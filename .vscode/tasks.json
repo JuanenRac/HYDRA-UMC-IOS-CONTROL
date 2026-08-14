@@ -1,0 +1,28 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "swift: build package",
+      "type": "shell",
+      "command": "swift build",
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": ["$swiftc"],
+      "detail": "Builds the Sources/HydraUMCControl/ package only (Networking/Bluetooth logic) - does NOT build a real iOS .app. See docs/ARCHITECTURE.md for why an Xcode project is still needed for that."
+    },
+    {
+      "label": "swift: test package",
+      "type": "shell",
+      "command": "swift test",
+      "group": "test",
+      "problemMatcher": ["$swiftc"]
+    },
+    {
+      "label": "xcodebuild: build iOS app (requires an Xcode project to exist first)",
+      "type": "shell",
+      "command": "xcodebuild -scheme HydraUMCControl -destination 'generic/platform=iOS Simulator' build",
+      "group": "build",
+      "problemMatcher": [],
+      "detail": "Placeholder task - update the -scheme once a real .xcodeproj/.xcworkspace exists (not created by this scaffold)."
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "swift.path": "",
+  "editor.formatOnSave": false,
+  "files.exclude": {
+    "**/.build": true,
+    "**/*.xcodeproj": false
+  }
+}

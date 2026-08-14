@@ -4,7 +4,13 @@
 
 # 📱 HYDRA-UMC IOS CONTROL
 
-**Status: planned, not yet started.** This repository is a placeholder - scope, architecture, and feature set are still to be defined by the project owner. Nothing in this folder should be treated as a source of truth about what this project will actually do until that happens.
+**Status: scaffolding only, no real app yet.** A native iOS/iPadOS app that controls a robot on the [HYDRA-UMC](https://github.com/JuanenRac/HYDRA-UMC) platform over Wi-Fi (speaking the same [`REMOTE_API.md`](https://github.com/JuanenRac/HYDRA-UMC-STUDIO/blob/main/docs/REMOTE_API.md) contract [HYDRA-UMC SUITE](https://github.com/JuanenRac/HYDRA-UMC-SUITE) uses) or Bluetooth (blocked on future CM5-side work - see below). See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the full design. The actual SwiftUI implementation is being built by the project owner - this repository provides the architecture write-up, a minimal Swift Package source layout, and VSCode configuration for Swift development, not real app code.
+
+## 🏗️ What exists so far
+
+- `docs/ARCHITECTURE.md` - the real design doc: Wi-Fi transport (real, working API today), Bluetooth transport (honestly flagged as blocked on a CM5-side BLE service that doesn't exist yet anywhere in this ecosystem).
+- `Package.swift` + `Sources/HydraUMCControl/` - a Swift Package skeleton (`App.swift`, `Views/`, `Networking/`, `Bluetooth/`), every file a documented placeholder, not implementation. A real installable iOS app still needs an Xcode project wrapping this - not created here.
+- `.vscode/` - recommended Swift extensions, editor settings, and build tasks (`swift build`/`swift test` against the package; a placeholder `xcodebuild` task for once a real Xcode project exists).
 
 ## 🔗 Related Projects
 
