@@ -20,8 +20,8 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _hostCtrl = TextEditingController(text: '192.168.1.100');
   final _portCtrl = TextEditingController(text: '3000');
-  final _userCtrl = TextEditingController(text: 'demo');
-  final _passCtrl = TextEditingController(text: 'demo');
+  final _userCtrl = TextEditingController(text: 'admin');
+  final _passCtrl = TextEditingController(text: 'admin');
   bool _isSubmitting = false;
 
   @override

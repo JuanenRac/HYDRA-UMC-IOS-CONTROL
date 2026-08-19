@@ -32,21 +32,30 @@ unconditionally, and `POST /api/robot/:id/command` is a real, working
 atomic endpoint the doc under-documents relative to what it actually
 does).
 
-- `POST /api/login` - `demo`/`demo`, every server in this ecosystem's own
-  hardcoded account - returns a bearer token, required for every write
-  below and for the WebSocket upgrade.
+- `POST /api/login` - `admin`/`admin`, every server in this ecosystem's own
+  seeded default account (renamed 2026-08-19 from the old shared
+  `demo`/`demo` - see `server.ts`'s own `users.ts`, which now backs a real
+  multi-user store: additional lower-privilege "operator" accounts can be
+  created from Config > Users in the browser UI) - returns a bearer token,
+  required for every write below and for the WebSocket upgrade.
 - `GET /api/hydra-info` - discover/confirm a candidate IP is actually
-  running HYDRA-UMC STUDIO, 404 if remote access discovery is disabled
-  server-side.
+  running HYDRA-UMC STUDIO, 404 if this app's own access has been
+  disabled server-side (Config > Remote Access, per-client since
+  2026-08-19 - identified via the `X-Hydra-Client: ios` header this app
+  sends on every request, see `hydra_api_client.dart`'s own
+  `_clientHeaders`).
 - `GET`/`POST /api/settings` - full application state read/write -
-  `GET` needs no auth, `POST` does. Used for the initial full-state load
-  and for `SettingsScreen`'s own diagnostics; NOT the primary write path
-  (see below).
+  `GET` needs no auth, `POST` requires an **admin** token specifically
+  (2026-08-19 - an "operator" token gets 403 here). Used for the initial
+  full-state load and for `SettingsScreen`'s own diagnostics; NOT the
+  primary write path (see below).
 - `POST /api/robot/:id/command` - the **primary** write path for every
   mutation this app makes (enable/disable/play/pause/stop/jog/valve/pump/
-  speed/vision) - small, single-robot payload; the server computes which
-  `combinedWith` siblings are also affected, persists to disk, and
-  broadcasts a WS `"delta"` to every other connected client on its own.
+  speed/vision) - small, single-robot payload; works for a token of
+  **either** role (unlike the full-tree `POST /api/settings` above); the
+  server computes which `combinedWith` siblings are also affected,
+  persists to disk, and broadcasts a WS `"delta"` to every other connected
+  client on its own.
 - `WebSocket /ws?token=` - live push: the server sends the current state
   on connect, then broadcasts every change (from any client) to every
   other connected client.

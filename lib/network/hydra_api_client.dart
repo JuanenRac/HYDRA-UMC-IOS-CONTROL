@@ -8,18 +8,26 @@
 // truth - verify against the server's own code before trusting it blindly,
 // per the lesson learned building HYDRA-UMC-ANDROID-CONTROL's own
 // equivalent client the same day):
-//   - POST /api/login               - obtain a bearer token (demo/demo)
-//   - GET  /api/hydra-info          - discovery/identity, 404 if
-//     SystemSettings.remoteAccess.enabled is explicitly false
+//   - POST /api/login               - obtain a bearer token. Real multi-user
+//     accounts as of 2026-08-19 (server.ts's own users.ts) - every server
+//     seeds a default admin/admin account on its own first-ever start
+//     (renamed from the old shared demo/demo), and can have additional
+//     lower-privilege "operator" accounts created from Config > Users in
+//     the browser UI.
+//   - GET  /api/hydra-info          - discovery/identity, 404 if this app's
+//     own access has been disabled server-side (Config > Remote Access -
+//     per-client since 2026-08-19, identified via the X-Hydra-Client: ios
+//     header every request below carries)
 //   - GET  /api/settings            - full current state, no auth needed
 //   - POST /api/settings            - overwrite the whole state,
-//     read-modify-write, requires a bearer token
+//     read-modify-write, requires an ADMIN bearer token (an "operator"
+//     account gets 403 - see server.ts's own requireAdmin())
 //   - POST /api/robot/:id/command   - atomic per-robot command (stop/play/
-//     pause/jog/tool/valve/pump/speed/vision), requires a bearer token -
-//     the PRIMARY way this app writes (see state/robot_view_model.dart) -
-//     small payload, server computes affectedIds (self + combinedWith)
-//     itself, persists to disk, and broadcasts a WS "delta" to every other
-//     connected client on its own.
+//     pause/jog/tool/valve/pump/speed/vision), requires a bearer token of
+//     EITHER role - the PRIMARY way this app writes (see
+//     state/robot_view_model.dart) - small payload, server computes
+//     affectedIds (self + combinedWith) itself, persists to disk, and
+//     broadcasts a WS "delta" to every other connected client on its own.
 //   - GET  /api/system/metrics      - host CPU/memory/temp/uptime/network,
 //     no auth needed
 // =============================================================================
@@ -48,11 +56,19 @@ class HydraApiClient {
   Map<String, String> get _authHeaders =>
       authToken != null ? {'Authorization': 'Bearer $authToken'} : const {};
 
+  /// Self-identifies this client to server.ts's own per-client remote-access
+  /// toggles (Config > Remote Access) - lets the project owner disable this
+  /// app's own access without also blocking SUITE/Android, or vice versa.
+  /// Only GET /api/hydra-info actually checks this header server-side;
+  /// sending it on every request is simpler than special-casing just that
+  /// one call, and harmless everywhere else.
+  static const Map<String, String> _clientHeaders = {'X-Hydra-Client': 'ios'};
+
   Future<Map<String, dynamic>> login(String username, String password) async {
     final resp = await _client
         .post(
           Uri.parse('$baseUrl/api/login'),
-          headers: {'Content-Type': 'application/json'},
+          headers: {'Content-Type': 'application/json', ..._clientHeaders},
           body: jsonEncode({'username': username, 'password': password}),
         )
         .timeout(const Duration(seconds: 5));
@@ -61,7 +77,9 @@ class HydraApiClient {
 
   Future<Map<String, dynamic>?> getHydraInfo() async {
     try {
-      final resp = await _client.get(Uri.parse('$baseUrl/api/hydra-info')).timeout(const Duration(seconds: 3));
+      final resp = await _client
+          .get(Uri.parse('$baseUrl/api/hydra-info'), headers: _clientHeaders)
+          .timeout(const Duration(seconds: 3));
       if (resp.statusCode != 200) return null;
       final json = jsonDecode(resp.body) as Map<String, dynamic>;
       if (!json.containsKey('remoteApiVersion')) return null;
@@ -73,7 +91,7 @@ class HydraApiClient {
 
   Future<Map<String, dynamic>> getSettings() async {
     final resp = await _client
-        .get(Uri.parse('$baseUrl/api/settings'), headers: _authHeaders)
+        .get(Uri.parse('$baseUrl/api/settings'), headers: {..._clientHeaders, ..._authHeaders})
         .timeout(const Duration(seconds: 5));
     return _expectJson(resp);
   }
@@ -82,7 +100,7 @@ class HydraApiClient {
     final resp = await _client
         .post(
           Uri.parse('$baseUrl/api/settings'),
-          headers: {'Content-Type': 'application/json', ..._authHeaders},
+          headers: {'Content-Type': 'application/json', ..._clientHeaders, ..._authHeaders},
           body: jsonEncode(payload),
         )
         .timeout(const Duration(seconds: 5));
@@ -93,7 +111,7 @@ class HydraApiClient {
     final resp = await _client
         .post(
           Uri.parse('$baseUrl/api/robot/$robotId/command'),
-          headers: {'Content-Type': 'application/json', ..._authHeaders},
+          headers: {'Content-Type': 'application/json', ..._clientHeaders, ..._authHeaders},
           body: jsonEncode(payload),
         )
         .timeout(const Duration(seconds: 5));
@@ -101,7 +119,9 @@ class HydraApiClient {
   }
 
   Future<Map<String, dynamic>> getSystemMetrics() async {
-    final resp = await _client.get(Uri.parse('$baseUrl/api/system/metrics')).timeout(const Duration(seconds: 5));
+    final resp = await _client
+        .get(Uri.parse('$baseUrl/api/system/metrics'), headers: _clientHeaders)
+        .timeout(const Duration(seconds: 5));
     return _expectJson(resp);
   }
 

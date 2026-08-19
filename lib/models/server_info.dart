@@ -25,11 +25,17 @@ class ServerInfo {
   final String nickname; // user-assigned label, not from the server
 
   // Login credentials - every real HYDRA-UMC STUDIO server in this ecosystem
-  // ships with the same hardcoded demo/demo account (see that project's own
-  // server.ts) - defaults to it so a fresh "add server" doesn't require
-  // typing credentials for what's already public knowledge in the server's
-  // own source, matching the pragmatic choice HYDRA-UMC-SUITE's own
-  // ServerInfo made the same day (2026-08-19) for the same reason.
+  // seeds the same default admin/admin account on its own first-ever start
+  // (see that project's own server.ts + users.ts, renamed 2026-08-19 from
+  // the old shared demo/demo alongside the new real multi-user account
+  // system - server.ts now also supports additional lower-privilege
+  // "operator" accounts, created from Config > Users in the browser UI) -
+  // defaults to it so a fresh "add server" doesn't require typing
+  // credentials for what's already public knowledge in the server's own
+  // source, matching the pragmatic choice HYDRA-UMC-SUITE's own ServerInfo
+  // made the same day for the same reason. Editable per-ServerInfo (see
+  // copyWith below) in case a real deployment renamed the admin account or
+  // uses a dedicated operator account instead.
   final String username;
   final String password;
 
@@ -44,8 +50,8 @@ class ServerInfo {
     this.robotCount = 0,
     this.uptimeSeconds = 0,
     this.nickname = '',
-    this.username = 'demo',
-    this.password = 'demo',
+    this.username = 'admin',
+    this.password = 'admin',
   });
 
   String get baseUrl => 'http://$host:$port';

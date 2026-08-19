@@ -14,7 +14,7 @@ This project started as a native Swift/SwiftUI Package (scaffolding only, 15 Aug
 
 ## 🏗️ What's implemented
 
-- **Login** (`lib/ui/login_screen.dart`, `lib/state/robot_view_model.dart`) - `POST /api/login` against `demo`/`demo` (pre-filled, the same hardcoded account every server in this ecosystem ships with), session token persisted across launches via `shared_preferences`.
+- **Login** (`lib/ui/login_screen.dart`, `lib/state/robot_view_model.dart`) - `POST /api/login` against `admin`/`admin` (pre-filled - the default account every server in this ecosystem seeds on its own first-ever start, renamed 2026-08-19 from the old shared `demo`/`demo`; a server can also have additional lower-privilege "operator" accounts, created from Config > Users in the browser UI), session token persisted across launches via `shared_preferences`.
 - **Atomic command sync** (`lib/state/robot_view_model.dart`'s own `_sendAtomicCommand()`) - every write (enable/disable/play/pause/stop/jog/valve/pump/speed/vision) uses the real `POST /api/robot/:id/command` endpoint from day one, with correct combined-robot (`combinedWith`) propagation for the 5 commands that need it - built this way from the start rather than the heavier "always POST the whole settings tree" approach the Android app shipped first and had to migrate away from the same day.
 - **Live WebSocket sync** (`lib/network/hydra_websocket.dart`) - `?token=` in the connection URL from day one (server.ts's `/ws` upgrade requires it unconditionally - both other clients in this ecosystem had this missing and had to be fixed the same day), handles both `"settings"` and `"delta"` broadcast types, auto-reconnects on drop.
 - **Dashboard** (`lib/ui/dashboard_screen.dart`) - per-robot cards, reactive in real time via `Provider`'s own `ChangeNotifier`, LED convention (green pulsing = active, red solid = inactive) and combined-robot display (shown on the follower side only, resolved by id) matching what HYDRA-UMC-STUDIO's own Dashboard Overview settled on the same day.
@@ -67,7 +67,7 @@ HYDRA-UMC-IOS-CONTROL/
 
 ## 🔗 Related Projects
 
-Direct Flutter counterpart to [HYDRA-UMC-ANDROID-CONTROL](https://github.com/JuanenRac/HYDRA-UMC-ANDROID-CONTROL) (native Kotlin/Compose, no code shared between the two) - both speak the exact same [`REMOTE_API.md`](https://github.com/JuanenRac/HYDRA-UMC-STUDIO/blob/main/docs/REMOTE_API.md) contract as [HYDRA-UMC SUITE](https://github.com/JuanenRac/HYDRA-UMC-SUITE), served by [HYDRA-UMC STUDIO](https://github.com/JuanenRac/HYDRA-UMC-STUDIO), which in turn is the human-facing side of [HYDRA-UMC](https://github.com/JuanenRac/HYDRA-UMC) itself.
+Direct Flutter counterpart to [HYDRA-UMC-ANDROID-CONTROL](https://github.com/JuanenRac/HYDRA-UMC-ANDROID-CONTROL) (native Kotlin/Compose, no code shared between the two) - both speak the exact same [`REMOTE_API.md`](https://github.com/JuanenRac/HYDRA-UMC-STUDIO/blob/main/docs/REMOTE_API.md) contract as [HYDRA-UMC SUITE](https://github.com/JuanenRac/HYDRA-UMC-SUITE), served by [HYDRA-UMC STUDIO](https://github.com/JuanenRac/HYDRA-UMC-STUDIO), which in turn is the human-facing side of [HYDRA-UMC](https://github.com/JuanenRac/HYDRA-UMC) itself. Two more sibling projects are planned but not started yet: [HYDRA-UMC-EDITOR-URDF](https://github.com/JuanenRac/HYDRA-UMC-EDITOR-URDF) (graphical URDF creator/editor for STUDIO's model catalog) and [HYDRA-UMC-DSI](https://github.com/JuanenRac/HYDRA-UMC-DSI) (native touch UI for HYDRA-UMC's own 7" DSI touchscreen on the Compute Module 5).
 
 ---
 
