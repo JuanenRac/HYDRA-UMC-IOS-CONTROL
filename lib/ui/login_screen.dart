@@ -4,10 +4,13 @@
 // GPL-3.0 - see LICENSE
 // =============================================================================
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../models/server_info.dart';
+import '../network/discovery.dart';
 import '../state/robot_view_model.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -24,13 +27,122 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passCtrl = TextEditingController(text: 'admin');
   bool _isSubmitting = false;
 
+  StreamSubscription<ServerInfo>? _scanSub;
+
   @override
   void dispose() {
+    _scanSub?.cancel();
     _hostCtrl.dispose();
     _portCtrl.dispose();
     _userCtrl.dispose();
     _passCtrl.dispose();
     super.dispose();
+  }
+
+  /// Runs [scanSubnets] against this device's own real local subnet(s)
+  /// (see network/discovery.dart) and shows results live in a bottom
+  /// sheet, so a user who doesn't already know the server's IP can find
+  /// it instead of always needing to type it manually.
+  Future<void> _openScanSheet() async {
+    final found = <ServerInfo>[];
+    final foundNotifier = ValueNotifier<List<ServerInfo>>(const []);
+    var scanning = true;
+    final scanningNotifier = ValueNotifier<bool>(true);
+
+    _scanSub?.cancel();
+    _scanSub = scanSubnets(lastHost: _hostCtrl.text.trim().isEmpty ? null : _hostCtrl.text.trim()).listen(
+      (server) {
+        if (found.any((s) => s.connectionId == server.connectionId)) return;
+        found.add(server);
+        foundNotifier.value = List.of(found);
+      },
+      onDone: () {
+        scanning = false;
+        scanningNotifier.value = false;
+      },
+      onError: (_) {
+        scanning = false;
+        scanningNotifier.value = false;
+      },
+    );
+
+    if (!mounted) return;
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Scanning local network…',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                    ),
+                    ValueListenableBuilder<bool>(
+                      valueListenable: scanningNotifier,
+                      builder: (context, isScanning, _) => isScanning
+                          ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                          : const Icon(Icons.check_circle, color: Colors.greenAccent),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 320),
+                  child: ValueListenableBuilder<List<ServerInfo>>(
+                    valueListenable: foundNotifier,
+                    builder: (context, servers, _) {
+                      if (servers.isEmpty) {
+                        return ValueListenableBuilder<bool>(
+                          valueListenable: scanningNotifier,
+                          builder: (context, isScanning, _) => Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 24),
+                            child: Text(
+                              isScanning ? 'Looking for HYDRA-UMC STUDIO servers…' : 'No servers found on this network.',
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ),
+                        );
+                      }
+                      return ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: servers.length,
+                        itemBuilder: (context, i) {
+                          final s = servers[i];
+                          return ListTile(
+                            leading: const Icon(Icons.dns),
+                            title: Text(s.displayName),
+                            subtitle: Text('${s.host}:${s.port} · ${s.product.isNotEmpty ? s.product : "HYDRA-UMC STUDIO"}'),
+                            onTap: () {
+                              _hostCtrl.text = s.host;
+                              _portCtrl.text = s.port.toString();
+                              Navigator.of(context).pop();
+                            },
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (scanning) {
+      unawaited(_scanSub?.cancel());
+    }
   }
 
   Future<void> _submit() async {
@@ -84,7 +196,16 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed: _isSubmitting ? null : _openScanSheet,
+                    icon: const Icon(Icons.wifi_find, size: 18),
+                    label: const Text('Scan local network'),
+                  ),
+                ),
+                const SizedBox(height: 4),
                 TextField(
                   controller: _userCtrl,
                   decoration: const InputDecoration(labelText: 'Username', border: OutlineInputBorder()),
