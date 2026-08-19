@@ -7,7 +7,26 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Hydra Umc Control</string>
+	<string>HYDRA-UMC Control</string>
+	<!-- HYDRA-UMC-STUDIO's own server.ts is plain http/ws, no TLS, by design
+	     (REMOTE_API.md's own "trusted LAN" model) - iOS's App Transport
+	     Security blocks all cleartext HTTP by default. NSAllowsLocalNetworking
+	     (iOS 10+) permits it for local/private-network addresses specifically
+	     (the target is always a LAN IP the user types or discovery finds),
+	     without the broader NSAllowsArbitraryLoads escape hatch a random
+	     internet host would need - same reasoning
+	     HYDRA-UMC-ANDROID-CONTROL's own android:usesCleartextTraffic="true"
+	     documents for the same server. -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
+	<!-- iOS 14+ requires this description to show the "Local Network" access
+	     prompt - triggered by network/discovery.dart's own subnet scan and
+	     by every plain HTTP/WS request to a LAN server. -->
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>HYDRA-UMC Control connects to a HYDRA-UMC STUDIO server on your local network to control real robots.</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>

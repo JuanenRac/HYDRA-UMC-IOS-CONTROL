@@ -1,8 +1,17 @@
 {
-  "swift.path": "",
-  "editor.formatOnSave": false,
+  "editor.formatOnSave": true,
+  "[dart]": {
+    "editor.formatOnSave": true,
+    "editor.formatOnType": true,
+    "editor.rulers": [80],
+    "editor.selectionHighlight": false,
+    "editor.suggestSelection": "first",
+    "editor.tabCompletion": "onlySnippets",
+    "editor.wordBasedSuggestions": "off"
+  },
   "files.exclude": {
-    "**/.build": true,
-    "**/*.xcodeproj": false
-  }
+    "**/.dart_tool": true,
+    "**/build": true
+  },
+  "dart.flutterSdkPath": "C:/tools/flutter"
 }

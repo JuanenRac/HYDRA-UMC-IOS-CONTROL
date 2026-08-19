@@ -2,27 +2,33 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "swift: build package",
+      "label": "flutter: analyze",
       "type": "shell",
-      "command": "swift build",
-      "group": { "kind": "build", "isDefault": true },
-      "problemMatcher": ["$swiftc"],
-      "detail": "Builds the Sources/HydraUMCControl/ package only (Networking/Bluetooth logic) - does NOT build a real iOS .app. See docs/ARCHITECTURE.md for why an Xcode project is still needed for that."
+      "command": "flutter analyze",
+      "group": { "kind": "test", "isDefault": true },
+      "problemMatcher": ["$dart-analyze"]
     },
     {
-      "label": "swift: test package",
+      "label": "flutter: test",
       "type": "shell",
-      "command": "swift test",
+      "command": "flutter test",
       "group": "test",
-      "problemMatcher": ["$swiftc"]
+      "problemMatcher": []
     },
     {
-      "label": "xcodebuild: build iOS app (requires an Xcode project to exist first)",
+      "label": "flutter: build windows (verification target - not the real iOS app)",
       "type": "shell",
-      "command": "xcodebuild -scheme HydraUMCControl -destination 'generic/platform=iOS Simulator' build",
+      "command": "flutter build windows",
       "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "flutter: build ipa (requires Xcode on macOS - will fail on Windows)",
+      "type": "shell",
+      "command": "flutter build ipa",
+      "group": { "kind": "build", "isDefault": true },
       "problemMatcher": [],
-      "detail": "Placeholder task - update the -scheme once a real .xcodeproj/.xcworkspace exists (not created by this scaffold)."
+      "detail": "The real iOS build. See README.md's own 'Framework pivot' section - this only works run from a Mac."
     }
   ]
 }

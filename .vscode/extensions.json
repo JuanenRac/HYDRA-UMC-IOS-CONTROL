@@ -1,7 +1,6 @@
 {
   "recommendations": [
-    "swiftlang.swift-vscode",
-    "vknabel.vscode-swiftformat",
-    "sswg.swift-lang"
+    "Dart-Code.flutter",
+    "Dart-Code.dart-code"
   ]
 }

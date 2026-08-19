@@ -23,7 +23,7 @@ class RobotView {
   RobotView(this.raw);
 
   dynamic get id => raw['id'];
-  String get name => (raw['name'] ?? 'Robot ${id}') as String;
+  String get name => (raw['name'] ?? 'Robot $id') as String;
   bool get online => (raw['online'] ?? false) as bool;
   String get model => (raw['model'] ?? 'Generic (6-DOF)') as String;
   String get role => (raw['role'] ?? 'Idle') as String;

@@ -50,29 +50,27 @@ class _MjpegViewState extends State<MjpegView> {
     }
   }
 
-  void _start() {
+  Future<void> _start() async {
     _client = http.Client();
     final buffer = BytesBuilder(copy: false);
-    _sub = _client!.send(http.Request('GET', Uri.parse(widget.url))).asStream().listen(
-      (response) {
-        response.stream.listen(
-          (chunk) {
-            buffer.add(chunk);
-            _extractFrames(buffer);
-          },
-          onError: (Object _) {
-            if (mounted) setState(() => _hasError = true);
-          },
-          onDone: () {
-            if (mounted) setState(() => _hasError = true);
-          },
-          cancelOnError: true,
-        );
-      },
-      onError: (Object _) {
-        if (mounted) setState(() => _hasError = true);
-      },
-    );
+    try {
+      final response = await _client!.send(http.Request('GET', Uri.parse(widget.url)));
+      _sub = response.stream.listen(
+        (chunk) {
+          buffer.add(chunk);
+          _extractFrames(buffer);
+        },
+        onError: (Object _) {
+          if (mounted) setState(() => _hasError = true);
+        },
+        onDone: () {
+          if (mounted) setState(() => _hasError = true);
+        },
+        cancelOnError: true,
+      );
+    } catch (_) {
+      if (mounted) setState(() => _hasError = true);
+    }
   }
 
   void _extractFrames(BytesBuilder buffer) {

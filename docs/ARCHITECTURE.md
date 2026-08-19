@@ -1,98 +1,106 @@
 # HYDRA-UMC iOS Control - Architecture
 
-**Status: scaffolding only.** This document describes the intended design
-so real implementation work has a starting point - the actual SwiftUI
-app is not built here (per the project owner's own instruction: "la app
-la voy hacer yo"). Nothing under `Sources/` is real app logic; every file
-there is a placeholder documenting where a piece belongs.
+**Status: real, working app (19 August 2026).** Superseded the original
+15 August 2026 native-Swift scaffolding-only version of this document -
+see the root [`README.md`](../README.md)'s own "Framework pivot" section
+for why. The old Swift files are archived (not deleted) in this
+ecosystem's own private tracking repo, `SONNET/_papelera/
+HYDRA-UMC-IOS-CONTROL_swift_skeleton_2026-08-19/`.
 
 ## 1. What this app is
 
-A native iOS/iPadOS app that controls a robot running on the
+A cross-platform Flutter app that controls a robot running on the
 [HYDRA-UMC](https://github.com/JuanenRac/HYDRA-UMC) platform, reached
-through its Compute Module 5 host - either over the same local Wi-Fi
-network HYDRA-UMC STUDIO's own browser UI uses, or over Bluetooth for a
-closer-range, no-network-setup-needed control path.
+through its Compute Module 5 host over the same local Wi-Fi network
+HYDRA-UMC STUDIO's own browser UI uses. Its real target is iOS/iPadOS;
+Windows and Android are additionally enabled build targets used to
+actually compile/run/test this app's own logic from a Windows
+development machine, since a real `.ipa` can only be built on macOS - see
+the README's own "Framework pivot" section.
 
-## 2. Wi-Fi transport (primary - real API exists today)
+## 2. Wi-Fi transport (the only transport - no Bluetooth)
 
 The CM5 already runs a real, working server for this: HYDRA-UMC STUDIO's
-own `server.ts`. This app should speak the exact same contract documented
-in [`HYDRA-UMC-STUDIO/docs/REMOTE_API.md`](https://github.com/JuanenRac/HYDRA-UMC-STUDIO/blob/main/docs/REMOTE_API.md) -
-the same one [HYDRA-UMC SUITE](https://github.com/JuanenRac/HYDRA-UMC-SUITE)
-uses, not a separate mobile-specific protocol:
+own `server.ts`. This app speaks the exact contract documented in
+[`HYDRA-UMC-STUDIO/docs/REMOTE_API.md`](https://github.com/JuanenRac/HYDRA-UMC-STUDIO/blob/main/docs/REMOTE_API.md) -
+the same one HYDRA-UMC SUITE and HYDRA-UMC-ANDROID-CONTROL use, not a
+separate mobile-specific protocol. That document itself notes it can
+drift from `server.ts`, the real source of truth - verified against the
+real server's own code while building this app, not assumed from the doc
+alone (found the same day: the `/ws` upgrade requires `?token=`
+unconditionally, and `POST /api/robot/:id/command` is a real, working
+atomic endpoint the doc under-documents relative to what it actually
+does).
 
+- `POST /api/login` - `demo`/`demo`, every server in this ecosystem's own
+  hardcoded account - returns a bearer token, required for every write
+  below and for the WebSocket upgrade.
 - `GET /api/hydra-info` - discover/confirm a candidate IP is actually
-  running HYDRA-UMC STUDIO (product name, API version, robot/controller
-  counts) before connecting to it for real.
-- `GET`/`POST /api/settings` - read and write the full application state
-  (robots, jobs, trajectories, configuration) - read-modify-write, no
-  granular per-field update exists server-side.
-- `WebSocket /ws` - live push: the server sends the current state on
-  connect, then broadcasts every change (from any client - a browser tab,
-  this app, HYDRA-UMC SUITE) to every other connected client. A change
-  made from this app should show up live in an open HYDRA-UMC STUDIO
-  browser tab, and vice versa - not just on next manual refresh.
+  running HYDRA-UMC STUDIO, 404 if remote access discovery is disabled
+  server-side.
+- `GET`/`POST /api/settings` - full application state read/write -
+  `GET` needs no auth, `POST` does. Used for the initial full-state load
+  and for `SettingsScreen`'s own diagnostics; NOT the primary write path
+  (see below).
+- `POST /api/robot/:id/command` - the **primary** write path for every
+  mutation this app makes (enable/disable/play/pause/stop/jog/valve/pump/
+  speed/vision) - small, single-robot payload; the server computes which
+  `combinedWith` siblings are also affected, persists to disk, and
+  broadcasts a WS `"delta"` to every other connected client on its own.
+- `WebSocket /ws?token=` - live push: the server sends the current state
+  on connect, then broadcasts every change (from any client) to every
+  other connected client.
+- `GET /api/system/metrics` - host CPU/memory/temperature/uptime, no auth
+  needed, polled every 5s for the Dashboard.
 
-**Recommended Swift networking stack:** `URLSession` for the REST calls
-(no third-party HTTP client needed for 2 simple JSON endpoints), and
-`URLSessionWebSocketTask` (native since iOS 13, no third-party WebSocket
-library needed either) for `/ws`. Keeping this dependency-free is
-deliberate - see `Sources/HydraUMCControl/Networking/` below for exactly
-where these belong.
+**Networking stack:** `package:http` for REST, `package:web_socket_channel`
+for `/ws` - both dependency-light, well-maintained pub.dev packages
+rather than hand-rolled socket code.
 
-**Discovery on a real network:** the REMOTE_API.md document itself notes
-no mDNS/Bonjour service is advertised yet (a real gap, not an oversight -
-see that document's own "Future work" section). Until that exists
-server-side, this app has 2 realistic options: (a) let the user type in
-a HYDRA-UMC's IP/hostname manually (simplest, always works), or (b) scan
-the local subnet's likely IP range hitting `/api/hydra-info` on each
-candidate (same approach HYDRA-UMC SUITE's own network scanner uses -
-see that project's own `discovery.py` for the reference algorithm once
-it exists). Bonjour/mDNS (`NWBrowser` in `Network.framework`) becomes the
-much better option once the CM5 side actually advertises a
-`_hydra-umc._tcp` service - track that against REMOTE_API.md's own
-"Future work" note rather than building Bonjour support against nothing.
+**Discovery:** `lib/network/discovery.dart` does a concurrent scan of the
+`192.168.1.x` range (plus whatever subnet the last-used host implies)
+hitting `GET /api/hydra-info` on each candidate - same approach
+HYDRA-UMC SUITE's own `discovery.py` and HYDRA-UMC-ANDROID-CONTROL's own
+`Discovery.kt` use. `server.ts` does publish a real `_hydra._tcp` Bonjour
+service now (confirmed 19 August 2026) - real mDNS support here (Apple's
+own `Network.framework`/`NWBrowser` via a Flutter plugin, or the
+`multicast_dns` pub.dev package) is a documented future improvement, not
+implemented yet - see `mejoras_futuras.txt`.
 
-## 3. Bluetooth transport (secondary - NOT backed by any server-side support yet)
+## 3. Bluetooth transport - not built, and not planned until server-side support exists
 
 **Honesty note, matching the rest of this ecosystem's documentation
-convention:** there is currently no Bluetooth service of any kind running
-on a HYDRA-UMC's CM5 - no BLE GATT server, no Bluetooth Classic profile,
-nothing. Before this transport can be built on the iOS side, HYDRA-UMC's
-own CM5-side software needs a corresponding BLE peripheral service (most
-likely a BlueZ-based GATT server process on the CM5's own Linux OS,
-exposing a custom service/characteristic set that mirrors a useful subset
-of the Wi-Fi API above - short-range jog control and status readout are
-the obvious first candidates, not full state sync, given BLE's much lower
-throughput than Wi-Fi). That server-side work does not exist yet anywhere
-in this ecosystem as of this document's own writing (15 August 2026) -
-track it as a HYDRA-UMC-repository prerequisite, not something to build
-from the iOS side alone.
+convention:** there is still no Bluetooth service of any kind running on
+a HYDRA-UMC's CM5 - no BLE GATT server, nothing. This is a real,
+unchanged gap from the original Swift-era version of this document, not
+something the Flutter pivot addressed or was expected to - it's blocked
+on HYDRA-UMC's own CM5-side software, not this app.
 
-Once that CM5-side service exists, the iOS side would use
-`CoreBluetooth`'s `CBCentralManager`/`CBPeripheral` APIs - see
-`Sources/HydraUMCControl/Bluetooth/` below for where that implementation
-belongs once it's real.
-
-## 4. Suggested source layout
+## 4. Real source layout
 
 ```text
-Sources/HydraUMCControl/
-├── App.swift                  # @main entry point (placeholder)
-├── Views/                     # SwiftUI views (placeholder)
-├── Networking/                # URLSession REST client + URLSessionWebSocketTask live-sync client (placeholder)
-└── Bluetooth/                 # CoreBluetooth CBCentralManager client, blocked on CM5-side GATT service (placeholder)
+lib/
+├── main.dart
+├── models/        server_info.dart, hydra_state.dart
+├── network/       hydra_api_client.dart, hydra_websocket.dart, discovery.dart, auth_prefs.dart
+├── state/         robot_view_model.dart
+└── ui/            login_screen.dart, main_screen.dart, dashboard_screen.dart,
+                   control_screen.dart, camera_screen.dart, three_d_screen.dart,
+                   settings_screen.dart, widgets/
 ```
+
+See the root README's own "Repository Structure" section for what each
+file does - not duplicated here to avoid the 2 documents drifting apart
+the way the old Swift-era README/ARCHITECTURE.md pair did.
 
 ## 5. Relationship to the rest of the ecosystem
 
-See the root [`README.md`](../README.md)'s own "Related Projects" section
-for the full picture. The 3 things worth knowing specifically for this
-app's own design: it speaks the exact same REMOTE_API.md contract as
-[HYDRA-UMC SUITE](https://github.com/JuanenRac/HYDRA-UMC-SUITE) (don't
-invent a separate mobile protocol), it has a direct Android counterpart
-([HYDRA-UMC-ANDROID-CONTROL](https://github.com/JuanenRac/HYDRA-UMC-ANDROID-CONTROL))
-that should stay in sync with this app's own feature set even though the
-2 codebases don't share code, and [HYDRA-UMC](https://github.com/JuanenRac/HYDRA-UMC)
-is the actual hardware/firmware project this app ultimately controls.
+See the root [`README.md`](../README.md)'s own "Related Projects"
+section. Direct counterpart to
+[HYDRA-UMC-ANDROID-CONTROL](https://github.com/JuanenRac/HYDRA-UMC-ANDROID-CONTROL)
+(no code shared, same API contract, feature parity is a design goal even
+though the 2 codebases are independent), speaks the same contract as
+[HYDRA-UMC SUITE](https://github.com/JuanenRac/HYDRA-UMC-SUITE), served
+by [HYDRA-UMC STUDIO](https://github.com/JuanenRac/HYDRA-UMC-STUDIO),
+which is the human-facing side of
+[HYDRA-UMC](https://github.com/JuanenRac/HYDRA-UMC) itself.
