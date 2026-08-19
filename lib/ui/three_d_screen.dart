@@ -10,10 +10,11 @@
 // robot mesh/kinematics) for free instead of reimplementing it natively.
 // webview_flutter only ships an Android/iOS(+macOS) platform
 // implementation - guarded behind Platform.isIOS/isAndroid so this screen
-// degrades to an honest placeholder rather than crashing on desktop/web
-// verification builds (this app's primary target is iOS; Windows here is
-// only this session's own build-verification proxy, see
-// SONNET/HYDRA-UMC-IOS-CONTROL/chat.TXT).
+// degrades to an honest placeholder rather than crashing on platforms it
+// doesn't support (this app's primary target is iOS; the Windows desktop
+// target exists so this app's own logic can be built and run on a
+// Windows dev machine without needing a Mac, but 3D falls back to a
+// placeholder there since webview_flutter has no Windows implementation).
 // =============================================================================
 
 import 'dart:io' show Platform;

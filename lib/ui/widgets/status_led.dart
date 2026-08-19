@@ -4,8 +4,9 @@
 // GPL-3.0 - see LICENSE
 //
 // Green pulsing = active, red solid = inactive - same convention
-// HYDRA-UMC-STUDIO's own Dashboard Overview and HYDRA-UMC-SUITE both
-// settled on the same day (2026-08-19).
+// HYDRA-UMC-STUDIO's own Dashboard Overview and HYDRA-UMC-SUITE both use,
+// so a robot's status reads the same way across every client in this
+// ecosystem.
 // =============================================================================
 
 import 'package:flutter/material.dart';

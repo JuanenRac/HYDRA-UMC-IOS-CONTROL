@@ -3,11 +3,11 @@
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
 // GPL-3.0 - see LICENSE
 //
-// Real long-press protection on E-STOP/STOP from day one (a quick tap
-// does nothing but a short haptic + hint, only a genuine hold sends the
-// command) - HYDRA-UMC-ANDROID-CONTROL's own equivalent claimed this in
-// its README for a while before it was ever actually implemented; built
-// correctly here from the start instead of repeating that gap.
+// Real long-press protection on E-STOP/STOP (a quick tap does nothing but
+// a short haptic + hint, only a genuine hold sends the command) - a
+// safety-critical control like this needs to be hard to trigger by
+// accident, so a tap alone must never be enough to stop or e-stop a
+// running robot.
 // =============================================================================
 
 import 'package:flutter/material.dart';

@@ -12,10 +12,10 @@
 // envelope back over its own socket.
 //
 // server.ts's /ws upgrade REQUIRES ?token= in the query string
-// unconditionally (closes with code 1008 otherwise) - built with that in
-// mind from day one, unlike the other 2 clients in this ecosystem, which
-// both had to have this added after the fact the same day (2026-08-19,
-// see their own SONNET/ tracking for the regression this fixed).
+// unconditionally (closes with code 1008 otherwise), so the token is
+// always attached to the connection URL here rather than treated as
+// optional - a socket opened without it would just get closed by the
+// server immediately.
 // =============================================================================
 
 import 'dart:async';

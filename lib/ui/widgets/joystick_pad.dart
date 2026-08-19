@@ -4,10 +4,10 @@
 // GPL-3.0 - see LICENSE
 //
 // Jog-pendant-style directional pad - same deliberate choice
-// HYDRA-UMC-STUDIO's own new Joystick3D.tsx made the same day (2026-08-19):
-// a D-pad, not an analog stick, since real CNC/robot jog pendants (the UI
-// this is modeled after) almost always use discrete directional buttons at
-// a chosen step size, not a continuous joystick.
+// HYDRA-UMC-STUDIO's own Joystick3D.tsx makes: a D-pad, not an analog
+// stick, since real CNC/robot jog pendants (the UI this is modeled after)
+// almost always use discrete directional buttons at a chosen step size,
+// not a continuous joystick.
 // =============================================================================
 
 import 'dart:async';

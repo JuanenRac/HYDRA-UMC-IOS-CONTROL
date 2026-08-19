@@ -5,9 +5,10 @@
 //
 // Per-robot cards, reactive in real time via Provider's own
 // ChangeNotifier - the Flutter counterpart to HYDRA-UMC-STUDIO's own
-// Dashboard.tsx OverviewPanel (LED convention, combined-robot display, and
-// role/firmware fields deliberately match what that panel settled on the
-// same day, 2026-08-19).
+// Dashboard.tsx OverviewPanel. LED convention, combined-robot display, and
+// role/firmware fields deliberately match that panel so the same robot
+// looks and behaves the same way whether it's viewed from the browser or
+// from this app.
 // =============================================================================
 
 import 'package:flutter/material.dart';
@@ -92,8 +93,9 @@ class _RobotCard extends StatelessWidget {
   Widget build(BuildContext context) {
     // Combined-robot display shown on the FOLLOWER side only, resolved by
     // id (never stored by name, so a rename never goes stale) - same
-    // convention HYDRA-UMC-STUDIO's own Dashboard Overview settled on the
-    // same day, per the project owner's own explicit request.
+    // convention as HYDRA-UMC-STUDIO's own Dashboard Overview, per the
+    // project owner's preference for reading "combined with" from the
+    // follower rather than duplicating it on the leader too.
     final leaders = allRobots.where((other) => other.id != robot.id && other.combinedWith.contains(robot.id)).toList();
 
     return Card(

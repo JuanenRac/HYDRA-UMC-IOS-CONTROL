@@ -53,10 +53,11 @@ class RobotView {
   // Real signal is visionEnabled or the paired camera's own connected flag -
   // NOT mere presence of a "camera"/"cameraView" key (cameraView is the 3D
   // viewport's own orbit camera, unrelated to vision hardware; "camera"
-  // exists as a key on almost every robot regardless of state). Same bug,
-  // found and fixed the same day (2026-08-19) in HYDRA-UMC-STUDIO's own
-  // Dashboard Overview and HYDRA-UMC-ANDROID-CONTROL's own HydraState.kt -
-  // built correctly here from day one instead of repeating it a 3rd time.
+  // exists as a key on almost every robot regardless of state, so testing
+  // for its mere presence would report a camera as available even when
+  // vision is off). Matches the same fix in HYDRA-UMC-STUDIO's own
+  // Dashboard Overview and HYDRA-UMC-ANDROID-CONTROL's own HydraState.kt,
+  // so all 3 clients agree on what "has a camera" means.
   bool get hasCamera => (raw['visionEnabled'] ?? false) as bool || ((raw['camera']?['connected']) ?? false) as bool;
   bool get hasAtc => raw.containsKey('atc');
   bool get hasRack => _moduleEnabled('rackSystem');

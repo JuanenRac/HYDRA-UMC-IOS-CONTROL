@@ -5,19 +5,17 @@
 //
 // Talks the exact contract in HYDRA-UMC-STUDIO/docs/REMOTE_API.md (that
 // document itself admits it can drift from server.ts, the real source of
-// truth - verify against the server's own code before trusting it blindly,
-// per the lesson learned building HYDRA-UMC-ANDROID-CONTROL's own
-// equivalent client the same day):
+// truth - worth verifying against the server's own code rather than
+// trusting the doc blindly):
 //   - POST /api/login               - obtain a bearer token. Real multi-user
-//     accounts as of 2026-08-19 (server.ts's own users.ts) - every server
-//     seeds a default admin/admin account on its own first-ever start
-//     (renamed from the old shared demo/demo), and can have additional
-//     lower-privilege "operator" accounts created from Config > Users in
-//     the browser UI.
+//     accounts (server.ts's own users.ts) - every server seeds a default
+//     admin/admin account on its own first-ever start, and can have
+//     additional lower-privilege "operator" accounts created from
+//     Config > Users in the browser UI.
 //   - GET  /api/hydra-info          - discovery/identity, 404 if this app's
-//     own access has been disabled server-side (Config > Remote Access -
-//     per-client since 2026-08-19, identified via the X-Hydra-Client: ios
-//     header every request below carries)
+//     own access has been disabled server-side (Config > Remote Access,
+//     per-client, identified via the X-Hydra-Client: ios header every
+//     request below carries)
 //   - GET  /api/settings            - full current state, no auth needed
 //   - POST /api/settings            - overwrite the whole state,
 //     read-modify-write, requires an ADMIN bearer token (an "operator"

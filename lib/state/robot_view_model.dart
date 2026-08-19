@@ -7,13 +7,12 @@
 // counterpart to HYDRA-UMC-ANDROID-CONTROL's own viewmodel/RobotViewModel.kt.
 // Every write goes through sendAtomicCommand(), which POSTs the real atomic
 // POST /api/robot/:id/command endpoint (server.ts:210-298) instead of
-// always overwriting the whole settings tree - built this way from day
-// one, unlike the Android app, which had to be migrated to it the same
-// day (2026-08-19) after shipping the slower/heavier full-tree approach
-// first. Combined-robot propagation (a robot's own combinedWith siblings)
-// is correct from day one too for the same reason - see that project's
-// own SONNET/ tracking for the Enable/Disable bug this avoids by
-// construction.
+// overwriting the whole settings tree: a small, targeted payload avoids
+// read-modify-write races with other connected clients and lets the
+// server compute affectedIds (self + combinedWith) itself rather than
+// trusting the client to get combined-robot propagation right. Every
+// command that needs it (enable/disable/play/pause/stop) propagates to a
+// robot's own combinedWith siblings for that same reason.
 // =============================================================================
 
 import 'dart:async';
@@ -290,10 +289,10 @@ class RobotViewModel extends ChangeNotifier {
   }
 
   /// Toggles a robot's vision system on/off from the Camera screen
-  /// (server.ts's own "vision" command, added 2026-08-19). Takes an
-  /// explicit robotId since the camera being browsed isn't necessarily the
-  /// globally selected control robot - same design as
-  /// HYDRA-UMC-ANDROID-CONTROL's own setVisionEnabled(robotId, enabled).
+  /// (server.ts's own "vision" command). Takes an explicit robotId since
+  /// the camera being browsed isn't necessarily the globally selected
+  /// control robot - same design as HYDRA-UMC-ANDROID-CONTROL's own
+  /// setVisionEnabled(robotId, enabled).
   void setVisionEnabled(dynamic robotId, bool enabled) {
     _sendAtomicCommand(
       'vision',
