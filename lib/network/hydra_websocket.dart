@@ -110,8 +110,14 @@ class HydraWebSocket {
     onSettings(payload);
   }
 
-  /// Sends the current full state over the socket - the WS-side half of
-  /// the dual REST+WS write path (see state/robot_view_model.dart).
+  /// Sends [payload] as a "settings" envelope over the socket. Not
+  /// currently called anywhere in this app - state/robot_view_model.dart
+  /// writes exclusively through the REST POST /api/robot/:id/command
+  /// endpoint (see this file's own header comment), there is no "dual
+  /// REST+WS write path" today despite what an earlier version of this
+  /// comment claimed. Kept as a capability of this class rather than
+  /// removed, since the server's own wire protocol does accept a
+  /// client-sent "settings" envelope this way.
   bool send(Map<String, dynamic> payload) {
     final payloadJson = jsonEncode(payload);
     if (payloadJson == _lastPayloadJson) return true;

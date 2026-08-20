@@ -126,6 +126,16 @@ class RobotViewModel extends ChangeNotifier {
     } catch (e) {
       lastError = 'Initial fetch failed: $e';
       connectionStatus = 'error';
+      // A restored session (see init()) can reach here with a token the
+      // server no longer accepts (expired/revoked while the app was
+      // closed) - without this check the app was left showing MainScreen
+      // forever with isLoggedIn still true, an empty HydraState, and no
+      // path back to the login screen short of the user finding Settings >
+      // Sign Out themselves. Same 401/403 -> logout rule _sendAtomicCommand
+      // and the WS onError callback below already apply.
+      if (e.toString().contains('401') || e.toString().contains('403')) {
+        isLoggedIn = false;
+      }
       notifyListeners();
     }
 
