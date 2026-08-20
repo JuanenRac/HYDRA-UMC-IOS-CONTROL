@@ -16,6 +16,7 @@
 // =============================================================================
 
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 
@@ -60,9 +61,22 @@ class RobotViewModel extends ChangeNotifier {
       isLoggedIn = token != null;
     }
     notifyListeners();
+    // A restored session needs the same real connect() step login() runs
+    // (fetch settings, open the WS, start metrics polling) - without this
+    // call the app landed straight on MainScreen with isLoggedIn=true but
+    // an empty HydraState and no live connection: "No robots reported by
+    // the server" forever, with no way out short of logging out and back
+    // in by hand.
+    if (isLoggedIn) await connect();
   }
 
   Future<bool> login(ServerInfo server) async {
+    // Close out any previous session's client before replacing it - each
+    // HydraApiClient owns its own http.Client (its own connection pool),
+    // and overwriting apiClient without closing the old one first leaked
+    // one on every re-login (e.g. sign out then back in, or switching to a
+    // different server without restarting the app).
+    apiClient?.close();
     final client = HydraApiClient(server.host, server.port);
     apiClient = client;
     try {
@@ -203,23 +217,65 @@ class RobotViewModel extends ChangeNotifier {
       return;
     }
 
+    final client = apiClient;
+    if (client == null) {
+      // Nothing to roll back yet (no mutation applied below) - but this was
+      // previously a silent no-op with zero feedback, so a stray command
+      // fired while disconnected just vanished with no sign anything was
+      // wrong.
+      lastError = 'Not connected to a server';
+      notifyListeners();
+      return;
+    }
+
     final affectedIds = <dynamic>[robotId];
     if (propagateToCombined) affectedIds.addAll(target.combinedWith);
+
+    // Deep-copy snapshot of every affected robot's raw state before
+    // mutating: localMutate() (setOnline/stop/setValve/... in
+    // models/hydra_state.dart) writes straight into raw's own nested
+    // maps/lists (playbackState, pos, valves, ...) in place, so a shallow
+    // Map.from(raw) would still point at those same mutated nested objects
+    // and couldn't actually undo anything. jsonDecode(jsonEncode(...)) is
+    // used instead of a hand-rolled deep-clone since raw is already plain
+    // JSON-safe data straight from the server.
+    final snapshots = <dynamic, Map<String, dynamic>>{};
     for (final id in affectedIds) {
       final r = state.robotById(id);
-      if (r != null) localMutate(r);
+      if (r != null) {
+        snapshots[id] = jsonDecode(jsonEncode(r.raw)) as Map<String, dynamic>;
+        localMutate(r);
+      }
     }
     notifyListeners();
 
-    final client = apiClient;
-    if (client == null) return;
     final payload = <String, dynamic>{'command': command};
     if (params != null) payload['params'] = params;
 
     try {
       await client.postRobotCommand(robotId, payload);
       lastError = '';
-    } on HydraApiException catch (e) {
+    } catch (e) {
+      // Catches everything, not just HydraApiException: a plain network
+      // failure (timeout, connection refused, DNS failure) throws
+      // TimeoutException/SocketException/http's own ClientException, none
+      // of which is a HydraApiException - the narrower `on HydraApiException
+      // catch` used to let those escape this handler entirely as an
+      // unhandled Future error that never touched lastError and never
+      // rolled back the optimistic mutation above. That combination is the
+      // dangerous one for a robot controller: the operator holds E-STOP,
+      // the request times out on a flaky WiFi link, and the button UI
+      // still shows "stopped" with no error anywhere - the robot may still
+      // be moving. Roll back to the pre-mutation snapshot and surface the
+      // failure (see ui/main_screen.dart's own lastError listener) instead.
+      for (final entry in snapshots.entries) {
+        final r = state.robotById(entry.key);
+        if (r != null) {
+          r.raw
+            ..clear()
+            ..addAll(entry.value);
+        }
+      }
       lastError = 'TX error [$command]: $e';
       if (e.toString().contains('401') || e.toString().contains('403')) {
         isLoggedIn = false;

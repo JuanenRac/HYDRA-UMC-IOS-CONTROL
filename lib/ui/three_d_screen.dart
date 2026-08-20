@@ -26,8 +26,16 @@ import 'package:webview_flutter/webview_flutter.dart';
 
 import '../state/robot_view_model.dart';
 
-class ThreeDScreen extends StatelessWidget {
+class ThreeDScreen extends StatefulWidget {
   const ThreeDScreen({super.key});
+
+  @override
+  State<ThreeDScreen> createState() => _ThreeDScreenState();
+}
+
+class _ThreeDScreenState extends State<ThreeDScreen> {
+  WebViewController? _controller;
+  String? _loadedUrl;
 
   @override
   Widget build(BuildContext context) {
@@ -55,10 +63,20 @@ class ThreeDScreen extends StatelessWidget {
     }
 
     final url = '${server.baseUrl}/?hideUI=true&robotId=$robotId&token=${token ?? ''}';
-    final controller = WebViewController()
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..loadRequest(Uri.parse(url));
+    // The controller is created once and reused, and loadRequest() only
+    // fires when the URL actually changes (a different robot/server/token) -
+    // build() itself runs on every RobotViewModel.notifyListeners() call
+    // (every WS "settings"/"delta" broadcast, the 5-second system-metrics
+    // poll, connectionStatus flips, ...), so a fresh WebViewController +
+    // loadRequest() on every build reloaded the embedded 3D scene from
+    // scratch several times a minute - resetting camera orbit/zoom and
+    // flickering the view - instead of leaving one live WebView running.
+    _controller ??= WebViewController()..setJavaScriptMode(JavaScriptMode.unrestricted);
+    if (_loadedUrl != url) {
+      _loadedUrl = url;
+      _controller!.loadRequest(Uri.parse(url));
+    }
 
-    return WebViewWidget(controller: controller);
+    return WebViewWidget(controller: _controller!);
   }
 }

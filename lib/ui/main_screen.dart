@@ -23,6 +23,8 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _index = 0;
+  RobotViewModel? _vm;
+  String _lastShownError = '';
 
   static const _screens = [
     DashboardScreen(),
@@ -31,6 +33,41 @@ class _MainScreenState extends State<MainScreen> {
     ThreeDScreen(),
     SettingsScreen(),
   ];
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final vm = context.read<RobotViewModel>();
+    if (!identical(_vm, vm)) {
+      _vm?.removeListener(_onVmChanged);
+      _vm = vm;
+      _vm!.addListener(_onVmChanged);
+    }
+  }
+
+  @override
+  void dispose() {
+    _vm?.removeListener(_onVmChanged);
+    super.dispose();
+  }
+
+  /// Surfaces robot_view_model.dart's own lastError as a SnackBar regardless
+  /// of which of the 5 tabs is active. Before this, lastError was only ever
+  /// rendered on login_screen.dart - unreachable once isLoggedIn is true -
+  /// so a failed command (a rejected STOP, a network error mid-jog, ...) set
+  /// lastError correctly but nothing on screen ever showed it: the operator
+  /// had no way to know a command they just sent hadn't actually gone
+  /// through.
+  void _onVmChanged() {
+    if (!mounted) return;
+    final err = _vm?.lastError ?? '';
+    if (err.isNotEmpty && err != _lastShownError) {
+      _lastShownError = err;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(err), backgroundColor: const Color(0xFFB91C1C)),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
