@@ -82,7 +82,9 @@ HYDRA-UMC-IOS-CONTROL/
 ├── windows/                          # Windows desktop target - build verification without a Mac
 ├── docs/ARCHITECTURE.md
 ├── test/widget_test.dart
-└── images/
+├── images/
+├── README.md                         # this file
+└── README_spa.md / README_ita.md / README_fra.md / README_deu.md  # translations
 ```
 
 ## 🔗 Related Projects
@@ -116,4 +118,6 @@ This project is part of a larger robotics ecosystem by the same author (JuanenRa
 
 ## 📜 License
 
-GNU General Public License v3.0 (GPL-3.0) - see [`LICENSE`](LICENSE).
+GNU General Public License v3.0 (GPL-3.0) for the source code - see [`LICENSE`](LICENSE).
+
+The documentation (this README and its own translations - `README_spa.md`, `README_ita.md`, `README_fra.md`, `README_deu.md`) is available under **Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)**. Full text at https://creativecommons.org/licenses/by-sa/4.0/.
