@@ -28,10 +28,12 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isSubmitting = false;
 
   StreamSubscription<ServerInfo>? _scanSub;
+  StreamSubscription<ServerInfo>? _mdnsSub;
 
   @override
   void dispose() {
     _scanSub?.cancel();
+    _mdnsSub?.cancel();
     _hostCtrl.dispose();
     _portCtrl.dispose();
     _userCtrl.dispose();
@@ -39,30 +41,54 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  /// Runs [scanSubnets] against this device's own real local subnet(s)
-  /// (see network/discovery.dart) and shows results live in a bottom
-  /// sheet, so a user who doesn't already know the server's IP can find
-  /// it instead of always needing to type it manually.
+  /// Runs [discoverMdns] (real mDNS/Bonjour) and [scanSubnets] (brute-force
+  /// subnet scan, see network/discovery.dart) at the same time against this
+  /// device's own real local network, showing results live in a bottom
+  /// sheet as either path finds them - so a user who doesn't already know
+  /// the server's IP can find it instead of always needing to type it
+  /// manually. Both paths report through the same [found] list, deduped by
+  /// [ServerInfo.connectionId] since a server both paths agree on would
+  /// otherwise show up twice.
   Future<void> _openScanSheet() async {
     final found = <ServerInfo>[];
     final foundNotifier = ValueNotifier<List<ServerInfo>>(const []);
-    var scanning = true;
+    var mdnsDone = false;
+    var subnetDone = false;
     final scanningNotifier = ValueNotifier<bool>(true);
+
+    void addResult(ServerInfo server) {
+      if (found.any((s) => s.connectionId == server.connectionId)) return;
+      found.add(server);
+      foundNotifier.value = List.of(found);
+    }
+
+    void checkDone() {
+      if (mdnsDone && subnetDone) scanningNotifier.value = false;
+    }
+
+    _mdnsSub?.cancel();
+    _mdnsSub = discoverMdns().listen(
+      addResult,
+      onDone: () {
+        mdnsDone = true;
+        checkDone();
+      },
+      onError: (_) {
+        mdnsDone = true;
+        checkDone();
+      },
+    );
 
     _scanSub?.cancel();
     _scanSub = scanSubnets(lastHost: _hostCtrl.text.trim().isEmpty ? null : _hostCtrl.text.trim()).listen(
-      (server) {
-        if (found.any((s) => s.connectionId == server.connectionId)) return;
-        found.add(server);
-        foundNotifier.value = List.of(found);
-      },
+      addResult,
       onDone: () {
-        scanning = false;
-        scanningNotifier.value = false;
+        subnetDone = true;
+        checkDone();
       },
       onError: (_) {
-        scanning = false;
-        scanningNotifier.value = false;
+        subnetDone = true;
+        checkDone();
       },
     );
 
@@ -140,9 +166,8 @@ class _LoginScreenState extends State<LoginScreen> {
       },
     );
 
-    if (scanning) {
-      unawaited(_scanSub?.cancel());
-    }
+    if (!mdnsDone) unawaited(_mdnsSub?.cancel());
+    if (!subnetDone) unawaited(_scanSub?.cancel());
   }
 
   Future<void> _submit() async {

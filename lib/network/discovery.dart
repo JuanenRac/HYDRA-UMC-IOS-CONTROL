@@ -3,16 +3,27 @@
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
 // GPL-3.0 - see LICENSE
 //
-// Concurrent local-subnet scan hitting GET /api/hydra-info on every
-// candidate host - same approach HYDRA-UMC-SUITE's own
-// hydra_suite/net/discovery.py and HYDRA-UMC-ANDROID-CONTROL's own
-// network/Discovery.kt both use (mDNS/Bonjour would be nicer - server.ts
-// does publish a real _hydra._tcp service now - but a manual subnet scan
-// needs no extra native platform plugin and always works as a fallback,
-// so it stays the primary path here too until Bonjour support is added
-// to all 3 clients together rather than piecemeal).
+// Two independent discovery paths, both feeding the same "Scan local
+// network" sheet in ui/login_screen.dart:
+//   - discoverMdns(): real mDNS/Bonjour, querying the "_hydra._tcp.local"
+//     service server.ts publishes - near-instant on a network that
+//     delivers the multicast replies.
+//   - scanSubnets(): brute-force GET /api/hydra-info against every host on
+//     the device's own local /24(s) - slower, but needs no multicast
+//     delivery at all, so it stays the guaranteed fallback. In particular,
+//     iOS silently drops multicast *receive* for any app that wasn't
+//     granted Apple's dedicated Multicast Networking entitlement
+//     (com.apple.developer.networking.multicast - requested from Apple
+//     per-app, not something a plain `flutter build ios` gets for free):
+//     an unentitled iOS build can still send the mDNS query but may never
+//     see a reply, so discoverMdns() failing quietly on iOS is expected
+//     until that entitlement is requested and added to Runner.entitlements,
+//     not a bug in this file. HYDRA-UMC-SUITE and HYDRA-UMC-ANDROID-CONTROL
+//     still only scan subnets - this app is the first of the 3 clients to
+//     add real mDNS, additively, without dropping the fallback either of
+//     them still relies on.
 //
-// The prefix list to scan comes from this device's own network
+// The prefix list scanSubnets() scans comes from this device's own network
 // interfaces (dart:io's NetworkInterface.list(), portable and
 // permission-free on iOS/Android/Windows/macOS/Linux - no extra platform
 // plugin needed) rather than a single hardcoded guess: a phone's LAN is
@@ -27,9 +38,59 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
+import 'package:multicast_dns/multicast_dns.dart';
 
 import '../models/server_info.dart';
 import 'hydra_api_client.dart';
+
+const String _mdnsServiceType = '_hydra._tcp.local';
+
+/// Queries mDNS/Bonjour for real HYDRA-UMC STUDIO servers (server.ts's own
+/// "_hydra._tcp" publish) and resolves every instance found down to a real
+/// [ServerInfo] via the same GET /api/hydra-info [scanSubnets] uses, so a
+/// match found this way is verified exactly the same way, not just assumed
+/// live because mDNS answered. Any failure along the way (no multicast
+/// socket permission, MDnsClient.start() throwing on a locked-down
+/// platform, a timeout with zero replies) yields nothing rather than
+/// throwing - see this file's own header comment on why that's expected
+/// on an unentitled iOS build, and [scanSubnets] keeps working
+/// independently either way since login_screen.dart runs both at once.
+Stream<ServerInfo> discoverMdns({Duration timeout = const Duration(seconds: 4)}) async* {
+  final client = MDnsClient();
+  final seen = <String>{};
+  try {
+    await client.start();
+    final ptrQuery = client
+        .lookup<PtrResourceRecord>(ResourceRecordQuery.serverPointer(_mdnsServiceType))
+        .timeout(timeout, onTimeout: (sink) => sink.close());
+    await for (final ptr in ptrQuery) {
+      final srvQuery = client
+          .lookup<SrvResourceRecord>(ResourceRecordQuery.service(ptr.domainName))
+          .timeout(timeout, onTimeout: (sink) => sink.close());
+      await for (final srv in srvQuery) {
+        final ipQuery = client
+            .lookup<IPAddressResourceRecord>(ResourceRecordQuery.addressIPv4(srv.target))
+            .timeout(timeout, onTimeout: (sink) => sink.close());
+        await for (final ip in ipQuery) {
+          final host = ip.address.address;
+          final port = srv.port;
+          if (!seen.add('$host:$port')) continue;
+          final apiClient = HydraApiClient(host, port);
+          try {
+            final info = await apiClient.getHydraInfo();
+            if (info != null) yield ServerInfo.fromHydraInfo(host, port, info);
+          } finally {
+            apiClient.close();
+          }
+        }
+      }
+    }
+  } catch (_) {
+    // Best-effort discovery path - see header comment.
+  } finally {
+    client.stop();
+  }
+}
 
 const int defaultPort = 3000;
 const int _scanConcurrency = 32;
