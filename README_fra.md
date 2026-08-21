@@ -31,11 +31,11 @@ Nécessite le [Flutter SDK](https://docs.flutter.dev/get-started/install) (canal
 ### Scripts de build
 
 ```bash
-./build.sh     # Git Bash / WSL - flutter pub get + flutter build windows
-build.bat      # cmd.exe / PowerShell - flutter pub get + flutter build windows
+./build.sh     # Git Bash / WSL - flutter pub get + bump de version + flutter build windows
+build.bat      # cmd.exe / PowerShell - flutter pub get + bump de version + flutter build windows
 ```
 
-Les deux produisent `build/windows/x64/runner/Release/hydra_umc_control.exe`.
+Les deux produisent `build/windows/x64/runner/Release/hydra_umc_control.exe`, et les deux incrémentent d'abord la version de l'app - voir [Versionnage](#-versionnage) ci-dessous.
 
 ### Build manuel
 
@@ -43,19 +43,43 @@ Les deux produisent `build/windows/x64/runner/Release/hydra_umc_control.exe`.
 flutter pub get
 flutter analyze          # analyse statique - aucun compilateur necessaire
 flutter test             # tests de widgets
+dart run tool/bump_version.dart  # incremente la version, comme le font build.sh/build.bat
 flutter build windows    # produit build/windows/x64/runner/Release/hydra_umc_control.exe
 flutter run -d windows   # ou -d <ios-device-id> depuis un Mac, ou -d chrome pour un apercu web rapide
 ```
 
 **Compiler le vrai `.ipa` iOS** nécessite Xcode sous macOS - depuis cette machine : `flutter build ipa` (ou ouvrir directement `ios/Runner.xcworkspace` dans Xcode). Cela ne peut pas être fait depuis Windows ; voir "Pourquoi Flutter, et non Swift natif" ci-dessus.
 
+## 🔢 Versionnage
+
+Ce dépôt suit une politique à l'échelle de l'écosystème : la version
+s'incrémente automatiquement à **chaque build réel**, sans modifier
+manuellement la ligne `version:` de `pubspec.yaml`. `build.sh`/`build.bat`
+exécutent `tool/bump_version.dart` avant d'invoquer `flutter build`, en
+appliquant :
+
+- **Patch, façon compteur kilométrique (base 10) :** +1 à chaque build ;
+  une fois 9 dépassé, il repasse à 0 et minor gagne +1 - ex. `1.0.9` ->
+  `1.1.0`. Major n'est jamais modifié automatiquement.
+- **Build number** (la partie après `+`) : un simple compteur
+  monotone, +1 à chaque build, sans report.
+
+Le même script régénère `lib/app_version.dart` (généré, non modifié à
+la main - un simple fichier `const`, pas une nouvelle dépendance
+d'exécution comme `package_info_plus`), que l'app lit en temps réel
+pour afficher sa propre version sur l'écran **Paramètres**. Voir
+[CHANGELOG.md](CHANGELOG.md) pour l'historique des versions.
+
 ## 📂 Structure du Dépôt
 
 ```text
 HYDRA-UMC-IOS-CONTROL/
-├── build.bat, build.sh              # flutter pub get + flutter build windows
+├── build.bat, build.sh              # flutter pub get + bump de version + flutter build windows
+├── tool/
+│   └── bump_version.dart            # Script de bump de version, execute par build.bat/build.sh avant chaque build (voir Versionnage ci-dessus)
 ├── lib/
 │   ├── main.dart                    # Point d'entree de l'application, ChangeNotifierProvider + porte de connexion
+│   ├── app_version.dart             # GENERE - regenere par tool/bump_version.dart, ne pas modifier a la main
 │   ├── models/
 │   │   ├── server_info.dart         # Entree de decouverte/connexion - reflete ServerInfo dans les 2 autres clients
 │   │   └── hydra_state.dart         # RobotView/ControllerView/HydraState - vues mutables legeres sur l'arbre brut de settings.json
