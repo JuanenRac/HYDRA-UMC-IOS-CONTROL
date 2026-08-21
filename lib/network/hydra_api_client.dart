@@ -69,7 +69,14 @@ class HydraApiClient {
           headers: {'Content-Type': 'application/json', ..._clientHeaders},
           body: jsonEncode({'username': username, 'password': password}),
         )
-        .timeout(const Duration(seconds: 5));
+        // Longer than the other calls' 5s (see _expectJson's own callers
+        // below): login is the very first request against a host, so
+        // unlike a request over an already-warm connection it also pays
+        // for DNS resolution and TCP/connection setup - both of which can
+        // run considerably slower than 5s on a real industrial LAN (managed
+        // switches, slow local DNS, a server just waking up) even though
+        // the server itself would have answered in time.
+        .timeout(const Duration(seconds: 15));
     return _expectJson(resp);
   }
 

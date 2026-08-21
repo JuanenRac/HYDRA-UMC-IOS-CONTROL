@@ -52,10 +52,10 @@ class HydraWebSocket {
 
   void connect() {
     _closingByUser = false;
-    _openSocket();
+    unawaited(_openSocket());
   }
 
-  void _openSocket() {
+  Future<void> _openSocket() async {
     onStatus(WsStatus.connecting);
     final base = 'ws://$host:$port/ws';
     final url = token != null ? '$base?token=$token' : base;
@@ -77,13 +77,23 @@ class HydraWebSocket {
         },
         cancelOnError: true,
       );
-      // WebSocketChannel.connect() doesn't confirm the handshake itself -
-      // report "connected" once the stream is actually listening; a genuine
-      // failure surfaces via onError/onDone above instead.
+      // WebSocketChannel.connect() returns immediately and connects lazily -
+      // the previous version of this code reported "connected" right here,
+      // before the handshake even started, so a bad host/port/refused
+      // connection still showed a green "CONNECTED" status in the UI until
+      // the onDone/onError callbacks above eventually fired. channel.ready
+      // is the real handshake signal (completes once the connection is
+      // actually open, throws if it never completes) - wait for it before
+      // reporting connected, exactly like this fix's own external audit
+      // finding (#059/#254) described. A failure here still flows through
+      // the same onError/_scheduleReconnect path as a message-time failure.
+      await channel.ready;
+      if (_closingByUser || _channel != channel) return;
       onStatus(WsStatus.connected);
     } catch (e) {
       onStatus(WsStatus.disconnected);
       onError('WebSocket connect failed: $e');
+      _channel = null;
       _scheduleReconnect();
     }
   }
@@ -132,7 +142,7 @@ class HydraWebSocket {
     if (_closingByUser) return;
     _reconnectTimer?.cancel();
     _reconnectTimer = Timer(reconnectDelay, () {
-      if (!_closingByUser) _openSocket();
+      if (!_closingByUser) unawaited(_openSocket());
     });
   }
 

@@ -44,6 +44,17 @@ class RobotViewModel extends ChangeNotifier {
   HydraWebSocket? _ws;
   Timer? _metricsTimer;
 
+  // Per-robot generation counter guarding _sendAtomicCommand()'s own
+  // rollback-on-failure below. A held jog button (joystick_pad.dart's
+  // _RepeatButton) fires a new command roughly every 150ms while the API
+  // call it's rolling back from can take up to the 5s network timeout - so
+  // several commands for the same robot can be in flight at once. Without
+  // this guard, an early command failing AFTER later ones already applied
+  // (and possibly already succeeded) would restore its own stale
+  // pre-mutation snapshot over top of that newer state, silently erasing
+  // real progress the operator already made.
+  final Map<dynamic, int> _commandGeneration = {};
+
   ServerInfo? activeServer;
   bool isLoggedIn = false;
   String lastError = '';
@@ -165,8 +176,32 @@ class RobotViewModel extends ChangeNotifier {
     isLoggedIn = false;
     _ws?.disconnect();
     _metricsTimer?.cancel();
+    // Clear the bearer token from the live apiClient too, not just from
+    // persisted storage - apiClient itself was left alive (its own
+    // http.Client is reused if the user logs back into the same server, see
+    // login()'s own close-then-replace comment) but previously kept
+    // carrying the old token in memory after "signing out" with nothing
+    // clearing it until the next login() overwrote it or the process
+    // exited.
+    apiClient?.authToken = null;
     unawaited(_authPrefs.clearToken());
     notifyListeners();
+  }
+
+  /// Called when the app returns to the foreground (see main.dart's own
+  /// _RootGateState.didChangeAppLifecycleState) - iOS can suspend or drop
+  /// the socket while backgrounded without hydra_websocket.dart's own
+  /// onDone/onError ever firing promptly on return, so this asks for a
+  /// fresh connect() explicitly instead of waiting on the WS's own 3s retry
+  /// timer to notice by itself. A no-op while logged out, while the
+  /// biometric gate is still up, or when already connected/connecting -
+  /// connect() itself is safe to call again (it tears down and recreates
+  /// the WS/metrics timer), but there's no reason to when nothing suggests
+  /// the existing connection needs it.
+  void reconnectIfNeeded() {
+    if (!isLoggedIn || needsBiometricUnlock) return;
+    if (connectionStatus == 'connected' || connectionStatus == 'connecting') return;
+    unawaited(connect());
   }
 
   Future<void> connect() async {
@@ -308,11 +343,13 @@ class RobotViewModel extends ChangeNotifier {
     // used instead of a hand-rolled deep-clone since raw is already plain
     // JSON-safe data straight from the server.
     final snapshots = <dynamic, Map<String, dynamic>>{};
+    final myGeneration = <dynamic, int>{};
     for (final id in affectedIds) {
       final r = state.robotById(id);
       if (r != null) {
         snapshots[id] = jsonDecode(jsonEncode(r.raw)) as Map<String, dynamic>;
         localMutate(r);
+        myGeneration[id] = _commandGeneration[id] = (_commandGeneration[id] ?? 0) + 1;
       }
     }
     notifyListeners();
@@ -337,6 +374,12 @@ class RobotViewModel extends ChangeNotifier {
       // be moving. Roll back to the pre-mutation snapshot and surface the
       // failure (see ui/main_screen.dart's own lastError listener) instead.
       for (final entry in snapshots.entries) {
+        // Skip the rollback if a newer command for this same robot has
+        // already started since this one's snapshot was taken (see
+        // _commandGeneration's own header comment) - this failure is stale,
+        // and restoring its snapshot now would overwrite whatever that
+        // newer command already applied.
+        if (_commandGeneration[entry.key] != myGeneration[entry.key]) continue;
         final r = state.robotById(entry.key);
         if (r != null) {
           r.raw
