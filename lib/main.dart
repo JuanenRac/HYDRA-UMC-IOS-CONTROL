@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'state/robot_view_model.dart';
+import 'ui/biometric_gate_screen.dart';
 import 'ui/login_screen.dart';
 import 'ui/main_screen.dart';
 
@@ -43,12 +44,17 @@ class HydraUmcControlApp extends StatelessWidget {
 
 /// Shows the login screen until a session is active - mirrors
 /// HYDRA-UMC-ANDROID-CONTROL's own MainActivity gating on isLoggedIn.
+/// needsBiometricUnlock is checked first: a restored session with the
+/// biometric gate enabled (see state/robot_view_model.dart's own init())
+/// must not fall through to MainScreen just because isLoggedIn is already
+/// true.
 class _RootGate extends StatelessWidget {
   const _RootGate();
 
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<RobotViewModel>();
+    if (vm.needsBiometricUnlock) return const BiometricGateScreen();
     return vm.isLoggedIn ? const MainScreen() : const LoginScreen();
   }
 }

@@ -115,10 +115,15 @@ flutter_launcher_icons:
 # flutter_native_splash config (dart run flutter_native_splash:create) - same
 # source crop as the app icon above, centered on the app's own dark theme
 # background (main.dart's scaffoldBackgroundColor) instead of flutter
-# create's default white screen.
+# create's default white screen. iOS only: flutter_native_splash 2.4.8 has
+# no Windows desktop support at all (confirmed by reading its own
+# cli_commands.dart - only android/ios/web are recognized keys, "windows"
+# is rejected outright), so windows/ keeps flutter create's own default
+# native_startup_bitmap.bmp/launcher icon as its splash - not a gap this
+# package can close today, would need a different tool or hand-written
+# Win32 splash window.
 flutter_native_splash:
   color: "#07090C"
   image: "images/app_icon_source.png"
   ios: true
-  windows: true
   android: false

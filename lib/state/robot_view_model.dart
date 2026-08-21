@@ -23,6 +23,7 @@ import 'package:flutter/foundation.dart';
 import '../models/hydra_state.dart';
 import '../models/server_info.dart';
 import '../network/auth_prefs.dart';
+import '../network/biometric_helper.dart';
 import '../network/hydra_api_client.dart';
 import '../network/hydra_websocket.dart';
 
@@ -36,6 +37,7 @@ class SystemMetrics {
 
 class RobotViewModel extends ChangeNotifier {
   final AuthPrefs _authPrefs = AuthPrefs();
+  final BiometricHelper _biometricHelper = BiometricHelper();
 
   HydraState state = HydraState();
   HydraApiClient? apiClient;
@@ -49,9 +51,24 @@ class RobotViewModel extends ChangeNotifier {
   dynamic selectedRobotId;
   SystemMetrics? metrics;
 
+  // Face ID/Touch ID/Windows Hello gate on restoring a saved session - see
+  // network/biometric_helper.dart's own header comment for why this is an
+  // adapted equivalent of HYDRA-UMC-ANDROID-CONTROL's own biometric login
+  // rather than a literal port. biometricAvailable reflects real hardware/
+  // platform capability (checked once in init()); biometricEnabled is the
+  // user's own opt-in from ui/settings_screen.dart, persisted via
+  // AuthPrefs. needsBiometricUnlock is true only while a restored session
+  // is waiting on a successful prompt - main.dart's _RootGate shows
+  // ui/biometric_gate_screen.dart for as long as it's true.
+  bool biometricAvailable = false;
+  bool biometricEnabled = false;
+  bool needsBiometricUnlock = false;
+
   Future<void> init() async {
     final saved = await _authPrefs.loadConnection();
     final token = await _authPrefs.loadToken();
+    biometricAvailable = await _biometricHelper.isAvailable();
+    biometricEnabled = await _authPrefs.loadBiometricEnabled();
     if (saved != null) {
       final (host, port) = saved;
       final client = HydraApiClient(host, port);
@@ -59,6 +76,15 @@ class RobotViewModel extends ChangeNotifier {
       apiClient = client;
       activeServer = ServerInfo(host: host, port: port);
       isLoggedIn = token != null;
+    }
+    if (isLoggedIn && biometricEnabled && biometricAvailable) {
+      // Hold off on connect() (and on notifyListeners() showing MainScreen)
+      // until unlockWithBiometrics() succeeds - _RootGate reads
+      // needsBiometricUnlock before isLoggedIn, so the app shows the
+      // unlock gate instead of jumping straight into a live session.
+      needsBiometricUnlock = true;
+      notifyListeners();
+      return;
     }
     notifyListeners();
     // A restored session needs the same real connect() step login() runs
@@ -68,6 +94,38 @@ class RobotViewModel extends ChangeNotifier {
     // the server" forever, with no way out short of logging out and back
     // in by hand.
     if (isLoggedIn) await connect();
+  }
+
+  /// Shows the biometric prompt and, on success, finishes restoring the
+  /// session exactly the way init() would have without the gate. Returns
+  /// false on cancellation/failure so ui/biometric_gate_screen.dart can
+  /// show an error without touching isLoggedIn - the saved token is still
+  /// there for another attempt.
+  Future<bool> unlockWithBiometrics() async {
+    final ok = await _biometricHelper.authenticate('Unlock HYDRA-UMC Control');
+    if (ok) {
+      needsBiometricUnlock = false;
+      notifyListeners();
+      await connect();
+    }
+    return ok;
+  }
+
+  /// Escape hatch from the unlock gate for a user who can't or won't
+  /// complete the biometric prompt (lost Face ID access, wrong finger
+  /// repeatedly, ...) - signs out fully rather than leaving the app stuck
+  /// showing the gate forever with no other path back to LoginScreen.
+  void cancelBiometricUnlock() {
+    needsBiometricUnlock = false;
+    isLoggedIn = false;
+    unawaited(_authPrefs.clearToken());
+    notifyListeners();
+  }
+
+  Future<void> setBiometricEnabled(bool value) async {
+    biometricEnabled = value;
+    await _authPrefs.saveBiometricEnabled(value);
+    notifyListeners();
   }
 
   Future<bool> login(ServerInfo server) async {

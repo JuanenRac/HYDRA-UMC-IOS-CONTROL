@@ -28,6 +28,16 @@ class SettingsScreen extends StatelessWidget {
           leading: const Icon(Icons.wifi_tethering),
           title: Text('Status: ${vm.connectionStatus}'),
         ),
+        if (vm.biometricAvailable) ...[
+          const Divider(),
+          SwitchListTile(
+            secondary: const Icon(Icons.fingerprint),
+            title: const Text('Require Face ID / Touch ID'),
+            subtitle: const Text('Ask again on launch before reconnecting to a saved session'),
+            value: vm.biometricEnabled,
+            onChanged: (value) => vm.setBiometricEnabled(value),
+          ),
+        ],
         const Divider(),
         ListTile(
           leading: const Icon(Icons.logout, color: Colors.redAccent),

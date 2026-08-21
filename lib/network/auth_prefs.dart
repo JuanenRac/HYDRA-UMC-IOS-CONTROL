@@ -18,6 +18,7 @@ class AuthPrefs {
   static const _keyPort = 'hydra_port';
   static const _keyToken = 'hydra_token';
   static const _keyUsername = 'hydra_username';
+  static const _keyBiometricEnabled = 'hydra_biometric_enabled';
 
   Future<void> saveConnection(String host, int port) async {
     final prefs = await SharedPreferences.getInstance();
@@ -52,5 +53,21 @@ class AuthPrefs {
   Future<void> clearToken() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_keyToken);
+  }
+
+  /// Whether restoring a saved session on launch should be gated behind a
+  /// Face ID/Touch ID/Windows Hello prompt first - see
+  /// network/biometric_helper.dart and state/robot_view_model.dart's own
+  /// init(). Off by default: turning it on is an explicit opt-in from
+  /// ui/settings_screen.dart, only ever offered when the device can
+  /// actually show a biometric prompt in the first place.
+  Future<void> saveBiometricEnabled(bool enabled) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyBiometricEnabled, enabled);
+  }
+
+  Future<bool> loadBiometricEnabled() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_keyBiometricEnabled) ?? false;
   }
 }
