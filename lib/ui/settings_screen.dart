@@ -7,6 +7,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../app_version.dart';
 import '../state/robot_view_model.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -43,6 +44,12 @@ class SettingsScreen extends StatelessWidget {
           leading: const Icon(Icons.logout, color: Colors.redAccent),
           title: const Text('Sign Out'),
           onTap: () => vm.logout(),
+        ),
+        const Divider(),
+        ListTile(
+          leading: const Icon(Icons.info_outline),
+          title: const Text('Version'),
+          subtitle: const Text('$kAppVersion (build $kAppBuildNumber)'),
         ),
       ],
     );

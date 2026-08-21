@@ -14,6 +14,26 @@
 # =============================================================================
 set -euo pipefail
 
+echo "============================================================================="
+echo " HYDRA-UMC CONTROL (iOS/Flutter) - build.sh"
+echo " Builds the Windows desktop target: flutter pub get + automatic version"
+echo " bump (tool/bump_version.dart) + flutter build windows."
+echo " Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>"
+echo " GPL-3.0 - see LICENSE"
+echo "============================================================================="
+echo
+
+# Keep the window open on both success and failure when this is launched by
+# double-click instead of from an already-open terminal. Runs automatically
+# on every exit path (normal end of script, `exit 1` below, or `set -e`
+# aborting on a failed command). `|| true` keeps a non-interactive/closed
+# stdin (e.g. CI, or this script being run by another tool) from turning the
+# read's own EOF into a spurious failure.
+pause() {
+    read -r -p "Press Enter to close this window..." _ || true
+}
+trap pause EXIT
+
 if ! command -v flutter >/dev/null 2>&1; then
     echo "[ERROR] flutter was not found on PATH. Install the Flutter SDK" >&2
     echo "        (https://docs.flutter.dev/get-started/install) and add its" >&2
@@ -21,10 +41,13 @@ if ! command -v flutter >/dev/null 2>&1; then
     exit 1
 fi
 
-echo "[1/2] flutter pub get"
+echo "[1/3] flutter pub get"
 flutter pub get
 
-echo "[2/2] flutter build windows"
+echo "[2/3] dart run tool/bump_version.dart"
+dart run tool/bump_version.dart
+
+echo "[3/3] flutter build windows"
 flutter build windows
 
 echo
