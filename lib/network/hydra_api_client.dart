@@ -3,9 +3,11 @@
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
 // GPL-3.0 - see LICENSE
 //
-// Talks the exact contract in HYDRA-UMC-STUDIO/docs/REMOTE_API.md (that
-// document itself admits it can drift from server.ts, the real source of
-// truth - worth verifying against the server's own code rather than
+// Talks the exact contract in HYDRA-UMC-SERVER/docs/REMOTE_API.md - the
+// headless backend split out of HYDRA-UMC STUDIO's own process (STUDIO is
+// now a pure frontend client of this same server, not a server itself).
+// That document itself admits it can drift from server.ts, the real source
+// of truth - worth verifying against the server's own code rather than
 // trusting the doc blindly):
 //   - POST /api/login               - obtain a bearer token. Real multi-user
 //     accounts (server.ts's own users.ts) - every server seeds a default

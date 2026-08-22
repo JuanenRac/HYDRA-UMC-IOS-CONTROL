@@ -8,12 +8,31 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:provider/provider.dart';
 
 import 'state/robot_view_model.dart';
 import 'ui/biometric_gate_screen.dart';
 import 'ui/login_screen.dart';
 import 'ui/main_screen.dart';
+
+/// Attached to MaterialApp's own `scaffoldMessengerKey` below - the only way
+/// _surfaceAsyncError() (errors caught outside Flutter's build/layout/paint
+/// pipeline, so no BuildContext of their own to show a SnackBar with) can
+/// still put something on screen instead of only reaching debugPrint, which
+/// is a release-build no-op invisible to a real operator with no debugger
+/// attached.
+final GlobalKey<ScaffoldMessengerState> _rootMessengerKey = GlobalKey<ScaffoldMessengerState>();
+
+void _surfaceAsyncError(Object error) {
+  _rootMessengerKey.currentState?.showSnackBar(
+    SnackBar(
+      content: Text('Unexpected error: $error'),
+      backgroundColor: const Color(0xFFB91C1C),
+      duration: const Duration(seconds: 6),
+    ),
+  );
+}
 
 /// Global error handling: without this, an uncaught exception (a bad
 /// server payload, a null a screen didn't guard against, ...) either shows
@@ -24,6 +43,17 @@ import 'ui/main_screen.dart';
 /// exception that crashes the whole isolate with no on-screen sign
 /// anything went wrong at all. Neither gives the operator any indication
 /// of what happened or a way to recover short of force-quitting the app.
+///
+/// debugPrint alone (the only channel this had before) is a real gap for
+/// the 2 async-error paths below: it's a no-op in release builds with no
+/// attached debugger/log tool, so an uncaught async error there used to be
+/// genuinely invisible - the app would just silently stop doing whatever
+/// that callback was supposed to do, with the operator seeing nothing.
+/// _surfaceAsyncError() adds a real on-screen SnackBar via the root
+/// ScaffoldMessengerKey for those 2 paths; the 3rd path (a widget failing
+/// to build) already gets its own dedicated on-screen message via
+/// ErrorWidget.builder/_CrashScreen below, so it isn't routed through
+/// _surfaceAsyncError() too (that would double-report the same failure).
 void main() {
   FlutterError.onError = (details) {
     FlutterError.presentError(details);
@@ -31,21 +61,43 @@ void main() {
   };
   PlatformDispatcher.instance.onError = (error, stack) {
     debugPrint('Uncaught async error: $error\n$stack');
+    _surfaceAsyncError(error);
     return true; // handled - don't crash the isolate over it
   };
   ErrorWidget.builder = (details) => _CrashScreen(details: details);
   runZonedGuarded(
     () => runApp(const HydraUmcControlApp()),
-    (error, stack) => debugPrint('Uncaught zone error: $error\n$stack'),
+    (error, stack) {
+      debugPrint('Uncaught zone error: $error\n$stack');
+      _surfaceAsyncError(error);
+    },
   );
 }
 
 /// Replaces Flutter's own default ErrorWidget for a widget that fails to
 /// build - a real message instead of a blank grey box, with a way back to
 /// a known-good screen instead of a dead end.
-class _CrashScreen extends StatelessWidget {
+class _CrashScreen extends StatefulWidget {
   final FlutterErrorDetails details;
   const _CrashScreen({required this.details});
+
+  @override
+  State<_CrashScreen> createState() => _CrashScreenState();
+}
+
+class _CrashScreenState extends State<_CrashScreen> {
+  bool _copied = false;
+
+  /// Copies the full exception + stack trace to the clipboard regardless of
+  /// build mode - unlike the on-screen text above (kDebugMode-only, so a
+  /// real operator on a release build could never actually see what broke),
+  /// this is the one channel that gets enough detail out of the device for
+  /// a real bug report without a debugger attached.
+  Future<void> _copyDetails() async {
+    final text = '${widget.details.exceptionAsString()}\n\n${widget.details.stack ?? ''}';
+    await Clipboard.setData(ClipboardData(text: text));
+    if (mounted) setState(() => _copied = true);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -66,11 +118,23 @@ class _CrashScreen extends StatelessWidget {
           if (kDebugMode) ...[
             const SizedBox(height: 8),
             Text(
-              details.exceptionAsString(),
+              widget.details.exceptionAsString(),
               textAlign: TextAlign.center,
               style: const TextStyle(color: Colors.grey, fontSize: 11),
             ),
           ],
+          const SizedBox(height: 16),
+          // Material(transparency) instead of relying on an ancestor: this
+          // ErrorWidget can replace a widget anywhere in the tree, not
+          // necessarily one already inside a Scaffold/Material ancestor.
+          Material(
+            type: MaterialType.transparency,
+            child: TextButton.icon(
+              onPressed: _copyDetails,
+              icon: Icon(_copied ? Icons.check : Icons.copy, size: 16, color: _copied ? const Color(0xFF10B981) : Colors.white70),
+              label: Text(_copied ? 'Copied' : 'Copy error details', style: TextStyle(color: _copied ? const Color(0xFF10B981) : Colors.white70)),
+            ),
+          ),
         ],
       ),
     );
@@ -86,6 +150,7 @@ class HydraUmcControlApp extends StatelessWidget {
       create: (_) => RobotViewModel()..init(),
       child: MaterialApp(
         title: 'HYDRA-UMC Control',
+        scaffoldMessengerKey: _rootMessengerKey,
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           brightness: Brightness.dark,
