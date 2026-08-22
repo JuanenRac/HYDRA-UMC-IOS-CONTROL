@@ -4,6 +4,14 @@
 
 # 📱 HYDRA-UMC CONTROL (iOS)
 
+<p align="left">
+  <img src="https://img.shields.io/badge/License-GPL%203.0-blue.svg" alt="GPL 3.0">
+  <img src="https://img.shields.io/badge/Framework-Flutter-02569B.svg" alt="Flutter">
+  <img src="https://img.shields.io/badge/Language-Dart-0175C2.svg" alt="Dart">
+  <img src="https://img.shields.io/badge/Platform-iOS-000000.svg" alt="iOS">
+</p>
+
+
 A cross-platform Flutter app (Dart) that controls a robot on the [HYDRA-UMC](https://github.com/JuanenRac/HYDRA-UMC) platform over Wi-Fi, speaking the exact same [`REMOTE_API.md`](https://github.com/JuanenRac/HYDRA-UMC-SERVER/blob/main/docs/REMOTE_API.md) contract [HYDRA-UMC SUITE](https://github.com/JuanenRac/HYDRA-UMC-SUITE) and [HYDRA-UMC-ANDROID-CONTROL](https://github.com/JuanenRac/HYDRA-UMC-ANDROID-CONTROL) use - discovery, login, atomic per-robot commands, and live WebSocket sync against a running [HYDRA-UMC-SERVER](https://github.com/JuanenRac/HYDRA-UMC-SERVER) instance (the headless backend split out of HYDRA-UMC STUDIO's own process - STUDIO is a pure frontend client of it now, same as this app).
 
 ## 🔀 Why Flutter, not native Swift
