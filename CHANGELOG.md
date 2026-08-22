@@ -9,6 +9,23 @@ Version numbers below follow the ecosystem-wide auto-bump policy described in
 pre-policy version `1.0.0+1` the repo carried while the policy did not yet
 exist.
 
+## [1.0.4+5] - Visible error reporting
+
+- **`_CrashScreen` now interactive** - converted from `StatelessWidget` to
+  `StatefulWidget` with a "Copy error details" button that copies the
+  exception and stack trace to the clipboard, so a crash can actually be
+  reported instead of only being visible on-screen.
+- **Async errors now surfaced to the user** - added a
+  `GlobalKey<ScaffoldMessengerState>` hung off `MaterialApp` and
+  `_surfaceAsyncError()`, so errors reaching `PlatformDispatcher.onError`/
+  `runZonedGuarded` show a real SnackBar instead of only going to
+  `debugPrint` (a no-op in release builds).
+- **Doc/reference cleanup** - corrected stale references claiming
+  HYDRA-UMC STUDIO hosts `server.ts` (moved to the standalone
+  HYDRA-UMC-SERVER project) in `docs/ARCHITECTURE.md`, the
+  `lib/network/hydra_api_client.dart` header, and the README (+4
+  translations).
+
 ## Versioning policy introduced
 
 - **Automatic version bump on every real build.** `build.sh`/`build.bat`

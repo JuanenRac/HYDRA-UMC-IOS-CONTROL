@@ -8,7 +8,7 @@
 		<string>$(DEVELOPMENT_LANGUAGE)</string>
 		<key>CFBundleDisplayName</key>
 		<string>HYDRA-UMC Control</string>
-		<!-- HYDRA-UMC-STUDIO's own server.ts is plain http/ws, no TLS, by design
+		<!-- HYDRA-UMC-SERVER's own backend is plain http/ws, no TLS, by design
 	     (REMOTE_API.md's own "trusted LAN" model) - iOS's App Transport
 	     Security blocks all cleartext HTTP by default. NSAllowsLocalNetworking
 	     (iOS 10+) permits it for local/private-network addresses specifically
