@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+	<dict>
+		<key>CADisableMinimumFrameDurationOnPhone</key>
+		<true/>
+		<key>CFBundleDevelopmentRegion</key>
+		<string>$(DEVELOPMENT_LANGUAGE)</string>
+		<key>CFBundleDisplayName</key>
+		<string>HYDRA-UMC Control</string>
+		<!-- HYDRA-UMC-SERVER's own backend is plain http/ws, no TLS, by design
+	     (REMOTE_API.md's own "trusted LAN" model) - iOS's App Transport
+	     Security blocks all cleartext HTTP by default. NSAllowsLocalNetworking
+	     (iOS 10+) permits it for local/private-network addresses specifically
+	     (the target is always a LAN IP the user types or discovery finds),
+	     without the broader NSAllowsArbitraryLoads escape hatch a random
+	     internet host would need - same reasoning
+	     HYDRA-UMC-ANDROID-CONTROL's own android:usesCleartextTraffic="true"
+	     documents for the same server. -->
+		<key>NSAppTransportSecurity</key>
+		<dict>
+			<key>NSAllowsLocalNetworking</key>
+			<true/>
+		</dict>
+		<!-- iOS 14+ requires this description to show the "Local Network" access
+	     prompt - triggered by network/discovery.dart's own subnet scan and
+	     by every plain HTTP/WS request to a LAN server. -->
+		<key>NSLocalNetworkUsageDescription</key>
+		<string>HYDRA-UMC Control connects to a HYDRA-UMC STUDIO server on your local network to control real robots.</string>
+		<!-- Required by iOS for Face ID specifically (Touch ID needs no
+		     Info.plist key at all) - used by network/biometric_helper.dart
+		     via package:local_auth to gate restoring a saved session on
+		     launch, see state/robot_view_model.dart's own init(). Without
+		     this key, LocalAuthentication's own authenticate() call throws
+		     instead of showing the Face ID prompt on a device that only
+		     has Face ID. -->
+		<key>NSFaceIDUsageDescription</key>
+		<string>HYDRA-UMC Control can use Face ID to confirm it's you before reconnecting to a saved server session.</string>
+		<key>CFBundleExecutable</key>
+		<string>$(EXECUTABLE_NAME)</string>
+		<key>CFBundleIdentifier</key>
+		<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+		<key>CFBundleInfoDictionaryVersion</key>
+		<string>6.0</string>
+		<key>CFBundleName</key>
+		<string>hydra_umc_control</string>
+		<key>CFBundlePackageType</key>
+		<string>APPL</string>
+		<key>CFBundleShortVersionString</key>
+		<string>$(FLUTTER_BUILD_NAME)</string>
+		<key>CFBundleSignature</key>
+		<string>????</string>
+		<key>CFBundleVersion</key>
+		<string>$(FLUTTER_BUILD_NUMBER)</string>
+		<key>LSRequiresIPhoneOS</key>
+		<true/>
+		<key>UIApplicationSceneManifest</key>
+		<dict>
+			<key>UIApplicationSupportsMultipleScenes</key>
+			<false/>
+			<key>UISceneConfigurations</key>
+			<dict>
+				<key>UIWindowSceneSessionRoleApplication</key>
+				<array>
+					<dict>
+						<key>UISceneClassName</key>
+						<string>UIWindowScene</string>
+						<key>UISceneConfigurationName</key>
+						<string>flutter</string>
+						<key>UISceneDelegateClassName</key>
+						<string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>
+						<key>UISceneStoryboardFile</key>
+						<string>Main</string>
+					</dict>
+				</array>
+			</dict>
+		</dict>
+		<key>UIApplicationSupportsIndirectInputEvents</key>
+		<true/>
+		<key>UILaunchStoryboardName</key>
+		<string>LaunchScreen</string>
+		<key>UIMainStoryboardFile</key>
+		<string>Main</string>
+		<key>UISupportedInterfaceOrientations</key>
+		<array>
+			<string>UIInterfaceOrientationPortrait</string>
+			<string>UIInterfaceOrientationLandscapeLeft</string>
+			<string>UIInterfaceOrientationLandscapeRight</string>
+		</array>
+		<key>UISupportedInterfaceOrientations~ipad</key>
+		<array>
+			<string>UIInterfaceOrientationPortrait</string>
+			<string>UIInterfaceOrientationPortraitUpsideDown</string>
+			<string>UIInterfaceOrientationLandscapeLeft</string>
+			<string>UIInterfaceOrientationLandscapeRight</string>
+		</array>
+		<key>UIStatusBarHidden</key>
+		<false/>
+	</dict>
+</plist>
