@@ -1,8 +1,30 @@
 #!/usr/bin/env bash
-# =============================================================================
-# HYDRA-UMC CONTROL (iOS/Flutter) - build.sh
-# Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
-# GPL-3.0 - see LICENSE
+# HYDRA_UMC_SCRIPT_STANDARD_HEADER_BEGIN
+# *****************************************************************************
+# Project   : HYDRA-UMC-IOS-CONTROL
+# Script    : build.sh
+# Purpose   : Incremental project build, verification and packaging workflow.
+# Author    : JuanenRac (Electro Hobby 3D)
+# Email     : electrohobby3d@gmail.com
+# Copyright : (C) 2026 JuanenRac
+# License   : GPL-3.0 - see LICENSE
+# *****************************************************************************
+# HYDRA_UMC_SCRIPT_STANDARD_HEADER_END
+# HYDRA_UMC_SCRIPT_STANDARD_BANNER_BEGIN
+printf '\n*******************************************************************************\n'
+printf '%s\n' "* HYDRA-UMC-IOS-CONTROL - build.sh"
+printf '%s\n' "* Mode      : INCREMENTAL BUILD"
+printf '%s\n' "* Author    : JuanenRac (Electro Hobby 3D)"
+printf '%s\n' "* Email     : electrohobby3d@gmail.com"
+printf '%s\n' "* Copyright : (C) 2026 JuanenRac"
+printf '%s\n' "* License   : GPL-3.0 - see LICENSE"
+printf '%s\n' "* ------------------------------------------------------------------------- *"
+printf '%s\n' "* 1. Increment the project version and synchronise its manifest."
+printf '%s\n' "* 2. Run this project's declared build, verification and packaging commands."
+printf '%s\n' "* 3. Report the result and keep an interactive terminal open."
+printf '%s\n' "*******************************************************************************"
+printf '\n'
+# HYDRA_UMC_SCRIPT_STANDARD_BANNER_END
 #
 # Builds the Windows desktop target - the only target this repo can
 # actually produce a runnable binary for on a Windows machine without
@@ -11,24 +33,7 @@
 # under Git Bash/WSL on the same Windows machine `flutter build windows`
 # itself requires - this is a bash-shell convenience wrapper, not a
 # Linux/macOS build (there is no linux/ or macos/ platform folder here).
-# =============================================================================
 set -euo pipefail
-
-echo "============================================================================="
-echo " HYDRA-UMC CONTROL (iOS/Flutter) - build.sh"
-echo " Builds the Windows desktop target: flutter pub get + automatic version"
-echo " bump (tool/bump_version.dart) + flutter build windows."
-echo " Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>"
-echo " GPL-3.0 - see LICENSE"
-echo "============================================================================="
-echo
-
-# Keep the window open on both success and failure when this is launched by
-# double-click instead of from an already-open terminal. Runs automatically
-# on every exit path (normal end of script, `exit 1` below, or `set -e`
-# aborting on a failed command). `|| true` keeps a non-interactive/closed
-# stdin (e.g. CI, or this script being run by another tool) from turning the
-# read's own EOF into a spurious failure.
 pause() {
     read -r -p "Press Enter to close this window..." _ || true
 }
@@ -46,7 +51,17 @@ flutter pub get
 
 echo "[2/3] dart run tool/bump_version.dart"
 dart run tool/bump_version.dart || exit 1
+# HYDRA_UMC_SCRIPT_STANDARD_VERSION_CAPTURE_BEFORE
+HYDRA_UMC_VERSION_BEFORE="$(python3 -c 'import json, pathlib, sys; print(json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))["version"])' "$(dirname "$0")/hydra-umc.project.json")"
 python3 "$(dirname "$0")/bump_manifest_version.py" --sync || exit 1
+# HYDRA_UMC_SCRIPT_STANDARD_VERSION_CAPTURE_AFTER
+HYDRA_UMC_VERSION_AFTER="$(python3 -c 'import json, pathlib, sys; print(json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))["version"])' "$(dirname "$0")/hydra-umc.project.json")"
+printf '\n*******************************************************************************\n'
+printf '%s\n' '* VERSION INCREMENT COMPLETED'
+printf '%s\n' "* v${HYDRA_UMC_VERSION_BEFORE:-unknown} -> v${HYDRA_UMC_VERSION_AFTER:-unknown}"
+printf '%s\n' '* Project manifest has been synchronised by the project build flow.'
+printf '%s\n' '*******************************************************************************'
+printf '\n'
 
 echo "[3/3] flutter build windows"
 flutter build windows
