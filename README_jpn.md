@@ -33,7 +33,7 @@ Wi-Fi 経由で [HYDRA-UMC](https://github.com/JuanenRac/HYDRA-UMC) プラット
 
 ## 🏗️ 実装済みの内容
 
-- **ログイン**（`lib/ui/login_screen.dart`、`lib/state/robot_view_model.dart`）—— 編集可能なサーバー IP/ポートフィールドと、`admin`/`admin` に対する `POST /api/login`（事前入力済み——本エコシステム内のすべてのサーバーが自身の初回起動時に用意するデフォルトアカウント。サーバーはブラウザ UI の Config > Users から作成される追加の低権限「オペレーター」アカウントを持つこともできます）、`shared_preferences` を通じて起動をまたいで永続化されるセッショントークン。「ローカルネットワークをスキャン」ボタン（`lib/network/discovery.dart`）は、ユーザーが IP を事前に知らなくてもサーバーを見つけられます。
+- **ログイン**（`lib/ui/login_screen.dart`、`lib/state/robot_view_model.dart`）—— 編集可能なサーバー IP/ポートとオペレーター認証情報フィールド、および `POST /api/login` を使用します。アカウントやパスワードは事前入力されません。本番サーバーでは最初の管理者用に明示的に設定したブートストラップ認証情報が必要です。追加の低権限「オペレーター」アカウントはブラウザー UI の Config > Users から作成できます。セッショントークンは `shared_preferences` により起動をまたいで保持されます。「ローカルネットワークをスキャン」ボタン（`lib/network/discovery.dart`）は、ユーザーが IP を事前に知らなくてもサーバーを見つけられます。
 - **ネットワークディスカバリー**（`lib/network/discovery.dart`）—— このデバイス自身の実際のローカルサブネットに対する `GET /api/hydra-info` の並行スキャン。単一のハードコードされた推測ではなく `dart:io` の `NetworkInterface.list()` から導出されます。スマートフォンの LAN は `192.168.1.x` と同じくらい `192.168.0.x` や `10.x.x.x` である可能性があるためです。インターフェースの列挙自体が空を返した場合にのみ、`192.168.1.x` にフォールバックします。
 - **原子的な指令同期**（`lib/state/robot_view_model.dart` 自身の `_sendAtomicCommand()`）—— すべての書き込み（有効化/無効化/再生/一時停止/停止/ジョグ/バルブ/ポンプ/速度/ビジョン）は、実際の `POST /api/robot/:id/command` エンドポイントを使用し、設定ツリー全体を上書きするのではなく、小さな標的を絞ったペイロードを送信し、それが必要な 5 つの指令に対しては正しい統合ロボット（`combinedWith`）の伝播を行います。
 - **リアルタイム WebSocket 同期**（`lib/network/hydra_websocket.dart`）—— 接続 URL には常に `?token=` を付加します（`server.ts` 自身の `/ws` アップグレードは無条件にこれを要求します）。`"settings"` と `"delta"` の両方のブロードキャストタイプを処理し、切断時には自動的に再接続します。
@@ -113,7 +113,7 @@ HYDRA-UMC-IOS-CONTROL/
 ├── ios/                              # Xcode プロジェクト（macOS からのみビルド可能）
 ├── windows/                          # Windows デスクトップターゲット——Mac なしでのビルド検証
 ├── docs/ARCHITECTURE.md
-├── test/widget_test.dart
+├── test/widget_test.dart, websocket_uri_test.dart  # 起動と不透明トークンの URL エンコード
 ├── images/
 ├── README.md                         # 本ファイル
 └── README_spa.md / README_ita.md / README_fra.md / README_deu.md / README_zho.md / README_jpn.md  # 翻訳

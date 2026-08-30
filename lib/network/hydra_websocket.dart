@@ -62,17 +62,34 @@ class HydraWebSocket {
     unawaited(_openSocket());
   }
 
+  /// Builds the authenticated endpoint with Uri rather than string
+  /// interpolation. Tokens are opaque bearer credentials and may contain
+  /// reserved URL characters; queryParameters guarantees they remain one
+  /// token value instead of accidentally changing the request query.
+  static Uri buildConnectionUri({
+    required String host,
+    required int port,
+    String? token,
+  }) => Uri(
+    scheme: 'ws',
+    host: host,
+    port: port,
+    path: '/ws',
+    queryParameters: token == null
+        ? null
+        : {'token': token, 'remoteApiVersion': '2'},
+  );
+
   Future<void> _openSocket() async {
     onStatus(WsStatus.connecting);
-    final base = 'ws://$host:$port/ws';
     // remoteApiVersion=2 declares this connection understands a real
     // targeted delta - reused from GET /api/hydra-info's own field name
     // (see DISEÑO_SYNC_DELTAS.txt section 3/8q3). A server that doesn't
     // recognize it just keeps sending the full tree under "delta" like
     // before, so this is safe regardless of server version.
-    final url = token != null ? '$base?token=$token&remoteApiVersion=2' : base;
+    final url = buildConnectionUri(host: host, port: port, token: token);
     try {
-      final channel = WebSocketChannel.connect(Uri.parse(url));
+      final channel = WebSocketChannel.connect(url);
       _channel = channel;
       _sub = channel.stream.listen(
         (raw) => _handleMessage(raw as String),

@@ -33,7 +33,7 @@ This app targets iOS/iPadOS, but it is built in **Flutter** rather than Swift/Sw
 
 ## 🏗️ What's implemented
 
-- **Login** (`lib/ui/login_screen.dart`, `lib/state/robot_view_model.dart`) - editable server IP/port fields plus `POST /api/login` against `admin`/`admin` (pre-filled - the default account every server in this ecosystem seeds on its own first-ever start; a server can also have additional lower-privilege "operator" accounts, created from Config > Users in the browser UI), session token persisted across launches via `shared_preferences`. A "Scan local network" button (`lib/network/discovery.dart`) finds servers without the user needing to already know the IP.
+- **Login** (`lib/ui/login_screen.dart`, `lib/state/robot_view_model.dart`) - editable server IP/port and operator credential fields plus `POST /api/login`; no account or password is pre-filled. A production server requires explicitly configured bootstrap credentials for its first administrator, and additional lower-privilege "operator" accounts can be created from Config > Users in the browser UI. The session token persists across launches via `shared_preferences`. A "Scan local network" button (`lib/network/discovery.dart`) finds servers without the user needing to already know the IP.
 - **Network discovery** (`lib/network/discovery.dart`) - concurrent scan of `GET /api/hydra-info` across this device's own real local subnet(s), derived from `dart:io`'s `NetworkInterface.list()` rather than a single hardcoded guess, since a phone's LAN is just as likely to be `192.168.0.x` or `10.x.x.x` as `192.168.1.x`. Falls back to `192.168.1.x` only if interface enumeration itself comes back empty.
 - **Atomic command sync** (`lib/state/robot_view_model.dart`'s own `_sendAtomicCommand()`) - every write (enable/disable/play/pause/stop/jog/valve/pump/speed/vision) uses the real `POST /api/robot/:id/command` endpoint, a small targeted payload rather than overwriting the whole settings tree, with correct combined-robot (`combinedWith`) propagation for the 5 commands that need it.
 - **Live WebSocket sync** (`lib/network/hydra_websocket.dart`) - always attaches `?token=` to the connection URL (`server.ts`'s own `/ws` upgrade requires it unconditionally), handles both `"settings"` and `"delta"` broadcast types, auto-reconnects on drop.
@@ -123,7 +123,7 @@ HYDRA-UMC-IOS-CONTROL/
 ├── ios/                              # Xcode project (build only from macOS)
 ├── windows/                          # Windows desktop target - build verification without a Mac
 ├── docs/ARCHITECTURE.md
-├── test/widget_test.dart
+├── test/widget_test.dart, websocket_uri_test.dart  # login smoke test + opaque-token URL encoding
 ├── images/
 ├── README.md                         # this file
 └── README_spa.md / README_ita.md / README_fra.md / README_deu.md / README_zho.md / README_jpn.md  # translations

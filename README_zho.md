@@ -33,7 +33,7 @@
 
 ## 🏗️ 已实现的功能
 
-- **登录**（`lib/ui/login_screen.dart`、`lib/state/robot_view_model.dart`）—— 可编辑的服务器 IP/端口字段,加上针对 `admin`/`admin` 的 `POST /api/login`（已预填——本生态系统中每台服务器在自身首次启动时预置的默认账户;服务器也可以拥有额外的低权限“操作员”账户,在浏览器界面的 Config > Users 中创建）,会话令牌通过 `shared_preferences` 在多次启动之间持久化。“扫描本地网络”按钮（`lib/network/discovery.dart`）无需用户预先知道 IP 即可找到服务器。
+- **登录**（`lib/ui/login_screen.dart`、`lib/state/robot_view_model.dart`）—— 可编辑的服务器 IP/端口和操作员凭据字段，加上 `POST /api/login`；不会预填账户或密码。生产服务器必须为首个管理员显式配置引导凭据；可在浏览器界面的 Config > Users 中创建额外的低权限“操作员”账户。会话令牌通过 `shared_preferences` 在多次启动之间持久化。“扫描本地网络”按钮（`lib/network/discovery.dart`）无需用户预先知道 IP 即可找到服务器。
 - **网络发现**（`lib/network/discovery.dart`）—— 针对本设备自身真实本地子网的并发扫描 `GET /api/hydra-info`,该子网通过 `dart:io` 的 `NetworkInterface.list()` 推导,而非单一的硬编码猜测,因为手机的局域网同样可能是 `192.168.0.x` 或 `10.x.x.x`,而不一定是 `192.168.1.x`。仅当接口枚举本身返回为空时,才回退到 `192.168.1.x`。
 - **原子化指令同步**（`lib/state/robot_view_model.dart` 自身的 `_sendAtomicCommand()`）—— 每一次写入（启用/禁用/播放/暂停/停止/点动/阀门/泵/速度/视觉）都使用真实的 `POST /api/robot/:id/command` 端点,发送一个小型的定向负载,而非覆盖整棵设置树,并对需要它的 5 种指令进行正确的合并机器人（`combinedWith`）传播。
 - **实时 WebSocket 同步**（`lib/network/hydra_websocket.dart`）—— 始终在连接 URL 中附加 `?token=`（`server.ts` 自身的 `/ws` 升级请求无条件地要求它）,同时处理 `"settings"` 和 `"delta"` 两种广播类型,断线后自动重连。
@@ -113,7 +113,7 @@ HYDRA-UMC-IOS-CONTROL/
 ├── ios/                              # Xcode 项目（仅可在 macOS 上构建）
 ├── windows/                          # Windows 桌面目标——无需 Mac 即可进行构建验证
 ├── docs/ARCHITECTURE.md
-├── test/widget_test.dart
+├── test/widget_test.dart, websocket_uri_test.dart  # 启动与不透明令牌 URL 编码
 ├── images/
 ├── README.md                         # 本文件
 └── README_spa.md / README_ita.md / README_fra.md / README_deu.md / README_zho.md / README_jpn.md  # 翻译

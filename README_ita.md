@@ -33,7 +33,7 @@ Questa app punta a iOS/iPadOS, ma è costruita in **Flutter** anziché Swift/Swi
 
 ## 🏗️ Cosa è implementato
 
-- **Login** (`lib/ui/login_screen.dart`, `lib/state/robot_view_model.dart`) - campi modificabili di IP/porta del server più `POST /api/login` contro `admin`/`admin` (precompilato - l'account predefinito che ogni server di questo ecosistema genera da solo al suo primo avvio in assoluto; un server può anche avere account "operator" aggiuntivi a privilegio inferiore, creati da Config > Users nella UI del browser), token di sessione persistito tra gli avvii tramite `shared_preferences`. Un pulsante "Scan local network" (`lib/network/discovery.dart`) trova i server senza che l'utente debba già conoscere l'IP.
+- **Login** (`lib/ui/login_screen.dart`, `lib/state/robot_view_model.dart`) - campi modificabili di IP/porta e credenziali operatore più `POST /api/login`; nessun account o password è precompilato. Un server di produzione richiede credenziali bootstrap configurate esplicitamente per il primo amministratore; account "operator" aggiuntivi a privilegio inferiore possono essere creati da Config > Users nell'interfaccia browser. Il token di sessione persiste tramite `shared_preferences`. Un pulsante "Scan local network" (`lib/network/discovery.dart`) trova i server senza che l'utente debba già conoscere l'IP.
 - **Discovery di rete** (`lib/network/discovery.dart`) - scansione concorrente di `GET /api/hydra-info` attraverso la(e) sottorete(i) locale(i) reale(i) propria(e) di questo dispositivo, derivata dal `NetworkInterface.list()` proprio di `dart:io` invece di un'unica ipotesi fissa, dato che la LAN di un telefono ha altrettante probabilità di essere `192.168.0.x` o `10.x.x.x` quanto `192.168.1.x`. Ricade su `192.168.1.x` solo se l'enumerazione delle interfacce stessa risulta vuota.
 - **Sincronizzazione comandi atomici** (il `_sendAtomicCommand()` proprio di `lib/state/robot_view_model.dart`) - ogni scrittura (enable/disable/play/pause/stop/jog/valve/pump/speed/vision) usa l'endpoint reale `POST /api/robot/:id/command`, un payload piccolo e mirato invece di sovrascrivere l'intero albero settings, con propagazione corretta del robot combinato (`combinedWith`) per i 5 comandi che ne hanno bisogno.
 - **Sincronizzazione WebSocket in tempo reale** (`lib/network/hydra_websocket.dart`) - allega sempre `?token=` all'URL di connessione (l'upgrade `/ws` proprio di `server.ts` lo richiede incondizionatamente), gestisce sia i tipi di broadcast `"settings"` che `"delta"`, si riconnette automaticamente alla caduta.
@@ -124,7 +124,7 @@ HYDRA-UMC-IOS-CONTROL/
 ├── ios/                              # Progetto Xcode (compilare solo da macOS)
 ├── windows/                          # Target desktop Windows - verifica della build senza un Mac
 ├── docs/ARCHITECTURE.md
-├── test/widget_test.dart
+├── test/widget_test.dart, websocket_uri_test.dart  # avvio + codifica token opaco
 ├── images/
 ├── README.md                         # questo file (inglese)
 └── README_spa.md / README_ita.md / README_fra.md / README_deu.md / README_zho.md / README_jpn.md  # traduzioni
