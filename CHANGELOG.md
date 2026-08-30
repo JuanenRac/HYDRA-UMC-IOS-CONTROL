@@ -9,6 +9,26 @@ Version numbers below follow the ecosystem-wide auto-bump policy described in
 pre-policy version `0.0.0+1` the repo carried while the policy did not yet
 exist.
 
+## [0.0.7] - Fixed a real version-drift bug in build.bat's own step order
+
+- **`build.bat`** - it ran `bump_manifest_version.py` (a real, independent
+  bump) *before* `dart run tool/bump_version.dart`, the real source of
+  the app's own native version (`pubspec.yaml`). That let the manifest
+  advance to a version the compiled app hadn't reached yet - exactly the
+  drift class this ecosystem's version-mirror convention exists to
+  prevent. `build.sh` already had the correct order; `build.bat` now
+  matches: `dart run tool/bump_version.dart` first, then
+  `bump_manifest_version.py --sync` to align the manifest to what the
+  app build actually produced. Verified with a real `flutter build
+  windows` run through the fixed script.
+- **`tools/ci_validate.py`** - new `validate_local_markdown_links()`
+  rejects a relative Markdown link whose target file doesn't actually
+  exist (external URLs and anchors are skipped, not probed). `CI_VALIDATION=PASS`.
+
+## [0.0.6]
+
+- Build version synchronized with `hydra-umc.project.json` and the repository-native version source.
+
 ## [0.0.5]
 
 - Build version synchronized with `hydra-umc.project.json` and the repository-native version source.
