@@ -57,7 +57,7 @@
   "controlStopAllHold": "STOP ALLE (halten)",
   "controlStopHold": "STOP (halten)",
 
-  "dashboardUptime": "Laufzeit {hours} h",
+  "dashboardUptime": "Laufzeit {duration}",
   "dashboardRunning": "LÄUFT",
   "dashboardRole": "Rolle: {role}",
   "dashboardCombinedWith": "Kombiniert mit: {names}",

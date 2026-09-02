@@ -70,7 +70,7 @@ class _MetricsBar extends StatelessWidget {
           _stat(Icons.thermostat, '${metrics.temp.toStringAsFixed(0)}°C'),
           const Spacer(),
           Text(
-            AppLocalizations.of(context)!.dashboardUptime((metrics.uptime / 3600).toStringAsFixed(1)),
+            AppLocalizations.of(context)!.dashboardUptime(formatUptime(metrics.uptime)),
             style: const TextStyle(color: Colors.grey, fontSize: 11),
           ),
         ],
@@ -171,4 +171,19 @@ class _RobotCard extends StatelessWidget {
       child: Text(label, style: TextStyle(fontSize: 9, color: color.shade200, fontWeight: FontWeight.bold)),
     );
   }
+}
+
+/// Formats seconds into a human-readable uptime string (e.g. "2d 4h 15m") -
+/// same algorithm and same deliberately untranslated d/h/m units (matching
+/// this ecosystem's short-technical-abbreviation convention, e.g. E-STOP)
+/// as HYDRA-UMC-ANDROID-CONTROL's own ui/DashboardScreen.kt formatUptime(),
+/// ported here so this app's Dashboard matches that one instead of only
+/// ever showing a raw hours-with-one-decimal figure.
+String formatUptime(int seconds) {
+  final d = seconds ~/ 86400;
+  final h = (seconds % 86400) ~/ 3600;
+  final m = (seconds % 3600) ~/ 60;
+  if (d > 0) return '${d}d ${h}h ${m}m';
+  if (h > 0) return '${h}h ${m}m';
+  return '${m}m';
 }

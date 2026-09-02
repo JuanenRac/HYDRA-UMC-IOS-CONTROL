@@ -67,8 +67,8 @@
   "controlStopAllHold": "STOP ALL (hold)",
   "controlStopHold": "STOP (hold)",
 
-  "dashboardUptime": "uptime {hours}h",
-  "@dashboardUptime": {"placeholders": {"hours": {"type": "String"}}},
+  "dashboardUptime": "uptime {duration}",
+  "@dashboardUptime": {"placeholders": {"duration": {"type": "String"}}},
   "dashboardRunning": "RUNNING",
   "dashboardRole": "Role: {role}",
   "@dashboardRole": {"placeholders": {"role": {"type": "String"}}},

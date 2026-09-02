@@ -9,6 +9,17 @@ Version numbers below follow the ecosystem-wide auto-bump policy described in
 pre-policy version `0.0.0+1` the repo carried while the policy did not yet
 exist.
 
+## [0.1.0]
+
+- **Human-readable uptime on the Dashboard** (`lib/ui/dashboard_screen.dart`'s
+  new `formatUptime()`) - was a raw hours-with-one-decimal figure (`4.3h`);
+  now the same "2d 4h 15m" format HYDRA-UMC-ANDROID-CONTROL's own
+  `DashboardScreen.kt` `formatUptime()` already shows, ported to match
+  (same untranslated d/h/m units in every language, matching this
+  ecosystem's short-technical-abbreviation convention). Real test
+  coverage in `test/format_uptime_test.dart` for the minutes-only/
+  hours-and-minutes/days-hours-minutes/zero-day-boundary cases.
+
 ## [0.0.9]
 
 - **Full 7-language UI localization** - this app had no `intl`/

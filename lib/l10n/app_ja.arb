@@ -57,7 +57,7 @@
   "controlStopAllHold": "STOP 全台（長押し）",
   "controlStopHold": "STOP（長押し）",
 
-  "dashboardUptime": "稼働時間 {hours}時間",
+  "dashboardUptime": "稼働時間 {duration}",
   "dashboardRunning": "稼働中",
   "dashboardRole": "役割: {role}",
   "dashboardCombinedWith": "連結先: {names}",

@@ -57,7 +57,7 @@
   "controlStopAllHold": "STOP TODOS (mantener)",
   "controlStopHold": "STOP (mantener)",
 
-  "dashboardUptime": "activo {hours} h",
+  "dashboardUptime": "activo {duration}",
   "dashboardRunning": "EN MARCHA",
   "dashboardRole": "Rol: {role}",
   "dashboardCombinedWith": "Combinado con: {names}",

@@ -57,7 +57,7 @@
   "controlStopAllHold": "STOP 全部（长按）",
   "controlStopHold": "STOP（长按）",
 
-  "dashboardUptime": "运行时间 {hours} 小时",
+  "dashboardUptime": "运行时间 {duration}",
   "dashboardRunning": "运行中",
   "dashboardRole": "角色：{role}",
   "dashboardCombinedWith": "已联动：{names}",

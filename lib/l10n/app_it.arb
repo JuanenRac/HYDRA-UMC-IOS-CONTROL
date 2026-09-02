@@ -57,7 +57,7 @@
   "controlStopAllHold": "STOP TUTTI (tieni premuto)",
   "controlStopHold": "STOP (tieni premuto)",
 
-  "dashboardUptime": "attivo da {hours} h",
+  "dashboardUptime": "attivo da {duration}",
   "dashboardRunning": "IN ESECUZIONE",
   "dashboardRole": "Ruolo: {role}",
   "dashboardCombinedWith": "Combinato con: {names}",
