@@ -6,6 +6,10 @@
   "navCamera": "摄像头",
   "nav3d": "3D",
   "navSettings": "设置",
+  "navTelemetry": "遥测",
+  "telemetryTitle": "遥测",
+  "telemetryClearTooltip": "清除日志",
+  "telemetryEmpty": "暂无遥测数据",
 
   "loginSubtitle": "登录 HYDRA-UMC STUDIO 服务器",
   "loginServerIp": "服务器IP",

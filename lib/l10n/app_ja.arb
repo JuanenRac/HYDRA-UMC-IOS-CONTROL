@@ -6,6 +6,10 @@
   "navCamera": "カメラ",
   "nav3d": "3D",
   "navSettings": "設定",
+  "navTelemetry": "テレメトリ",
+  "telemetryTitle": "テレメトリ",
+  "telemetryClearTooltip": "ログを消去",
+  "telemetryEmpty": "テレメトリデータがありません",
 
   "loginSubtitle": "HYDRA-UMC STUDIO サーバーにサインイン",
   "loginServerIp": "サーバーIP",

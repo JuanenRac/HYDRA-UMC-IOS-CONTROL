@@ -28,6 +28,7 @@ import '../network/auth_prefs.dart';
 import '../network/biometric_helper.dart';
 import '../network/hydra_api_client.dart';
 import '../network/hydra_websocket.dart';
+import '../network/state_cache.dart';
 import 'hydra_error.dart';
 
 class SystemMetrics {
@@ -42,11 +43,30 @@ class RobotViewModel extends ChangeNotifier {
   final AuthPrefs _authPrefs = AuthPrefs();
   final BiometricHelper _biometricHelper = BiometricHelper();
   final LanguagePrefs _languagePrefs = LanguagePrefs();
+  final StateCache _stateCache = StateCache();
 
   HydraState state = HydraState();
   HydraApiClient? apiClient;
   HydraWebSocket? _ws;
   Timer? _metricsTimer;
+  Timer? _stateCacheTimer;
+
+  // Debounced disk write of state.raw (see network/state_cache.dart's own
+  // header comment for why - not on every single notifyListeners() call,
+  // which fires on every WS broadcast AND every local optimistic command
+  // mutation, several times a second during a held jog).
+  void _scheduleCacheSave() {
+    _stateCacheTimer?.cancel();
+    _stateCacheTimer = Timer(const Duration(seconds: 1), () {
+      unawaited(_stateCache.saveState(state.raw));
+    });
+  }
+
+  @override
+  void notifyListeners() {
+    _scheduleCacheSave();
+    super.notifyListeners();
+  }
 
   // Per-command-name debounce for _sendAtomicCommand()'s own network send -
   // a dragged Slider's onChanged fires many times a second (setSpeed's own
@@ -84,6 +104,29 @@ class RobotViewModel extends ChangeNotifier {
   // MaterialApp.locale and changed from ui/settings_screen.dart.
   Locale? languageOverride;
 
+  // Rolling connection/command event log for ui/telemetry_screen.dart -
+  // ported from HYDRA-UMC-ANDROID-CONTROL's own logTelemetry()/
+  // telemetryLogs, same 50-entry cap and newest-first order. In-memory
+  // only (unlike lastError/state, never persisted) - a diagnostic trail
+  // for the current session, not something meant to survive a restart.
+  final List<String> telemetryLog = [];
+
+  // Deliberately does NOT call notifyListeners() itself - every call site
+  // already triggers one shortly after for the state change the log entry
+  // is describing, so this would only ever double the rebuild.
+  void _logTelemetry(String message) {
+    final now = DateTime.now();
+    String two(int n) => n.toString().padLeft(2, '0');
+    final timestamp = '${two(now.hour)}:${two(now.minute)}:${two(now.second)}';
+    telemetryLog.insert(0, '[$timestamp] $message');
+    if (telemetryLog.length > 50) telemetryLog.removeRange(50, telemetryLog.length);
+  }
+
+  void clearTelemetryLog() {
+    telemetryLog.clear();
+    notifyListeners();
+  }
+
   Future<void> setLanguage(String? languageCode) async {
     await _languagePrefs.saveLanguage(languageCode);
     languageOverride = await _languagePrefs.loadLocale();
@@ -105,6 +148,17 @@ class RobotViewModel extends ChangeNotifier {
 
   Future<void> init() async {
     languageOverride = await _languagePrefs.loadLocale();
+    // Real, if possibly stale, robot data on screen immediately rather than
+    // an empty Dashboard/Control while the live connect() round-trip below
+    // is still in flight - genuinely useful right after the phone comes
+    // back into WiFi range. Superseded by the real fetch the moment
+    // connect() succeeds; see network/state_cache.dart's own header
+    // comment. Loaded unconditionally, same as
+    // HYDRA-UMC-ANDROID-CONTROL's own equivalent - a signed-out user just
+    // never reaches a screen that reads `state`, so this is harmless
+    // either way.
+    final cached = await _stateCache.loadState();
+    if (cached != null) state = HydraState(cached);
     final saved = await _authPrefs.loadConnection();
     final token = await _authPrefs.loadToken();
     biometricAvailable = await _biometricHelper.isAvailable();
@@ -177,11 +231,13 @@ class RobotViewModel extends ChangeNotifier {
     apiClient?.close();
     final client = HydraApiClient(server.host, server.port);
     apiClient = client;
+    _logTelemetry('Logging in to ${server.host}:${server.port}...');
     try {
       final resp = await client.login(server.username, server.password);
       final token = resp['token'] as String?;
       if (resp['success'] != true || token == null) {
         lastError = const HydraError(HydraErrorKind.loginFailed);
+        _logTelemetry('Login failed: server rejected credentials');
         notifyListeners();
         return false;
       }
@@ -191,11 +247,13 @@ class RobotViewModel extends ChangeNotifier {
       await _authPrefs.saveConnection(server.host, server.port);
       await _authPrefs.saveToken(token, server.username);
       lastError = null;
+      _logTelemetry('Login successful');
       notifyListeners();
       await connect();
       return true;
     } catch (e) {
       lastError = HydraError(HydraErrorKind.loginError, {'error': '$e'});
+      _logTelemetry('Login error: $e');
       notifyListeners();
       return false;
     }
@@ -238,16 +296,19 @@ class RobotViewModel extends ChangeNotifier {
     final client = apiClient;
     if (server == null || client == null) return;
     connectionStatus = 'connecting';
+    _logTelemetry('Connecting to ${server.host}:${server.port}...');
     notifyListeners();
 
     try {
       final settings = await client.getSettings();
       state = HydraState(settings);
       _ensureSelectedRobot();
+      _logTelemetry('Initial state synchronized via REST');
       notifyListeners();
     } catch (e) {
       lastError = HydraError(HydraErrorKind.fetchFailed, {'error': '$e'});
       connectionStatus = 'error';
+      _logTelemetry('REST sync error: $e');
       // A restored session (see init()) can reach here with a token the
       // server no longer accepts (expired/revoked while the app was
       // closed) - without this check the app was left showing MainScreen
@@ -277,6 +338,11 @@ class RobotViewModel extends ChangeNotifier {
           WsStatus.connected => 'connected',
           WsStatus.disconnected => 'disconnected',
         };
+        _logTelemetry(switch (status) {
+          WsStatus.connecting => 'WebSocket connecting...',
+          WsStatus.connected => 'WebSocket connected',
+          WsStatus.disconnected => 'WebSocket disconnected',
+        });
         notifyListeners();
       },
       onSettings: (payload) {
@@ -287,6 +353,7 @@ class RobotViewModel extends ChangeNotifier {
       onDelta: _applyRobotDelta,
       onError: (error) {
         lastError = error;
+        _logTelemetry('WebSocket error: ${error.params['message'] ?? error.params['error'] ?? error.kind.name}');
         // Only a server-relayed message ever carries the real
         // "denied"/"token" auth-rejection text - a client-side connection
         // failure (wsConnectionLost/wsConnectFailed) is a generic
@@ -463,6 +530,8 @@ class RobotViewModel extends ChangeNotifier {
       try {
         await client.postRobotCommand(robotId, payload);
         lastError = null;
+        _logTelemetry('TX OK [$command] -> robot $robotId');
+        notifyListeners();
       } catch (e) {
         // Catches everything, not just HydraApiException: a plain network
         // failure (timeout, connection refused, DNS failure) throws
@@ -491,6 +560,7 @@ class RobotViewModel extends ChangeNotifier {
           }
         }
         lastError = HydraError(HydraErrorKind.txError, {'command': command, 'error': '$e'});
+        _logTelemetry('TX error [$command]: $e');
         if (e.toString().contains('401') || e.toString().contains('403')) {
           isLoggedIn = false;
           connectionStatus = 'disconnected';
@@ -594,6 +664,7 @@ class RobotViewModel extends ChangeNotifier {
   void dispose() {
     _ws?.disconnect();
     _metricsTimer?.cancel();
+    _stateCacheTimer?.cancel();
     for (final timer in _debounceTimers.values) {
       timer.cancel();
     }

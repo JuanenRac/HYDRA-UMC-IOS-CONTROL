@@ -9,6 +9,30 @@ Version numbers below follow the ecosystem-wide auto-bump policy described in
 pre-policy version `0.0.0+1` the repo carried while the policy did not yet
 exist.
 
+## [0.1.1]
+
+- **Offline state cache** (`lib/network/state_cache.dart`, ported from
+  HYDRA-UMC-ANDROID-CONTROL's own `StateCache.kt`) - the last known
+  settings tree persists to disk (`shared_preferences`, debounced 1s the
+  same way ANDROID-CONTROL's DataStore write is) and loads back on
+  launch, so the Dashboard/Control screens show real, if possibly stale,
+  robot data immediately instead of an empty state while the live
+  `connect()` round-trip is still in flight - genuinely useful right
+  after the phone comes back into WiFi range. Superseded by the real
+  fetch the instant it succeeds. Real save/load round-trip test coverage
+  in `test/state_cache_test.dart`, including corrupt-cache handling.
+- **Telemetry screen** (`lib/ui/telemetry_screen.dart`, new 6th tab) -
+  ported the Logs half of HYDRA-UMC-ANDROID-CONTROL's own
+  `TelemetryScreen.kt` (its separate "Ecosystem" tab reads a different
+  server endpoint and is a larger feature of its own, not part of this
+  port): a terminal-style, newest-first, monospace log of real
+  connection/login/command lifecycle events (green text, red for
+  anything that looks like an error - same "Matrix Green" convention as
+  the Android app), capped at 50 entries, with a clear-log action.
+  `RobotViewModel`'s new `telemetryLog`/`clearTelemetryLog()` are covered
+  by `test/telemetry_log_test.dart` (real command round-trip via a mocked
+  HTTP client, the 50-entry cap, and clearing).
+
 ## [0.1.0]
 
 - **Human-readable uptime on the Dashboard** (`lib/ui/dashboard_screen.dart`'s

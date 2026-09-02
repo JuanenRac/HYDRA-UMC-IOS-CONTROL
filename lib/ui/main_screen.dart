@@ -14,6 +14,7 @@ import 'camera_screen.dart';
 import 'control_screen.dart';
 import 'dashboard_screen.dart';
 import 'settings_screen.dart';
+import 'telemetry_screen.dart';
 import 'three_d_screen.dart';
 
 class MainScreen extends StatefulWidget {
@@ -33,6 +34,7 @@ class _MainScreenState extends State<MainScreen> {
     ControlScreen(),
     CameraScreen(),
     ThreeDScreen(),
+    TelemetryScreen(),
     SettingsScreen(),
   ];
 
@@ -117,6 +119,7 @@ class _MainScreenState extends State<MainScreen> {
           NavigationDestination(icon: const Icon(Icons.gamepad), label: l10n.navControl),
           NavigationDestination(icon: const Icon(Icons.videocam), label: l10n.navCamera),
           NavigationDestination(icon: const Icon(Icons.view_in_ar), label: l10n.nav3d),
+          NavigationDestination(icon: const Icon(Icons.terminal), label: l10n.navTelemetry),
           NavigationDestination(icon: const Icon(Icons.settings), label: l10n.navSettings),
         ],
       ),

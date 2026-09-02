@@ -10,6 +10,10 @@
   "nav3d": "3D",
   "@nav3d": {"description": "Bottom navigation label"},
   "navSettings": "Settings",
+  "navTelemetry": "Telemetry",
+  "telemetryTitle": "Telemetry",
+  "telemetryClearTooltip": "Clear logs",
+  "telemetryEmpty": "No telemetry data",
   "@navSettings": {"description": "Bottom navigation label"},
 
   "loginSubtitle": "Sign in to a HYDRA-UMC STUDIO server",

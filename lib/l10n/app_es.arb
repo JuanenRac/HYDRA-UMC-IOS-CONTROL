@@ -6,6 +6,10 @@
   "navCamera": "Cámara",
   "nav3d": "3D",
   "navSettings": "Ajustes",
+  "navTelemetry": "Telemetría",
+  "telemetryTitle": "Telemetría",
+  "telemetryClearTooltip": "Borrar registros",
+  "telemetryEmpty": "No hay datos de telemetría",
 
   "loginSubtitle": "Inicia sesión en un servidor HYDRA-UMC STUDIO",
   "loginServerIp": "IP del servidor",

@@ -43,6 +43,8 @@ This app targets iOS/iPadOS, but it is built in **Flutter** rather than Swift/Sw
 - **3D View** (`lib/ui/three_d_screen.dart`) - embeds HYDRA-UMC-STUDIO's own real-time 3D viewport in a WebView (`?hideUI=true&robotId=&token=`), same approach as the Android app, for the same reason (gets the real, currently-shipping 3D scene for free). Falls back to an honest placeholder on platforms `webview_flutter` doesn't support (this repo's Windows desktop target, used for build verification).
 - **System metrics** (`lib/state/robot_view_model.dart`) - `GET /api/system/metrics` polled every 5s, same cadence as the other 2 clients, shown in the Dashboard.
 - **7-language UI** (`lib/l10n/`, standard `flutter gen-l10n` pipeline) - English, Spanish, French, German, Italian, Japanese and Chinese, matching every other client in this ecosystem. A persisted `Settings > Language` override defaults to the OS locale; `RobotViewModel.lastError` is a typed `HydraError` rather than pre-formatted English text, so business-logic error messages (login/connection/command failures) localize correctly too, not just static screen chrome.
+- **Offline state cache** (`lib/network/state_cache.dart`) - the last known settings tree persists to disk (debounced 1s), so the Dashboard/Control screens show real, if possibly stale, robot data immediately on launch instead of an empty state while the live `connect()` round-trip is still in flight. Superseded by the real fetch the instant it succeeds.
+- **Telemetry** (`lib/ui/telemetry_screen.dart`) - a terminal-style, newest-first log of real connection/login/command lifecycle events, capped at 50 entries, with a clear-log action - same "Matrix Green" convention as HYDRA-UMC-ANDROID-CONTROL's own Telemetry tab.
 
 ## 🚀 Building
 
