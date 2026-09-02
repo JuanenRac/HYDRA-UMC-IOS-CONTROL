@@ -98,16 +98,25 @@ HYDRA-UMC-IOS-CONTROL/
 │   │   ├── hydra_api_client.dart    # REST：登录、设置、原子化机器人指令、系统指标
 │   │   ├── hydra_websocket.dart     # /ws 实时同步客户端
 │   │   ├── discovery.dart           # 针对本设备自身真实本地子网的并发扫描 GET /api/hydra-info
-│   │   └── auth_prefs.dart          # 持久化的连接信息 + 令牌（shared_preferences）
+│   │   ├── auth_prefs.dart          # 持久化的连接信息 + 令牌（shared_preferences）
+│   │   ├── biometric_helper.dart    # package:local_auth 的轻量封装（Face ID/Touch ID 门禁）
+│   │   └── state_cache.dart         # 移植自 Android 自身的 StateCache.kt——跨启动持久化的最后已知良好状态
 │   ├── state/
-│   │   └── robot_view_model.dart    # 每个界面都监听的单一 ChangeNotifier
+│   │   ├── robot_view_model.dart    # 每个界面都监听的单一 ChangeNotifier
+│   │   └── hydra_error.dart         # 面向 RobotViewModel 的类型化错误接口（自身无 BuildContext）
+│   ├── l10n/                        # 真实生成的本地化文件（7 种语言）——见仓库根目录的 l10n.yaml
+│   │   ├── app_localizations.dart   # 生成的基类
+│   │   ├── app_localizations_en.dart, _es.dart, _it.dart, _fr.dart, _de.dart, _ja.dart, _zh.dart
+│   │   └── language_prefs.dart      # 持久化的语言覆盖设置（shared_preferences）
 │   └── ui/
 │       ├── login_screen.dart        # 主机/端口/用户/密码字段 + “扫描本地网络”
+│       ├── biometric_gate_screen.dart # Face ID/Touch ID 待处理时由 main.dart 的 _RootGate 显示
 │       ├── main_screen.dart         # 底部导航外壳（仪表盘/控制/摄像头/3D/设置）
 │       ├── dashboard_screen.dart    # 每机器人卡片 + 系统指标栏
 │       ├── control_screen.dart      # 点动/速度/阀门/泵/回放控制
 │       ├── camera_screen.dart       # MJPEG 查看器 + 视觉开关
 │       ├── three_d_screen.dart      # 通过 WebView 嵌入 STUDIO 自身的 3D 视口
+│       ├── telemetry_screen.dart    # 移植自 Android 自身的 TelemetryScreen.kt
 │       ├── settings_screen.dart     # 连接信息 + 退出登录
 │       └── widgets/
 │           ├── joystick_pad.dart     # 点动方向键（刻意不采用模拟摇杆，见文件头部说明）
@@ -116,7 +125,7 @@ HYDRA-UMC-IOS-CONTROL/
 ├── ios/                              # Xcode 项目（仅可在 macOS 上构建）
 ├── windows/                          # Windows 桌面目标——无需 Mac 即可进行构建验证
 ├── docs/ARCHITECTURE.md
-├── test/widget_test.dart, websocket_uri_test.dart  # 启动与不透明令牌 URL 编码
+├── test/                             # widget_test、websocket_uri_test、format_uptime_test、localization_test、state_cache_test、telemetry_log_test
 ├── images/
 ├── README.md                         # 本文件
 └── README_spa.md / README_ita.md / README_fra.md / README_deu.md / README_zho.md / README_jpn.md  # 翻译

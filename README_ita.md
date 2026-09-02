@@ -109,16 +109,25 @@ HYDRA-UMC-IOS-CONTROL/
 │   │   ├── hydra_api_client.dart    # REST: login, settings, comando atomico robot, metriche di sistema
 │   │   ├── hydra_websocket.dart     # Client di sincronizzazione live via /ws
 │   │   ├── discovery.dart           # Scansione concorrente della/e sottorete/i locale/i reale/i propria/e di questo dispositivo contro GET /api/hydra-info
-│   │   └── auth_prefs.dart          # Connessione e token persistiti (shared_preferences)
+│   │   ├── auth_prefs.dart          # Connessione e token persistiti (shared_preferences)
+│   │   ├── biometric_helper.dart    # Wrapper sottile su package:local_auth (gate Face ID/Touch ID)
+│   │   └── state_cache.dart         # Portato dallo StateCache.kt di Android - ultimo stato valido noto, persistito tra gli avvii
 │   ├── state/
-│   │   └── robot_view_model.dart    # Unico ChangeNotifier ascoltato da ogni schermata
+│   │   ├── robot_view_model.dart    # Unico ChangeNotifier ascoltato da ogni schermata
+│   │   └── hydra_error.dart         # Superficie di errore tipizzata per RobotViewModel (senza un proprio BuildContext)
+│   ├── l10n/                        # Localizzazioni reali generate (7 lingue) - vedi l10n.yaml nella radice del repo
+│   │   ├── app_localizations.dart   # Classe base generata
+│   │   ├── app_localizations_en.dart, _es.dart, _it.dart, _fr.dart, _de.dart, _ja.dart, _zh.dart
+│   │   └── language_prefs.dart      # Override della lingua persistito (shared_preferences)
 │   └── ui/
 │       ├── login_screen.dart        # Campi host/porta/utente/password + "Scan local network"
+│       ├── biometric_gate_screen.dart # Mostrata da _RootGate di main.dart mentre Face ID/Touch ID è in sospeso
 │       ├── main_screen.dart         # Shell di navigazione inferiore (Dashboard/Control/Camera/3D/Settings)
 │       ├── dashboard_screen.dart    # Schede per robot + barra metriche di sistema
 │       ├── control_screen.dart      # Controlli jog/velocità/valvola/pompa/riproduzione
 │       ├── camera_screen.dart       # Visualizzatore MJPEG + interruttore visione on/off
 │       ├── three_d_screen.dart      # Incorpora il viewport 3D proprio di STUDIO via WebView
+│       ├── telemetry_screen.dart    # Portato dal TelemetryScreen.kt di Android
 │       ├── settings_screen.dart     # Informazioni di connessione + disconnessione
 │       └── widgets/
 │           ├── joystick_pad.dart     # D-pad di jog (deliberatamente non uno stick analogico, vedi intestazione del file)
@@ -127,7 +136,7 @@ HYDRA-UMC-IOS-CONTROL/
 ├── ios/                              # Progetto Xcode (compilare solo da macOS)
 ├── windows/                          # Target desktop Windows - verifica della build senza un Mac
 ├── docs/ARCHITECTURE.md
-├── test/widget_test.dart, websocket_uri_test.dart  # avvio + codifica token opaco
+├── test/                             # widget_test, websocket_uri_test, format_uptime_test, localization_test, state_cache_test, telemetry_log_test
 ├── images/
 ├── README.md                         # questo file (inglese)
 └── README_spa.md / README_ita.md / README_fra.md / README_deu.md / README_zho.md / README_jpn.md  # traduzioni

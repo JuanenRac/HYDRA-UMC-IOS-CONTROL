@@ -98,16 +98,25 @@ HYDRA-UMC-IOS-CONTROL/
 │   │   ├── hydra_api_client.dart    # REST：ログイン、設定、原子的ロボット指令、システム指標
 │   │   ├── hydra_websocket.dart     # /ws リアルタイム同期クライアント
 │   │   ├── discovery.dart           # このデバイス自身の実際のローカルサブネットに対する GET /api/hydra-info の並行スキャン
-│   │   └── auth_prefs.dart          # 永続化された接続情報 + トークン（shared_preferences）
+│   │   ├── auth_prefs.dart          # 永続化された接続情報 + トークン（shared_preferences）
+│   │   ├── biometric_helper.dart    # package:local_auth の薄いラッパー（Face ID/Touch ID ゲート）
+│   │   └── state_cache.dart         # AndroidのStateCache.ktから移植——起動をまたいで永続化される最後の正常状態
 │   ├── state/
-│   │   └── robot_view_model.dart    # すべての画面がリッスンする単一の ChangeNotifier
+│   │   ├── robot_view_model.dart    # すべての画面がリッスンする単一の ChangeNotifier
+│   │   └── hydra_error.dart         # RobotViewModel向けの型付きエラーサーフェス(独自のBuildContextを持たない)
+│   ├── l10n/                        # 実際に生成されたローカライゼーション(7言語) - リポジトリルートのl10n.yamlを参照
+│   │   ├── app_localizations.dart   # 生成されたベースクラス
+│   │   ├── app_localizations_en.dart, _es.dart, _it.dart, _fr.dart, _de.dart, _ja.dart, _zh.dart
+│   │   └── language_prefs.dart      # 永続化された言語上書き設定(shared_preferences)
 │   └── ui/
 │       ├── login_screen.dart        # ホスト/ポート/ユーザー/パスワードフィールド + 「ローカルネットワークをスキャン」
+│       ├── biometric_gate_screen.dart # Face ID/Touch ID保留中にmain.dartの_RootGateが表示
 │       ├── main_screen.dart         # ボトムナビゲーションシェル（ダッシュボード/制御/カメラ/3D/設定）
 │       ├── dashboard_screen.dart    # ロボットごとのカード + システム指標バー
 │       ├── control_screen.dart      # ジョグ/速度/バルブ/ポンプ/再生制御
 │       ├── camera_screen.dart       # MJPEG ビューアー + ビジョンオン/オフスイッチ
 │       ├── three_d_screen.dart      # WebView 経由で STUDIO 自身の 3D ビューポートを埋め込み
+│       ├── telemetry_screen.dart    # AndroidのTelemetryScreen.ktから移植
 │       ├── settings_screen.dart     # 接続情報 + サインアウト
 │       └── widgets/
 │           ├── joystick_pad.dart     # ジョグ方向パッド（意図的にアナログスティックではない、ファイルヘッダー参照）
@@ -116,7 +125,7 @@ HYDRA-UMC-IOS-CONTROL/
 ├── ios/                              # Xcode プロジェクト（macOS からのみビルド可能）
 ├── windows/                          # Windows デスクトップターゲット——Mac なしでのビルド検証
 ├── docs/ARCHITECTURE.md
-├── test/widget_test.dart, websocket_uri_test.dart  # 起動と不透明トークンの URL エンコード
+├── test/                             # widget_test、websocket_uri_test、format_uptime_test、localization_test、state_cache_test、telemetry_log_test
 ├── images/
 ├── README.md                         # 本ファイル
 └── README_spa.md / README_ita.md / README_fra.md / README_deu.md / README_zho.md / README_jpn.md  # 翻訳

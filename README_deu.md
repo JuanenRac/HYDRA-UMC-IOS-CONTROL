@@ -110,16 +110,25 @@ HYDRA-UMC-IOS-CONTROL/
 │   │   ├── hydra_api_client.dart    # REST: Login, Settings, atomarer Roboterbefehl, Systemmetriken
 │   │   ├── hydra_websocket.dart     # /ws Live-Sync-Client
 │   │   ├── discovery.dart           # Gleichzeitiger Scan des/der eigenen realen lokalen Subnetzes/e dieses Geraets gegen GET /api/hydra-info
-│   │   └── auth_prefs.dart          # Persistierte Verbindung + Token (shared_preferences)
+│   │   ├── auth_prefs.dart          # Persistierte Verbindung + Token (shared_preferences)
+│   │   ├── biometric_helper.dart    # Dünner Wrapper über package:local_auth (Face-ID/Touch-ID-Gate)
+│   │   └── state_cache.dart         # Portiert von Androids eigenem StateCache.kt - letzter bekannter guter Zustand, über Starts hinweg persistiert
 │   ├── state/
-│   │   └── robot_view_model.dart    # Einziges ChangeNotifier, das jeder Screen abonniert
+│   │   ├── robot_view_model.dart    # Einziges ChangeNotifier, das jeder Screen abonniert
+│   │   └── hydra_error.dart         # Typisierte Fehleroberfläche für RobotViewModel (ohne eigenen BuildContext)
+│   ├── l10n/                        # Echte generierte Lokalisierungen (7 Sprachen) - siehe l10n.yaml im Repo-Root
+│   │   ├── app_localizations.dart   # Generierte Basisklasse
+│   │   ├── app_localizations_en.dart, _es.dart, _it.dart, _fr.dart, _de.dart, _ja.dart, _zh.dart
+│   │   └── language_prefs.dart      # Persistierte Sprachüberschreibung (shared_preferences)
 │   └── ui/
 │       ├── login_screen.dart        # Host/Port/Benutzer/Passwort-Felder + "Scan local network"
+│       ├── biometric_gate_screen.dart # Von main.darts _RootGate gezeigt, während Face-ID/Touch-ID aussteht
 │       ├── main_screen.dart         # Untere Navigationsleiste (Dashboard/Control/Camera/3D/Settings)
 │       ├── dashboard_screen.dart    # Karten pro Roboter + Systemmetriken-Leiste
 │       ├── control_screen.dart      # Jog/Geschwindigkeit/Ventil/Pumpe/Wiedergabe-Steuerung
 │       ├── camera_screen.dart       # MJPEG-Viewer + Vision-Ein/Aus-Schalter
 │       ├── three_d_screen.dart      # Bettet das eigene 3D-Viewport von STUDIO via WebView ein
+│       ├── telemetry_screen.dart    # Portiert von Androids eigenem TelemetryScreen.kt
 │       ├── settings_screen.dart     # Verbindungsinformationen + Abmelden
 │       └── widgets/
 │           ├── joystick_pad.dart     # Jog-D-Pad (bewusst kein analoger Stick, siehe Datei-Kopfkommentar)
@@ -128,7 +137,7 @@ HYDRA-UMC-IOS-CONTROL/
 ├── ios/                              # Xcode-Projekt (nur von macOS aus kompilieren)
 ├── windows/                          # Windows-Desktop-Target - Build-Verifikation ohne Mac
 ├── docs/ARCHITECTURE.md
-├── test/widget_test.dart, websocket_uri_test.dart  # Start + Kodierung eines undurchsichtigen Tokens
+├── test/                             # widget_test, websocket_uri_test, format_uptime_test, localization_test, state_cache_test, telemetry_log_test
 ├── images/
 ├── README.md                         # diese Datei (Englisch)
 └── README_spa.md / README_ita.md / README_fra.md / README_deu.md / README_zho.md / README_jpn.md  # Uebersetzungen
