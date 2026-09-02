@@ -12,6 +12,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_localizations.dart';
 import '../state/robot_view_model.dart';
 
 class BiometricGateScreen extends StatefulWidget {
@@ -26,11 +27,12 @@ class _BiometricGateScreenState extends State<BiometricGateScreen> {
   bool _failed = false;
 
   Future<void> _unlock() async {
+    final reason = AppLocalizations.of(context)!.biometricReason;
     setState(() {
       _authenticating = true;
       _failed = false;
     });
-    final ok = await context.read<RobotViewModel>().unlockWithBiometrics();
+    final ok = await context.read<RobotViewModel>().unlockWithBiometrics(reason);
     if (mounted) {
       setState(() {
         _authenticating = false;
@@ -42,6 +44,7 @@ class _BiometricGateScreenState extends State<BiometricGateScreen> {
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<RobotViewModel>();
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       body: Center(
         child: Padding(
@@ -57,15 +60,15 @@ class _BiometricGateScreenState extends State<BiometricGateScreen> {
               ),
               const SizedBox(height: 4),
               Text(
-                'Unlock to reconnect to ${vm.activeServer?.displayName ?? "the last server"}',
+                l10n.biometricUnlockToReconnect(vm.activeServer?.displayName ?? l10n.biometricLastServerFallback),
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall,
               ),
               const SizedBox(height: 32),
               if (_failed)
-                const Padding(
-                  padding: EdgeInsets.only(bottom: 12),
-                  child: Text('Authentication failed or cancelled.', style: TextStyle(color: Colors.redAccent)),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Text(l10n.biometricAuthFailed, style: const TextStyle(color: Colors.redAccent)),
                 ),
               SizedBox(
                 width: double.infinity,
@@ -74,13 +77,13 @@ class _BiometricGateScreenState extends State<BiometricGateScreen> {
                   icon: _authenticating
                       ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
                       : const Icon(Icons.fingerprint),
-                  label: Text(_authenticating ? 'Waiting…' : 'Unlock'),
+                  label: Text(_authenticating ? l10n.biometricWaiting : l10n.biometricUnlock),
                 ),
               ),
               const SizedBox(height: 12),
               TextButton(
                 onPressed: _authenticating ? null : vm.cancelBiometricUnlock,
-                child: const Text('Sign out instead'),
+                child: Text(l10n.biometricSignOutInstead),
               ),
             ],
           ),

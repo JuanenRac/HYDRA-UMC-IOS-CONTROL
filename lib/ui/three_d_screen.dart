@@ -24,6 +24,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
+import '../l10n/app_localizations.dart';
 import '../state/robot_view_model.dart';
 
 class ThreeDScreen extends StatefulWidget {
@@ -45,18 +46,18 @@ class _ThreeDScreenState extends State<ThreeDScreen> {
     final token = vm.apiClient?.authToken;
 
     if (server == null || robotId == null) {
-      return const Center(child: Text('No robot selected', style: TextStyle(color: Colors.grey)));
+      return Center(child: Text(AppLocalizations.of(context)!.threedNoRobotSelected, style: const TextStyle(color: Colors.grey)));
     }
 
     final supported = !kIsWeb && (Platform.isIOS || Platform.isAndroid);
     if (!supported) {
-      return const Center(
+      return Center(
         child: Padding(
-          padding: EdgeInsets.all(24),
+          padding: const EdgeInsets.all(24),
           child: Text(
-            '3D view requires iOS or Android (WebView) - not available on this verification platform.',
+            AppLocalizations.of(context)!.threedUnsupportedPlatform,
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey),
+            style: const TextStyle(color: Colors.grey),
           ),
         ),
       );

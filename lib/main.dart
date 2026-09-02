@@ -9,8 +9,10 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show Clipboard, ClipboardData;
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 
+import 'l10n/app_localizations.dart';
 import 'state/robot_view_model.dart';
 import 'ui/biometric_gate_screen.dart';
 import 'ui/login_screen.dart';
@@ -25,9 +27,13 @@ import 'ui/main_screen.dart';
 final GlobalKey<ScaffoldMessengerState> _rootMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
 void _surfaceAsyncError(Object error) {
+  final context = _rootMessengerKey.currentContext;
+  final message = context != null
+      ? AppLocalizations.of(context)?.errorUnexpected('$error')
+      : null;
   _rootMessengerKey.currentState?.showSnackBar(
     SnackBar(
-      content: Text('Unexpected error: $error'),
+      content: Text(message ?? 'Unexpected error: $error'),
       backgroundColor: const Color(0xFFB91C1C),
       duration: const Duration(seconds: 6),
     ),
@@ -101,6 +107,11 @@ class _CrashScreenState extends State<_CrashScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // AppLocalizations may not be resolvable yet if this widget somehow
+    // renders before MaterialApp's own localization delegates are ready
+    // (a build failure in the very first frame) - fall back to the
+    // English literal rather than crashing the crash screen itself.
+    final l10n = AppLocalizations.of(context);
     return Container(
       color: const Color(0xFF07090C),
       alignment: Alignment.center,
@@ -110,10 +121,10 @@ class _CrashScreenState extends State<_CrashScreen> {
         children: [
           const Icon(Icons.warning_amber_rounded, color: Color(0xFFF43F5E), size: 48),
           const SizedBox(height: 12),
-          const Text(
-            'Something went wrong displaying this screen.',
+          Text(
+            l10n?.crashMessage ?? 'Something went wrong displaying this screen.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white),
+            style: const TextStyle(color: Colors.white),
           ),
           if (kDebugMode) ...[
             const SizedBox(height: 8),
@@ -132,7 +143,10 @@ class _CrashScreenState extends State<_CrashScreen> {
             child: TextButton.icon(
               onPressed: _copyDetails,
               icon: Icon(_copied ? Icons.check : Icons.copy, size: 16, color: _copied ? const Color(0xFF10B981) : Colors.white70),
-              label: Text(_copied ? 'Copied' : 'Copy error details', style: TextStyle(color: _copied ? const Color(0xFF10B981) : Colors.white70)),
+              label: Text(
+                _copied ? (l10n?.crashCopied ?? 'Copied') : (l10n?.crashCopyDetails ?? 'Copy error details'),
+                style: TextStyle(color: _copied ? const Color(0xFF10B981) : Colors.white70),
+              ),
             ),
           ),
         ],
@@ -148,21 +162,35 @@ class HydraUmcControlApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => RobotViewModel()..init(),
-      child: MaterialApp(
-        title: 'HYDRA-UMC Control',
-        scaffoldMessengerKey: _rootMessengerKey,
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          brightness: Brightness.dark,
-          scaffoldBackgroundColor: const Color(0xFF07090C),
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color(0xFF00E5FF),
+      child: Consumer<RobotViewModel>(
+        builder: (context, vm, _) => MaterialApp(
+          title: 'HYDRA-UMC Control',
+          scaffoldMessengerKey: _rootMessengerKey,
+          debugShowCheckedModeBanner: false,
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
+          // null lets Flutter resolve the OS locale itself against
+          // supportedLocales (falling back to English) - only set once the
+          // user has made an explicit choice in ui/settings_screen.dart,
+          // see state/robot_view_model.dart's own languageOverride.
+          locale: vm.languageOverride,
+          theme: ThemeData(
             brightness: Brightness.dark,
-            surface: const Color(0xFF12161C),
+            scaffoldBackgroundColor: const Color(0xFF07090C),
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: const Color(0xFF00E5FF),
+              brightness: Brightness.dark,
+              surface: const Color(0xFF12161C),
+            ),
+            useMaterial3: true,
           ),
-          useMaterial3: true,
+          home: const _RootGate(),
         ),
-        home: const _RootGate(),
       ),
     );
   }

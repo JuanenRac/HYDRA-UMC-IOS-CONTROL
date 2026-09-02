@@ -14,6 +14,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_localizations.dart';
 import '../models/hydra_state.dart';
 import '../state/robot_view_model.dart';
 import 'widgets/status_led.dart';
@@ -24,6 +25,7 @@ class DashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<RobotViewModel>();
+    final l10n = AppLocalizations.of(context)!;
     final robots = vm.robots;
     final metrics = vm.metrics;
 
@@ -32,7 +34,7 @@ class DashboardScreen extends StatelessWidget {
         if (metrics != null) _MetricsBar(metrics: metrics),
         Expanded(
           child: robots.isEmpty
-              ? const Center(child: Text('No robots reported by the server', style: TextStyle(color: Colors.grey)))
+              ? Center(child: Text(l10n.controlNoRobots, style: const TextStyle(color: Colors.grey)))
               : GridView.builder(
                   padding: const EdgeInsets.all(12),
                   gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
@@ -67,7 +69,10 @@ class _MetricsBar extends StatelessWidget {
           const SizedBox(width: 16),
           _stat(Icons.thermostat, '${metrics.temp.toStringAsFixed(0)}°C'),
           const Spacer(),
-          Text('uptime ${(metrics.uptime / 3600).toStringAsFixed(1)}h', style: const TextStyle(color: Colors.grey, fontSize: 11)),
+          Text(
+            AppLocalizations.of(context)!.dashboardUptime((metrics.uptime / 3600).toStringAsFixed(1)),
+            style: const TextStyle(color: Colors.grey, fontSize: 11),
+          ),
         ],
       ),
     );
@@ -97,6 +102,7 @@ class _RobotCard extends StatelessWidget {
     // project owner's preference for reading "combined with" from the
     // follower rather than duplicating it on the leader too.
     final leaders = allRobots.where((other) => other.id != robot.id && other.combinedWith.contains(robot.id)).toList();
+    final l10n = AppLocalizations.of(context)!;
 
     return Card(
       color: robot.online ? const Color(0xFF12161C) : const Color(0xFF0A0C10),
@@ -120,13 +126,13 @@ class _RobotCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(color: const Color(0xFF10B981).withValues(alpha: 0.2), borderRadius: BorderRadius.circular(6)),
-                    child: const Text('RUNNING', style: TextStyle(fontSize: 9, color: Color(0xFF10B981), fontWeight: FontWeight.bold)),
+                    child: Text(l10n.dashboardRunning, style: const TextStyle(fontSize: 9, color: Color(0xFF10B981), fontWeight: FontWeight.bold)),
                   ),
               ],
             ),
-            Text('Role: ${robot.role}', style: const TextStyle(color: Colors.grey, fontSize: 11)),
+            Text(l10n.dashboardRole(robot.role), style: const TextStyle(color: Colors.grey, fontSize: 11)),
             if (leaders.isNotEmpty)
-              Text('Combined With: ${leaders.map((r) => r.name).join(', ')}', style: const TextStyle(color: Colors.amber, fontSize: 11)),
+              Text(l10n.dashboardCombinedWith(leaders.map((r) => r.name).join(', ')), style: const TextStyle(color: Colors.amber, fontSize: 11)),
             const SizedBox(height: 6),
             Text(robot.model, style: const TextStyle(color: Colors.white70, fontSize: 12)),
             Text(robot.manufacturer, style: const TextStyle(color: Color(0xFF00E5FF), fontSize: 11)),

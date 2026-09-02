@@ -7,6 +7,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_localizations.dart';
 import '../state/robot_view_model.dart';
 import 'widgets/mjpeg_view.dart';
 
@@ -23,9 +24,10 @@ class _CameraScreenState extends State<CameraScreen> {
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<RobotViewModel>();
+    final l10n = AppLocalizations.of(context)!;
     final robots = vm.robots;
     if (robots.isEmpty) {
-      return const Center(child: Text('No robots reported by the server', style: TextStyle(color: Colors.grey)));
+      return Center(child: Text(l10n.controlNoRobots, style: const TextStyle(color: Colors.grey)));
     }
     _selectedId ??= robots.first.id;
     final robot = robots.firstWhere((r) => r.id == _selectedId, orElse: () => robots.first);
@@ -37,9 +39,9 @@ class _CameraScreenState extends State<CameraScreen> {
         children: [
           DropdownButtonFormField<dynamic>(
             initialValue: robot.id,
-            decoration: const InputDecoration(labelText: 'Camera', border: OutlineInputBorder(), isDense: true),
+            decoration: InputDecoration(labelText: l10n.cameraLabel, border: const OutlineInputBorder(), isDense: true),
             items: robots
-                .map((r) => DropdownMenuItem(value: r.id, child: Text('${r.name}${r.hasCamera ? '' : ' (disabled)'}')))
+                .map((r) => DropdownMenuItem(value: r.id, child: Text('${r.name}${r.hasCamera ? '' : l10n.cameraDisabledSuffix}')))
                 .toList(),
             onChanged: (id) => setState(() => _selectedId = id),
           ),
@@ -48,7 +50,7 @@ class _CameraScreenState extends State<CameraScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                robot.hasCamera ? 'Camera Enabled' : 'Camera Disabled',
+                robot.hasCamera ? l10n.cameraEnabled : l10n.cameraDisabled,
                 style: TextStyle(color: robot.hasCamera ? const Color(0xFF4CAF50) : const Color(0xFFEF5350), fontWeight: FontWeight.bold),
               ),
               Switch(
@@ -67,11 +69,11 @@ class _CameraScreenState extends State<CameraScreen> {
                   : Center(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
-                        children: const [
-                          Icon(Icons.videocam_off, color: Colors.grey, size: 48),
-                          SizedBox(height: 8),
-                          Text('Camera Disabled', style: TextStyle(color: Colors.grey)),
-                          Text('Use the switch above to enable it on the server', style: TextStyle(color: Colors.white38, fontSize: 12)),
+                        children: [
+                          const Icon(Icons.videocam_off, color: Colors.grey, size: 48),
+                          const SizedBox(height: 8),
+                          Text(l10n.cameraDisabled, style: const TextStyle(color: Colors.grey)),
+                          Text(l10n.cameraUseSwitch, style: const TextStyle(color: Colors.white38, fontSize: 12)),
                         ],
                       ),
                     ),

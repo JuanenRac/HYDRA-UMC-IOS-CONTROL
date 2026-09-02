@@ -9,6 +9,32 @@ Version numbers below follow the ecosystem-wide auto-bump policy described in
 pre-policy version `0.0.0+1` the repo carried while the policy did not yet
 exist.
 
+## [0.0.9]
+
+- **Full 7-language UI localization** - this app had no `intl`/
+  `flutter_localizations` at all before this release; every screen showed
+  hardcoded English regardless of device locale, unlike the rest of the
+  ecosystem's UIs (STUDIO, SUITE, ANDROID-CONTROL, WATCH, UPDATER). Added
+  the standard `flutter gen-l10n` pipeline (`lib/l10n/app_*.arb`, one real
+  translation per key - Spanish, French, German, Italian, Japanese, Chinese,
+  no placeholders) covering every screen's chrome, dialogs, tooltips and
+  navigation labels, plus a persisted language override
+  (`Settings > Language`, `LanguagePrefs` via `shared_preferences`) that
+  defaults to the OS locale when unset.
+- **Business-logic error messages now localizable too**: `RobotViewModel.
+  lastError` was a raw English `String` built inside a `ChangeNotifier` with
+  no `BuildContext` to localize from. Replaced with a typed `HydraError`
+  (kind + raw parameters, never pre-formatted text) that the UI layer
+  resolves via `AppLocalizations` only when it actually renders a message -
+  `hydra_websocket.dart`'s two client-side connection-failure literals are
+  now localized the same way, while a server-relayed WS error message is
+  correctly left untouched (already resolved server-side, not this app's
+  text to translate).
+- Real test coverage: `test/localization_test.dart` builds an actual widget
+  tree under `Locale('es')`/`Locale('ja')` and asserts on the resolved
+  strings and interpolated placeholders, not just that the English default
+  still renders.
+
 ## [0.0.8] - Debounced the speed/acceleration slider's real network send
 
 - **`lib/state/robot_view_model.dart`** - `setSpeed()` now debounces its

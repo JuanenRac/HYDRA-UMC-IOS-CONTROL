@@ -9,6 +9,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_localizations.dart';
 import '../models/server_info.dart';
 import '../network/discovery.dart';
 import '../state/robot_view_model.dart';
@@ -50,6 +51,7 @@ class _LoginScreenState extends State<LoginScreen> {
   /// [ServerInfo.connectionId] since a server both paths agree on would
   /// otherwise show up twice.
   Future<void> _openScanSheet() async {
+    final l10n = AppLocalizations.of(context)!;
     final found = <ServerInfo>[];
     final foundNotifier = ValueNotifier<List<ServerInfo>>(const []);
     var mdnsDone = false;
@@ -108,7 +110,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     Expanded(
                       child: Text(
-                        'Scanning local network…',
+                        l10n.loginScanTitle,
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                     ),
@@ -132,7 +134,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           builder: (context, isScanning, _) => Padding(
                             padding: const EdgeInsets.symmetric(vertical: 24),
                             child: Text(
-                              isScanning ? 'Looking for HYDRA-UMC STUDIO servers…' : 'No servers found on this network.',
+                              isScanning ? l10n.loginScanSearching : l10n.loginScanNoneFound,
                               textAlign: TextAlign.center,
                               style: Theme.of(context).textTheme.bodyMedium,
                             ),
@@ -183,6 +185,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<RobotViewModel>();
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       body: Center(
         child: SingleChildScrollView(
@@ -199,7 +202,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900, letterSpacing: 2),
                 ),
                 const SizedBox(height: 4),
-                Text('Sign in to a HYDRA-UMC STUDIO server', style: Theme.of(context).textTheme.bodySmall),
+                Text(l10n.loginSubtitle, style: Theme.of(context).textTheme.bodySmall),
                 const SizedBox(height: 32),
                 Row(
                   children: [
@@ -207,7 +210,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       flex: 3,
                       child: TextField(
                         controller: _hostCtrl,
-                        decoration: const InputDecoration(labelText: 'Server IP', border: OutlineInputBorder()),
+                        decoration: InputDecoration(labelText: l10n.loginServerIp, border: const OutlineInputBorder()),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -216,7 +219,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: TextField(
                         controller: _portCtrl,
                         keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(labelText: 'Port', border: OutlineInputBorder()),
+                        decoration: InputDecoration(labelText: l10n.loginPort, border: const OutlineInputBorder()),
                       ),
                     ),
                   ],
@@ -227,25 +230,25 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: TextButton.icon(
                     onPressed: _isSubmitting ? null : _openScanSheet,
                     icon: const Icon(Icons.wifi_find, size: 18),
-                    label: const Text('Scan local network'),
+                    label: Text(l10n.loginScanNetwork),
                   ),
                 ),
                 const SizedBox(height: 4),
                 TextField(
                   controller: _userCtrl,
-                  decoration: const InputDecoration(labelText: 'Username', border: OutlineInputBorder()),
+                  decoration: InputDecoration(labelText: l10n.loginUsername, border: const OutlineInputBorder()),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: _passCtrl,
                   obscureText: true,
-                  decoration: const InputDecoration(labelText: 'Password', border: OutlineInputBorder()),
+                  decoration: InputDecoration(labelText: l10n.loginPassword, border: const OutlineInputBorder()),
                 ),
                 const SizedBox(height: 24),
-                if (vm.lastError.isNotEmpty)
+                if (vm.lastError != null)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 12),
-                    child: Text(vm.lastError, style: const TextStyle(color: Colors.redAccent)),
+                    child: Text(vm.lastError!.localize(l10n), style: const TextStyle(color: Colors.redAccent)),
                   ),
                 SizedBox(
                   width: double.infinity,
@@ -254,7 +257,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     icon: _isSubmitting
                         ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
                         : const Icon(Icons.login),
-                    label: Text(_isSubmitting ? 'Signing in…' : 'Sign In'),
+                    label: Text(_isSubmitting ? l10n.loginSigningIn : l10n.loginSignIn),
                   ),
                 ),
               ],

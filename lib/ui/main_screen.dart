@@ -7,6 +7,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/app_localizations.dart';
+import '../state/hydra_error.dart';
 import '../state/robot_view_model.dart';
 import 'camera_screen.dart';
 import 'control_screen.dart';
@@ -24,7 +26,7 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _index = 0;
   RobotViewModel? _vm;
-  String _lastShownError = '';
+  HydraError? _lastShownError;
 
   static const _screens = [
     DashboardScreen(),
@@ -60,18 +62,33 @@ class _MainScreenState extends State<MainScreen> {
   /// through.
   void _onVmChanged() {
     if (!mounted) return;
-    final err = _vm?.lastError ?? '';
-    if (err.isNotEmpty && err != _lastShownError) {
+    final err = _vm?.lastError;
+    if (err != null && !identical(err, _lastShownError)) {
       _lastShownError = err;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(err), backgroundColor: const Color(0xFFB91C1C)),
+        SnackBar(content: Text(err.localize(AppLocalizations.of(context)!)), backgroundColor: const Color(0xFFB91C1C)),
       );
+    }
+  }
+
+  static String _connectionStatusLabel(AppLocalizations l10n, String status) {
+    switch (status) {
+      case 'connected':
+        return l10n.connStatusConnected;
+      case 'connecting':
+        return l10n.connStatusConnecting;
+      case 'error':
+        return l10n.connStatusError;
+      case 'disconnected':
+      default:
+        return l10n.connStatusDisconnected;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<RobotViewModel>();
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
         title: Text(vm.activeServer?.displayName ?? 'HYDRA-UMC CONTROL'),
@@ -80,7 +97,7 @@ class _MainScreenState extends State<MainScreen> {
             padding: const EdgeInsets.only(right: 16),
             child: Center(
               child: Text(
-                vm.connectionStatus.toUpperCase(),
+                _connectionStatusLabel(l10n, vm.connectionStatus).toUpperCase(),
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
@@ -95,12 +112,12 @@ class _MainScreenState extends State<MainScreen> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
         onDestinationSelected: (i) => setState(() => _index = i),
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.dashboard), label: 'Dashboard'),
-          NavigationDestination(icon: Icon(Icons.gamepad), label: 'Control'),
-          NavigationDestination(icon: Icon(Icons.videocam), label: 'Camera'),
-          NavigationDestination(icon: Icon(Icons.view_in_ar), label: '3D'),
-          NavigationDestination(icon: Icon(Icons.settings), label: 'Settings'),
+        destinations: [
+          NavigationDestination(icon: const Icon(Icons.dashboard), label: l10n.navDashboard),
+          NavigationDestination(icon: const Icon(Icons.gamepad), label: l10n.navControl),
+          NavigationDestination(icon: const Icon(Icons.videocam), label: l10n.navCamera),
+          NavigationDestination(icon: const Icon(Icons.view_in_ar), label: l10n.nav3d),
+          NavigationDestination(icon: const Icon(Icons.settings), label: l10n.navSettings),
         ],
       ),
     );

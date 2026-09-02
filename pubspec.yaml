@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 0.0.8+7
+version: 0.0.9+7
 environment:
   sdk: ^3.13.0
 
@@ -40,6 +40,9 @@ dependencies:
   provider: ^6.1.5+1
   multicast_dns: ^0.3.3+1
   local_auth: ^3.0.2
+  flutter_localizations:
+    sdk: flutter
+  intl: ^0.20.2
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -63,6 +66,12 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  # Generates lib/l10n/app_localizations.dart from lib/l10n/app_*.arb (see
+  # l10n.yaml) via `flutter gen-l10n` - the standard Flutter localization
+  # pipeline, same 7 languages (en/es/fr/de/it/ja/zh) every other client in
+  # this ecosystem already ships.
+  generate: true
 
   # To add assets to your application, add an assets section, like this:
   # assets:
