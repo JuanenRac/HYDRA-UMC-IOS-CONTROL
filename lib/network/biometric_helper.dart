@@ -12,8 +12,8 @@
 // app never stores a raw password at all, only a bearer token - see
 // auth_prefs.dart), so here it gates restoring an already-valid saved
 // session on launch instead (see state/robot_view_model.dart's own
-// init()/unlockWithBiometrics()) - same "reforzar el login" goal from
-// mejoras_futuras.txt, adapted to what this app actually persists.
+// init()/unlockWithBiometrics()) - same "strengthen the login" goal,
+// adapted to what this app actually persists.
 // biometricOnly: true mirrors Android's BIOMETRIC_STRONG|BIOMETRIC_WEAK
 // (no device-credential/passcode fallback allowed) as closely as
 // local_auth's own cross-platform API allows.

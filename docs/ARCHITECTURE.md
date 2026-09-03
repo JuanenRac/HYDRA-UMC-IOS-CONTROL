@@ -64,18 +64,25 @@ under-documents relative to what it actually does).
 for `/ws` - both dependency-light, well-maintained pub.dev packages
 rather than hand-rolled socket code.
 
-**Discovery:** `lib/network/discovery.dart` does a concurrent scan of
-`GET /api/hydra-info` across this device's own real local subnet(s) -
-derived from `dart:io`'s `NetworkInterface.list()` rather than a single
-hardcoded guess, since a phone's LAN is just as likely to be
-`192.168.0.x` or `10.x.x.x` as `192.168.1.x`. `192.168.1.x` is kept only
-as a last-resort fallback if interface enumeration itself comes back
-empty. Same overall approach HYDRA-UMC SUITE's own `discovery.py` and
-HYDRA-UMC-ANDROID-CONTROL's own `Discovery.kt` use. HYDRA-UMC-SERVER's
-`server.ts` also publishes a real `_hydra._tcp` Bonjour service; real mDNS support here
-(Apple's own `Network.framework`/`NWBrowser` via a Flutter plugin, or the
-`multicast_dns` pub.dev package) is a documented future improvement, not
-implemented yet - see `mejoras_futuras.txt`.
+**Discovery:** `lib/network/discovery.dart` runs two independent paths at
+once from the same "Scan local network" sheet in `login_screen.dart`:
+`discoverMdns()` queries the real `_hydra._tcp.local` mDNS/Bonjour service
+`server.ts` publishes (via the `multicast_dns` pub.dev package), and
+`scanSubnets()` is a concurrent brute-force `GET /api/hydra-info` sweep
+across this device's own real local subnet(s) - derived from `dart:io`'s
+`NetworkInterface.list()` rather than a single hardcoded guess, since a
+phone's LAN is just as likely to be `192.168.0.x` or `10.x.x.x` as
+`192.168.1.x`. `192.168.1.x` is kept only as a last-resort fallback if
+interface enumeration itself comes back empty. This app is the first of
+the ecosystem's 3 remote clients to add real mDNS - HYDRA-UMC SUITE's own
+`discovery.py` and HYDRA-UMC-ANDROID-CONTROL's own `Discovery.kt` still
+only scan subnets - added additively, without dropping the subnet-scan
+fallback either of them still relies on: iOS silently drops multicast
+*receive* for any app without Apple's dedicated Multicast Networking
+entitlement (not something a plain `flutter build ios` grants for free),
+so `discoverMdns()` failing quietly on an unentitled iOS build is expected
+behavior, not a bug - `scanSubnets()` keeps working independently either
+way.
 
 ## 3. Bluetooth transport - not built, and not planned until server-side support exists
 

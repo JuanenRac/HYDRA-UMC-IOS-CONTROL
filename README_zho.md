@@ -34,7 +34,8 @@
 ## 🏗️ 已实现的功能
 
 - **登录**（`lib/ui/login_screen.dart`、`lib/state/robot_view_model.dart`）—— 可编辑的服务器 IP/端口和操作员凭据字段，加上 `POST /api/login`；不会预填账户或密码。生产服务器必须为首个管理员显式配置引导凭据；可在浏览器界面的 Config > Users 中创建额外的低权限“操作员”账户。会话令牌通过 `shared_preferences` 在多次启动之间持久化。“扫描本地网络”按钮（`lib/network/discovery.dart`）无需用户预先知道 IP 即可找到服务器。
-- **网络发现**（`lib/network/discovery.dart`）—— 针对本设备自身真实本地子网的并发扫描 `GET /api/hydra-info`,该子网通过 `dart:io` 的 `NetworkInterface.list()` 推导,而非单一的硬编码猜测,因为手机的局域网同样可能是 `192.168.0.x` 或 `10.x.x.x`,而不一定是 `192.168.1.x`。仅当接口枚举本身返回为空时,才回退到 `192.168.1.x`。
+- **网络发现**（`lib/network/discovery.dart`）—— 从同一个“扫描本地网络”面板同时运行两条独立路径：真实的 mDNS/Bonjour（`discoverMdns()`，通过 `multicast_dns` 包查询 `server.ts` 发布的 `_hydra._tcp.local` 服务——本应用是本生态系统 3 个远程客户端中第一个加入该能力的）,以及针对本设备自身真实本地子网的并发暴力扫描 `GET /api/hydra-info`（`scanSubnets()`，该子网通过 `dart:io` 的 `NetworkInterface.list()` 推导,而非单一的硬编码猜测,因为手机的局域网同样可能是 `192.168.0.x` 或 `10.x.x.x`,而不一定是 `192.168.1.x`,仅当接口枚举本身返回为空时才回退到 `192.168.1.x`）。在未获得相应权限的 iOS 构建上，mDNS 静默失败是预期行为（Apple 的 Multicast Networking 权限并非普通 `flutter build ios` 就能获得）——无论如何，子网扫描都会独立继续工作。
+- **生物识别登录锁**（`lib/network/biometric_helper.dart`、`lib/ui/biometric_gate_screen.dart`）—— 通过 `package:local_auth` 实现的 Face ID/Touch ID/Windows Hello，`Settings` 中的一个可选开关，用于在启动时保护已保存有效会话的恢复过程（本应用从不保存明文密码，只保存令牌——相较 HYDRA-UMC-ANDROID-CONTROL 自身的密码重填设计，针对这一差异做了适配）。
 - **原子化指令同步**（`lib/state/robot_view_model.dart` 自身的 `_sendAtomicCommand()`）—— 每一次写入（启用/禁用/播放/暂停/停止/点动/阀门/泵/速度/视觉）都使用真实的 `POST /api/robot/:id/command` 端点,发送一个小型的定向负载,而非覆盖整棵设置树,并对需要它的 5 种指令进行正确的合并机器人（`combinedWith`）传播。
 - **实时 WebSocket 同步**（`lib/network/hydra_websocket.dart`）—— 始终在连接 URL 中附加 `?token=`（`server.ts` 自身的 `/ws` 升级请求无条件地要求它）,同时处理 `"settings"` 和 `"delta"` 两种广播类型,断线后自动重连。
 - **仪表盘**（`lib/ui/dashboard_screen.dart`）—— 每机器人卡片,通过 `Provider` 自身的 `ChangeNotifier` 实时响应,LED 惯例（绿色脉冲=活动,红色常亮=非活动）,以及合并机器人显示（仅在从属方一侧显示,按 id 解析）,与 HYDRA-UMC-STUDIO 自身的仪表盘概览一致。
@@ -221,6 +222,7 @@ HYDRA-UMC-IOS-CONTROL/
 
 ## 📚 文档与社区
 
+- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** —— 本应用与 `server.ts` 之间的 Wi-Fi 传输契约（逐个端点说明）、为何目前仍没有蓝牙路径、真实的双路径发现机制，以及本应用与生态系统其余部分的关系。
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** —— 提交 Pull Request 所需的技术栈和编码规范。
 - **[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)** —— 本社区所期望的行为准则。
 - **[SECURITY.md](SECURITY.md)** —— 如何报告漏洞，以及本项目真实的安全关注重点。
