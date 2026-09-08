@@ -87,6 +87,7 @@
   "errUnknownCommand": "不明なコマンド: {command}",
   "errWsConnectionLost": "WebSocket接続が切断されました: {error}",
   "errWsConnectFailed": "WebSocket接続に失敗しました: {error}",
+  "errWsAuthRejected": "セッションが認証されていません。再度ログインしてください",
   "errVoiceAssistantFailed": "音声アシスタントへのリクエストに失敗しました: {error}",
 
   "settingsLanguage": "言語",

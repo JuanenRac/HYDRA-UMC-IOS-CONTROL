@@ -7,6 +7,24 @@ Version numbers below follow the ecosystem-wide auto-bump policy described in
 pre-policy version `0.0.0+1` the repo carried while the policy did not yet
 exist.
 
+## [0.1.6] - A rejected session token no longer retries forever, silently
+
+`network/hydra_websocket.dart`'s `onDone` always rescheduled a reconnect,
+unconditionally - a real gap found in an ecosystem-wide audit: server.ts
+closes the `/ws` upgrade with RFC 6455 code 1008 for a missing/invalid/
+expired token and never sends a message frame first (the connection is
+rejected before any data can flow), so the existing `{"error": "..."}`
+message check could never catch this case. The app just spun forever in
+"connecting" -> "disconnected" against a token the server will never
+accept again, with no visible error and no path back to the login screen.
+Now checks the real close code and, on a 1008, stops retrying and surfaces
+a new, localized `wsAuthRejected` error (all 7 languages) that
+`RobotViewModel` treats the same as a server-relayed "denied"/"token"
+message: force logout, disconnect. Same fix ported to HYDRA-UMC-DSI's own
+copy of this file. Real end-to-end regression test against a real local
+WebSocket server (`test/hydra_websocket_reconnect_test.dart`), asserting
+both the error and that no second connection attempt is ever made.
+
 ## [0.1.5] - In-app voice/text assistant button
 
 New mic icon in the app bar opens VoiceAssistantDialog: type a question or

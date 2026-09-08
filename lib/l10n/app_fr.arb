@@ -87,6 +87,7 @@
   "errUnknownCommand": "Commande inconnue : {command}",
   "errWsConnectionLost": "Connexion WebSocket perdue : {error}",
   "errWsConnectFailed": "Échec de connexion WebSocket : {error}",
+  "errWsAuthRejected": "Session non autorisée : reconnectez-vous",
   "errVoiceAssistantFailed": "Échec de la demande à l'assistant vocal : {error}",
 
   "settingsLanguage": "Langue",
