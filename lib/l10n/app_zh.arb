@@ -87,6 +87,7 @@
   "errUnknownCommand": "未知命令：{command}",
   "errWsConnectionLost": "WebSocket 连接已断开：{error}",
   "errWsConnectFailed": "WebSocket 连接失败：{error}",
+  "errWsAuthRejected": "会话未授权，请重新登录",
   "errVoiceAssistantFailed": "语音助手请求失败：{error}",
 
   "settingsLanguage": "语言",

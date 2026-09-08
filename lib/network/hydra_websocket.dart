@@ -29,6 +29,11 @@ enum WsStatus { connecting, connected, disconnected }
 
 const Duration reconnectDelay = Duration(seconds: 3);
 
+/// RFC 6455 close code the server sends for a missing/invalid/expired
+/// auth token (server.ts's own /ws upgrade check) - same constant name
+/// as HYDRA-UMC-ANDROID-CONTROL's own HydraWebSocket.kt.
+const int wsClosePolicyViolation = 1008;
+
 class HydraWebSocket {
   final String host;
   final int port;
@@ -97,6 +102,23 @@ class HydraWebSocket {
         (raw) => _handleMessage(raw as String),
         onDone: () {
           onStatus(WsStatus.disconnected);
+          // Real bug fixed 2026-09-08: this used to always reconnect here,
+          // unconditionally - unlike HYDRA-UMC-ANDROID-CONTROL's own
+          // HydraWebSocket.kt, which already checks the real close code.
+          // server.ts closes the /ws upgrade with exactly this code for a
+          // missing/invalid/expired token and never sends a message frame
+          // first (the connection is rejected before any data can flow),
+          // so _handleMessage()'s own {"error": "..."} check can never
+          // catch this case - retrying the same rejected token every
+          // reconnectDelay forever just spun in "connecting" ->
+          // "disconnected" with no visible error and no path back to the
+          // login screen.
+          if (channel.closeCode == wsClosePolicyViolation) {
+            _closingByUser = true;
+            onError(const HydraError(HydraErrorKind.wsAuthRejected));
+            _channel = null;
+            return;
+          }
           _channel = null;
           _scheduleReconnect();
         },
