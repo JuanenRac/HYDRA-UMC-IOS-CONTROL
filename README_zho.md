@@ -114,7 +114,7 @@ HYDRA-UMC-IOS-CONTROL/
 │   └── ui/
 │       ├── login_screen.dart        # 主机/端口/用户/密码字段 + “扫描本地网络”
 │       ├── biometric_gate_screen.dart # Face ID/Touch ID 待处理时由 main.dart 的 _RootGate 显示
-│       ├── main_screen.dart         # 底部导航外壳（仪表盘/控制/摄像头/3D/设置）
+│       ├── main_screen.dart         # 底部导航外壳（仪表盘/控制/摄像头/3D/遥测/设置）
 │       ├── dashboard_screen.dart    # 每机器人卡片 + 系统指标栏
 │       ├── control_screen.dart      # 点动/速度/阀门/泵/回放控制
 │       ├── camera_screen.dart       # MJPEG 查看器 + 视觉开关
