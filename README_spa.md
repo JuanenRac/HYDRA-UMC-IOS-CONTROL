@@ -124,7 +124,7 @@ HYDRA-UMC-IOS-CONTROL/
 │   └── ui/
 │       ├── login_screen.dart        # Campos de host/puerto/usuario/pass + "Scan local network"
 │       ├── biometric_gate_screen.dart # Mostrada por _RootGate de main.dart mientras Face ID/Touch ID está pendiente
-│       ├── main_screen.dart         # Contenedor de navegacion inferior (Dashboard/Control/Camara/3D/Ajustes)
+│       ├── main_screen.dart         # Contenedor de navegacion inferior (Dashboard/Control/Camara/3D/Telemetria/Ajustes)
 │       ├── dashboard_screen.dart    # Tarjetas por robot + barra de metricas del sistema
 │       ├── control_screen.dart      # Controles de jog/velocidad/valvula/bomba/reproduccion
 │       ├── camera_screen.dart       # Visor MJPEG + interruptor de vision on/off

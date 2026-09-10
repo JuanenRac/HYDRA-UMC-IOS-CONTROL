@@ -10,7 +10,7 @@ exist.
 ## [0.1.6] - A rejected session token no longer retries forever, silently
 
 `network/hydra_websocket.dart`'s `onDone` always rescheduled a reconnect,
-unconditionally - a real gap found in an ecosystem-wide audit: server.ts
+unconditionally - a real gap: server.ts
 closes the `/ws` upgrade with RFC 6455 code 1008 for a missing/invalid/
 expired token and never sends a message frame first (the connection is
 rejected before any data can flow), so the existing `{"error": "..."}`
@@ -53,7 +53,7 @@ shape, the client-identity header, and a real server-error path.
 
 ## [0.1.4] - V07-015: a failed logout or a half-written session could resurrect an old token
 
-Same real fix as HYDRA-UMC-DSI's own `AuthPrefs`, found the same day by
+Same real fix as HYDRA-UMC-DSI's own `AuthPrefs`, found by
 static inspection of both files: `clearToken()` caught a failed
 secure-storage `delete()` and only logged it, so a real logout could
 return successfully while the old token was still sitting in secure
@@ -73,9 +73,9 @@ whatever it did manage to write if a later step in the same call fails.
 
 ## [0.1.3] - REV-012: real regression found by independent revalidation
 
-An independent revalidation audit reproduced a real gap in v0.1.2's own
+An independent revalidation reproduced a real gap in v0.1.2's own
 IOS-01 fix (against a real fake `SecureTokenBackend`, no real platform
-channel) - the exact same shape of bug the same audit also found and
+channel) - the exact same shape of bug also found and
 fixed in HYDRA-UMC-DSI's own `auth_prefs.dart` (REV-011):
 
 - **REV-012 [P1]:** `saveToken()` wrapped every secure-storage write so a
@@ -102,7 +102,7 @@ fixed in HYDRA-UMC-DSI's own `auth_prefs.dart` (REV-011):
 
 ## [0.1.2] - IOS-01: real secure storage for the session token
 
-- **IOS-01 (found in an ecosystem-wide software-improvements audit, P1):**
+- **IOS-01 (P1):**
   the session token lived in the same plain `SharedPreferences` file as
   host/port and the biometric-enabled flag - a plain, unencrypted store
   (`NSUserDefaults` on iOS is included in a normal device backup). A
@@ -121,8 +121,8 @@ fixed in HYDRA-UMC-DSI's own `auth_prefs.dart` (REV-011):
   backend (no real platform channel). Same fix and design as
   HYDRA-UMC-DSI's own `network/auth_prefs.dart` (ported, not reinvented -
   both files started identical per this file's own header).
-- **New `test/hydra_websocket_reconnect_test.dart`** (5 tests) - found in
-  an ecosystem-wide software-improvements audit: `network/hydra_websocket.dart`'s
+- **New `test/hydra_websocket_reconnect_test.dart`** (5 tests):
+  `network/hydra_websocket.dart`'s
   real reconnection logic had no dedicated test - the one related test
   file (`websocket_uri_test.dart`) only covers URI construction
   (`buildConnectionUri()`), not the reconnect cycle itself. Real
