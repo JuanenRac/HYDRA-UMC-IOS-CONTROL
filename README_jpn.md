@@ -95,7 +95,8 @@ HYDRA-UMC-IOS-CONTROL/
 │   ├── app_version.dart             # 生成物——tool/bump_version.dart によって再生成される、手動編集禁止
 │   ├── models/
 │   │   ├── server_info.dart         # 発見/接続エントリ——他の 2 つのクライアントの ServerInfo をミラーリング
-│   │   └── hydra_state.dart         # RobotView/ControllerView/HydraState——生の settings.json ツリーに対する薄い可変ビュー
+│   │   ├── hydra_state.dart         # RobotView/ControllerView/HydraState——生の settings.json ツリーに対する薄い可変ビュー
+│   │   └── assistant_reply.dart    # アプリ内音声アシスタントの返信モデル
 │   ├── network/
 │   │   ├── hydra_api_client.dart    # REST：ログイン、設定、原子的ロボット指令、システム指標
 │   │   ├── hydra_websocket.dart     # /ws リアルタイム同期クライアント
@@ -128,7 +129,7 @@ HYDRA-UMC-IOS-CONTROL/
 ├── ios/                              # Xcode プロジェクト（macOS からのみビルド可能）
 ├── windows/                          # Windows デスクトップターゲット——Mac なしでのビルド検証
 ├── docs/ARCHITECTURE.md
-├── test/                             # widget_test、websocket_uri_test、format_uptime_test、localization_test、state_cache_test、telemetry_log_test
+├── test/                             # widget_test、auth_prefs_test、websocket_uri_test、hydra_websocket_reconnect_test、format_uptime_test、localization_test、state_cache_test、telemetry_log_test、voice_turn_test
 ├── images/
 ├── README.md                         # 本ファイル
 └── README_spa.md / README_ita.md / README_fra.md / README_deu.md / README_zho.md / README_jpn.md  # 翻訳

@@ -105,7 +105,8 @@ HYDRA-UMC-IOS-CONTROL/
 │   ├── app_version.dart             # GENERADO - regenerado por tool/bump_version.dart, no editar a mano
 │   ├── models/
 │   │   ├── server_info.dart         # Entrada de descubrimiento/conexion - refleja ServerInfo de los otros 2 clientes
-│   │   └── hydra_state.dart         # RobotView/ControllerView/HydraState - vistas mutables finas sobre el arbol crudo de settings.json
+│   │   ├── hydra_state.dart         # RobotView/ControllerView/HydraState - vistas mutables finas sobre el arbol crudo de settings.json
+│   │   └── assistant_reply.dart    # modelo de respuesta del asistente de voz integrado
 │   ├── network/
 │   │   ├── hydra_api_client.dart    # REST: login, settings, comando atomico de robot, metricas del sistema
 │   │   ├── hydra_websocket.dart     # Cliente de sincronizacion en vivo por /ws
@@ -138,7 +139,7 @@ HYDRA-UMC-IOS-CONTROL/
 ├── ios/                              # Proyecto Xcode (compilar solo desde macOS)
 ├── windows/                          # Target de escritorio Windows - verificacion de build sin un Mac
 ├── docs/ARCHITECTURE.md
-├── test/                             # widget_test, websocket_uri_test, format_uptime_test, localization_test, state_cache_test, telemetry_log_test
+├── test/                             # widget_test, auth_prefs_test, websocket_uri_test, hydra_websocket_reconnect_test, format_uptime_test, localization_test, state_cache_test, telemetry_log_test, voice_turn_test
 ├── images/
 ├── README.md                         # este archivo (ingles)
 └── README_spa.md / README_ita.md / README_fra.md / README_deu.md / README_zho.md / README_jpn.md  # traducciones
