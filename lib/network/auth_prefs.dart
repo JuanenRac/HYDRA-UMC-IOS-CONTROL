@@ -9,7 +9,7 @@
 // appropriate store for them. The session token itself is handled
 // separately below.
 //
-// IOS-01 (found in an ecosystem-wide software-improvements audit, P1): the
+// IOS-01 (P1): the
 // session token used to live in the exact same SharedPreferences file as
 // host/port - a plain, unencrypted store (on iOS, `NSUserDefaults` is
 // included in a normal device backup; on Windows, a plain JSON file). A
@@ -19,7 +19,7 @@
 // `flutter_secure_storage` (real Keychain on iOS, DPAPI-backed encrypted
 // storage on Windows - this app's two real deployment targets).
 //
-// REV-012 (found in an independent revalidation audit, P1): IOS-01 above
+// REV-012 (P1): IOS-01 above
 // wrapped every secure call so a failure fell back to writing the token in
 // PLAIN SharedPreferences - the exact failure of the protection mechanism
 // itself silently removing the guarantee it was meant to provide. A device
@@ -34,7 +34,7 @@
 // successfully read back - that is reading pre-existing legacy data, not
 // a new plaintext write.
 //
-// V07-015 (found in an independent revalidation audit, P1): two real
+// V07-015 (P1): two real
 // gaps found by static inspection of the two functions below. First,
 // `clearToken()` caught a failed secure-storage `delete()` and just
 // logged it - a real logout could return successfully while the old
