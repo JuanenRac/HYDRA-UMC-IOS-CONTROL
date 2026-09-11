@@ -42,7 +42,12 @@ class SystemMetrics {
 }
 
 class RobotViewModel extends ChangeNotifier {
-  final AuthPrefs _authPrefs = AuthPrefs();
+  // C08: injectable so login() / _attemptTokenRefresh() / logout() get real
+  // test coverage against a fake AuthPrefs backed by a fake SecureTokenBackend,
+  // the same pattern HYDRA-UMC-DSI's own RobotViewModel already uses.
+  RobotViewModel({AuthPrefs? authPrefs}) : _authPrefs = authPrefs ?? AuthPrefs();
+
+  final AuthPrefs _authPrefs;
   final BiometricHelper _biometricHelper = BiometricHelper();
   final LanguagePrefs _languagePrefs = LanguagePrefs();
   final StateCache _stateCache = StateCache();
@@ -254,7 +259,12 @@ class RobotViewModel extends ChangeNotifier {
       isLoggedIn = true;
       activeServer = server;
       await _authPrefs.saveConnection(server.host, server.port);
-      await _authPrefs.saveToken(token, server.username);
+      // C08: HYDRA-UMC-SERVER's own POST /api/login now also returns an
+      // opaque refreshToken (refresh_tokens.ts); a server predating this
+      // feature simply omits it and resp['refreshToken'] is null, which
+      // saveToken() treats as "leave any stored one alone".
+      final refreshToken = resp['refreshToken'] as String?;
+      await _authPrefs.saveToken(token, server.username, refreshToken: refreshToken);
       lastError = null;
       _logTelemetry('Login successful');
       notifyListeners();
@@ -280,8 +290,52 @@ class RobotViewModel extends ChangeNotifier {
     // clearing it until the next login() overwrote it or the process
     // exited.
     apiClient?.authToken = null;
+    // C08: revoke the refresh token server-side too, best-effort (see
+    // HydraApiClient.logoutRemote()'s own doc comment - it never throws or
+    // blocks). The local clear below happens regardless.
+    final client = apiClient;
+    if (client != null) {
+      unawaited(_authPrefs.loadRefreshToken().then((refreshToken) {
+        if (refreshToken != null) unawaited(client.logoutRemote(refreshToken));
+      }));
+    }
     unawaited(_authPrefs.clearToken());
     notifyListeners();
+  }
+
+  /// C08: try to recover a WebSocket 1008 (auth) close by exchanging the
+  /// stored refresh token for a fresh access token, before concluding the
+  /// session itself is dead. This app never stores a password (auth_prefs.dart's
+  /// own header comment on why), so ANDROID-CONTROL's "replay the remembered
+  /// password" approach doesn't apply; this mirrors HYDRA-UMC-DSI's / STUDIO's
+  /// own refresh-token client (HYDRA-UMC-SERVER 0.6.2). Fails closed exactly
+  /// where a real re-login is still correct: no refresh token on file, or a
+  /// non-success / 401 response (the refresh token itself expired, or the
+  /// account was genuinely revoked).
+  Future<bool> _attemptTokenRefresh() async {
+    final client = apiClient;
+    final server = activeServer;
+    if (client == null || server == null) return false;
+    final refreshToken = await _authPrefs.loadRefreshToken();
+    if (refreshToken == null) return false;
+    try {
+      final resp = await client.refresh(refreshToken);
+      final newToken = resp['token'] as String?;
+      if (resp['success'] != true || newToken == null) return false;
+      client.authToken = newToken;
+      final username = await _authPrefs.loadUsername() ?? server.username;
+      await _authPrefs.saveToken(newToken, username, refreshToken: resp['refreshToken'] as String?);
+      lastError = null;
+      _logTelemetry('WebSocket 1008: recovered with a refreshed token');
+      notifyListeners();
+      // Reopen the socket with the fresh token - the WS's own onError has
+      // already torn the old one down, so this is just a reconnect, no REST
+      // refetch (the session was never actually lost, only the token).
+      _setupWebSocket(server, newToken);
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   /// Called when the app returns to the foreground (see main.dart's own
@@ -366,21 +420,29 @@ class RobotViewModel extends ChangeNotifier {
         // A server-relayed message carrying the real "denied"/"token"
         // auth-rejection text, or the WS layer's own wsAuthRejected (a
         // bare 1008 close, no message frame ever sent for that case) both
-        // mean the same thing: this token is dead, stop pretending the
-        // session is still good. A client-side connection failure
-        // (wsConnectionLost/wsConnectFailed) is a generic connectivity
-        // problem, never an auth one.
-        if (error.kind == HydraErrorKind.wsAuthRejected) {
-          isLoggedIn = false;
-          connectionStatus = 'disconnected';
-          _ws?.disconnect();
-        } else if (error.kind == HydraErrorKind.serverMessage) {
-          final message = error.params['message'] ?? '';
-          if (message.contains('denied') || message.contains('token')) {
-            isLoggedIn = false;
-            connectionStatus = 'disconnected';
-            _ws?.disconnect();
-          }
+        // mean the same thing: this token is dead. A client-side
+        // connection failure (wsConnectionLost/wsConnectFailed) is a
+        // generic connectivity problem, never an auth one.
+        //
+        // C08: before concluding the session itself is dead, try
+        // _attemptTokenRefresh() - most real 1008s are just the access
+        // token's own time-based expiry, not an actual revocation. Only a
+        // failed refresh still forces today's logout; a genuinely revoked
+        // session, no refresh token on file, or a server predating this
+        // feature all correctly fall through to it exactly as before.
+        final isAuthFailure = error.kind == HydraErrorKind.wsAuthRejected ||
+            (error.kind == HydraErrorKind.serverMessage &&
+                (((error.params['message'] ?? '').contains('denied')) ||
+                    ((error.params['message'] ?? '').contains('token'))));
+        if (isAuthFailure) {
+          unawaited(_attemptTokenRefresh().then((recovered) {
+            if (!recovered) {
+              isLoggedIn = false;
+              connectionStatus = 'disconnected';
+              _ws?.disconnect();
+              notifyListeners();
+            }
+          }));
         }
         notifyListeners();
       },

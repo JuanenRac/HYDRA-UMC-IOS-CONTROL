@@ -234,4 +234,83 @@ void main() {
     await authPrefs.saveBiometricEnabled(true);
     expect(await authPrefs.loadBiometricEnabled(), isTrue);
   });
+
+  group('C08: refresh token storage', () {
+    test('saveToken with a refreshToken round-trips it through secure storage only', () async {
+      final secure = FakeSecureTokenBackend();
+      final authPrefs = AuthPrefs(secureBackend: secure);
+
+      await authPrefs.saveToken('secret-token', 'alice', refreshToken: 'secret-refresh-token');
+
+      expect(await authPrefs.loadRefreshToken(), 'secret-refresh-token');
+      expect(secure.store['hydra_refresh_token'], 'secret-refresh-token');
+      // Never a plaintext copy - same closure criterion as the access token.
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getString('hydra_refresh_token'), isNull);
+    });
+
+    test('saveToken with no refreshToken argument leaves a previously-stored one untouched', () async {
+      // A server predating C08 omits refreshToken from POST /api/login's
+      // response - a caller re-saving the token pair in that case must not
+      // be read as "clear the refresh token", since it never said anything
+      // about it either way (see saveToken()'s own doc comment).
+      final secure = FakeSecureTokenBackend();
+      final authPrefs = AuthPrefs(secureBackend: secure);
+      await authPrefs.saveToken('token-1', 'alice', refreshToken: 'refresh-1');
+
+      await authPrefs.saveToken('token-2', 'alice');
+
+      expect(await authPrefs.loadRefreshToken(), 'refresh-1');
+    });
+
+    test('a session with no refresh token (pre-C08, or a fresh install) reports null, not an error', () async {
+      final authPrefs = AuthPrefs(secureBackend: FakeSecureTokenBackend());
+      expect(await authPrefs.loadRefreshToken(), isNull);
+    });
+
+    test('a logged-out session never reports a stale refresh token', () async {
+      final secure = FakeSecureTokenBackend();
+      final authPrefs = AuthPrefs(secureBackend: secure);
+      await authPrefs.saveToken('secret-token', 'alice', refreshToken: 'secret-refresh-token');
+
+      await authPrefs.clearToken();
+
+      expect(await authPrefs.loadRefreshToken(), isNull);
+      expect(secure.store['hydra_refresh_token'], isNull);
+      // The logged-out marker still masks it even if the secure delete failed.
+      final afterLogout = AuthPrefs(secureBackend: secure);
+      expect(await afterLogout.loadRefreshToken(), isNull);
+    });
+
+    test('a partial saveToken whose refresh-token write fails still rolls the access token back', () async {
+      final secure = FakeSecureTokenBackend(failWriteKeys: {'hydra_refresh_token'});
+      final authPrefs = AuthPrefs(secureBackend: secure);
+
+      await authPrefs.saveToken('secret-token', 'alice', refreshToken: 'secret-refresh-token');
+
+      expect(
+        secure.store['hydra_token'],
+        isNull,
+        reason: 'a half-written session (token saved, refresh-token save failed) must not linger in secure storage',
+      );
+      expect(secure.store['hydra_refresh_token'], isNull);
+      // REV-012's own in-memory fallback still applies - the session stays
+      // usable for the rest of this app run.
+      expect(await authPrefs.loadToken(), 'secret-token');
+      expect(await authPrefs.loadRefreshToken(), 'secret-refresh-token');
+    });
+
+    test('when secure storage is genuinely unavailable, the refresh token stays in-memory only, never on disk', () async {
+      final secure = FakeSecureTokenBackend(alwaysFail: true);
+      final authPrefs = AuthPrefs(secureBackend: secure);
+
+      await authPrefs.saveToken('secret-token', 'alice', refreshToken: 'secret-refresh-token');
+
+      expect(await authPrefs.loadRefreshToken(), 'secret-refresh-token', reason: 'in-memory fallback, this app run only');
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getString('hydra_refresh_token'), isNull);
+      final afterRestart = AuthPrefs(secureBackend: secure);
+      expect(await afterRestart.loadRefreshToken(), isNull, reason: 'never persisted to disk - a real restart loses it, same as the access token');
+    });
+  });
 }

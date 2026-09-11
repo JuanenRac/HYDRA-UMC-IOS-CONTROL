@@ -7,6 +7,32 @@ Version numbers below follow the ecosystem-wide auto-bump policy described in
 pre-policy version `0.0.0+1` the repo carried while the policy did not yet
 exist.
 
+## [0.1.7] - A rejected session token now tries to heal itself before logging out
+
+`0.1.6` stopped a `wsAuthRejected` (RFC 6455 1008) close from retrying
+forever against a token the server will never accept again - but it still
+forced a real, visible logout every time, even though most real 1008s are
+just the access token's own routine time-based expiry, not an actual
+revocation. `HydraApiClient` gains `refresh()`/`logoutRemote()`
+(`POST /api/refresh` / `POST /api/logout`, HYDRA-UMC-SERVER 0.6.2's own
+opaque refresh-token pair from `POST /api/login`); `AuthPrefs` stores the
+refresh token in secure storage only, same treatment as the access token
+itself, never a plaintext fallback. `RobotViewModel`'s WS `onError` now
+tries a new `_attemptTokenRefresh()` on an auth failure before forcing
+logout, and reopens the socket with the fresh token on success; a real
+revoked session, no refresh token on file, or a server predating this
+feature all still fall through to the same forced logout as before. This
+app never stores a password (see `auth_prefs.dart`'s own header comment),
+so it mirrors HYDRA-UMC-DSI's/STUDIO's own refresh-token client rather
+than ANDROID-CONTROL's "replay the remembered password" approach.
+`RobotViewModel` is now built with an injectable `AuthPrefs` for real test
+coverage. Verified with a real end-to-end regression test
+(`test/robot_view_model_silent_refresh_test.dart`) against a real local
+HTTP+WebSocket server: a first `/ws` connection closed with 1008 is
+recovered silently (second connection carries the refreshed token,
+`isLoggedIn` never flips), while an unrecognized refresh token still
+forces a real logout.
+
 ## [0.1.6] - A rejected session token no longer retries forever, silently
 
 `network/hydra_websocket.dart`'s `onDone` always rescheduled a reconnect,

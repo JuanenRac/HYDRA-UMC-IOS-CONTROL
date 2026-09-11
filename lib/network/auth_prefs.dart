@@ -95,6 +95,14 @@ class AuthPrefs {
   // once as a migration source.
   static const _keyToken = 'hydra_token';
   static const _keyUsername = 'hydra_username';
+  // C08: the opaque refresh token HYDRA-UMC-SERVER's own POST /api/login
+  // now also returns (refresh_tokens.ts) - same secure-storage-only
+  // treatment as the access token itself (never a plaintext fallback).
+  // A session established before this feature simply has none;
+  // loadRefreshToken() returns null and _attemptTokenRefresh() falls back
+  // to a real re-login, exactly as before this existed. Mirrors
+  // HYDRA-UMC-DSI's own copy.
+  static const _keyRefreshToken = 'hydra_refresh_token';
   static const _keyBiometricEnabled = 'hydra_biometric_enabled';
   // V07-015: a plain, non-secret marker - the real, persistent source of
   // truth for "is there still an active session", checked BEFORE ever
@@ -110,6 +118,7 @@ class AuthPrefs {
   // (effectively, this app run), never written to any disk-backed store.
   String? _inMemoryToken;
   String? _inMemoryUsername;
+  String? _inMemoryRefreshToken;
 
   Future<void> saveConnection(String host, int port) async {
     final prefs = await SharedPreferences.getInstance();
@@ -125,12 +134,19 @@ class AuthPrefs {
     return (host, port);
   }
 
-  Future<void> saveToken(String token, String username) async {
+  // C08: `refreshToken` is optional and named so an older caller (or a
+  // server predating refresh-token support, whose login response omits it)
+  // leaves whatever refresh token was already stored untouched rather than
+  // wiping it. A non-null value replaces the stored one.
+  Future<void> saveToken(String token, String username, {String? refreshToken}) async {
     var tokenWritten = false;
     try {
       await _secure.write(_keyToken, token);
       tokenWritten = true;
       await _secure.write(_keyUsername, username);
+      if (refreshToken != null) {
+        await _secure.write(_keyRefreshToken, refreshToken);
+      }
       // Secure storage is now the source of truth - clear any stale
       // plaintext copy left by a pre-IOS-01 session, and any in-memory-
       // only fallback REV-012 left behind from an earlier failure this
@@ -143,6 +159,7 @@ class AuthPrefs {
       await prefs.remove(_keyLoggedOut);
       _inMemoryToken = null;
       _inMemoryUsername = null;
+      if (refreshToken != null) _inMemoryRefreshToken = null;
     } catch (e) {
       // V07-015: the token write above may already have succeeded before
       // THIS step failed - reverting it (best-effort) keeps secure
@@ -169,6 +186,7 @@ class AuthPrefs {
       );
       _inMemoryToken = token;
       _inMemoryUsername = username;
+      if (refreshToken != null) _inMemoryRefreshToken = refreshToken;
     }
   }
 
@@ -234,9 +252,29 @@ class AuthPrefs {
     return prefs.getString(_keyUsername);
   }
 
+  /// C08: the opaque refresh token, or null - no refresh token on file (a
+  /// session established before this feature, or already logged out) is a
+  /// real, expected state, not an error. Secure storage only; there is no
+  /// plaintext fallback for this key (it never existed before secure
+  /// storage did).
+  Future<String?> loadRefreshToken() async {
+    if (_inMemoryRefreshToken != null) return _inMemoryRefreshToken;
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool(_keyLoggedOut) ?? false) return null;
+    try {
+      return await _secure.read(_keyRefreshToken);
+    } catch (e) {
+      debugPrint(
+        'AuthPrefs: secure storage read failed ($e) - no refresh token available.',
+      );
+      return null;
+    }
+  }
+
   Future<void> clearToken() async {
     _inMemoryToken = null;
     _inMemoryUsername = null;
+    _inMemoryRefreshToken = null;
     final prefs = await SharedPreferences.getInstance();
     // V07-015: set BEFORE attempting the real secure delete below - a
     // real logout must be honoured even if that delete itself fails
@@ -245,6 +283,8 @@ class AuthPrefs {
     try {
       await _secure.delete(_keyToken);
       await _secure.delete(_keyUsername);
+      // C08: the refresh token dies with the session it belonged to.
+      await _secure.delete(_keyRefreshToken);
     } catch (e) {
       debugPrint(
         'AuthPrefs: secure storage delete failed ($e) - session already '
