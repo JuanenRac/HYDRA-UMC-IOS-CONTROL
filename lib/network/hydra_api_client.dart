@@ -84,6 +84,45 @@ class HydraApiClient {
     return _expectJson(resp);
   }
 
+  /// C08: exchanges a still-valid refresh token (returned alongside the
+  /// access token by login() above - see HYDRA-UMC-SERVER's own
+  /// refresh_tokens.ts / REMOTE_API.md section 2a) for a fresh access
+  /// token, no password involved: this app never stores one (auth_prefs.dart's
+  /// own header comment on why only the token itself lives in secure
+  /// storage). Throws on a 401 (the session was genuinely revoked, or the
+  /// refresh token itself expired/unknown) - it is the caller's job, not
+  /// this method's, to decide that means falling back to a real logout.
+  /// Mirrors HYDRA-UMC-DSI's own copy of this method.
+  Future<Map<String, dynamic>> refresh(String refreshToken) async {
+    final resp = await _client
+        .post(
+          Uri.parse('$baseUrl/api/refresh'),
+          headers: {'Content-Type': 'application/json', ..._clientHeaders},
+          body: jsonEncode({'refreshToken': refreshToken}),
+        )
+        .timeout(const Duration(seconds: 5));
+    return _expectJson(resp);
+  }
+
+  /// C08: revokes a refresh token server-side on a real, intentional
+  /// logout - best-effort by design (the caller clears its own local state
+  /// regardless; see robot_view_model.dart's own logout()). Never throws -
+  /// a network error here must not block a local sign-out the user is
+  /// actively waiting on.
+  Future<void> logoutRemote(String refreshToken) async {
+    try {
+      await _client
+          .post(
+            Uri.parse('$baseUrl/api/logout'),
+            headers: {'Content-Type': 'application/json', ..._clientHeaders},
+            body: jsonEncode({'refreshToken': refreshToken}),
+          )
+          .timeout(const Duration(seconds: 5));
+    } catch (_) {
+      // Best-effort - see this method's own doc comment.
+    }
+  }
+
   Future<Map<String, dynamic>?> getHydraInfo() async {
     try {
       final resp = await _client
