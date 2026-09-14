@@ -78,6 +78,9 @@
   "connStatusDisconnected": "已断开",
   "connStatusError": "错误",
 
+  "dashboardCachedDataBanner": "正在显示 {time} 的缓存数据——正在重新连接…",
+  "@dashboardCachedDataBanner": {"placeholders": {"time": {"type": "String"}}},
+
   "errLoginFailed": "登录失败：服务器拒绝了凭据",
   "errLoginError": "登录错误：{error}",
   "errFetchFailed": "初始数据获取失败：{error}",

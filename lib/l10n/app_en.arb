@@ -91,6 +91,9 @@
   "connStatusDisconnected": "Disconnected",
   "connStatusError": "Error",
 
+  "dashboardCachedDataBanner": "Showing cached data from {time} — reconnecting…",
+  "@dashboardCachedDataBanner": {"placeholders": {"time": {"type": "String"}}},
+
   "errLoginFailed": "Login failed: server rejected credentials",
   "errLoginError": "Login error: {error}",
   "@errLoginError": {"placeholders": {"error": {"type": "String"}}},

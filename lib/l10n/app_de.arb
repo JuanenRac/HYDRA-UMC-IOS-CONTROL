@@ -78,6 +78,9 @@
   "connStatusDisconnected": "Getrennt",
   "connStatusError": "Fehler",
 
+  "dashboardCachedDataBanner": "Zwischengespeicherte Daten von {time} — Verbindung wird wiederhergestellt…",
+  "@dashboardCachedDataBanner": {"placeholders": {"time": {"type": "String"}}},
+
   "errLoginFailed": "Anmeldung fehlgeschlagen: Server hat die Zugangsdaten abgelehnt",
   "errLoginError": "Anmeldefehler: {error}",
   "errFetchFailed": "Erster Abruf fehlgeschlagen: {error}",

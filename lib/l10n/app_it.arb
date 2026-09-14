@@ -78,6 +78,9 @@
   "connStatusDisconnected": "Disconnesso",
   "connStatusError": "Errore",
 
+  "dashboardCachedDataBanner": "Dati in cache dalle {time} — riconnessione in corso…",
+  "@dashboardCachedDataBanner": {"placeholders": {"time": {"type": "String"}}},
+
   "errLoginFailed": "Accesso non riuscito: il server ha rifiutato le credenziali",
   "errLoginError": "Errore di accesso: {error}",
   "errFetchFailed": "Recupero iniziale non riuscito: {error}",

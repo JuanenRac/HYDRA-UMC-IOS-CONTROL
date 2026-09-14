@@ -106,6 +106,17 @@ class RobotViewModel extends ChangeNotifier {
   dynamic selectedRobotId;
   SystemMetrics? metrics;
 
+  // I07: `state` shown on screen came from network/state_cache.dart's own
+  // persisted last-known tree, not yet from a real, live response - see
+  // that file's own header comment for the real risk this closes. Set in
+  // init() when a cache is loaded, cleared the moment either real path
+  // that replaces `state` with a live server response succeeds (the REST
+  // fetch in connect(), or the WS onSettings callback) - so it is never
+  // left true once the app has genuinely heard from the server at least
+  // once, however long that takes.
+  bool isShowingCachedState = false;
+  DateTime? cachedStateSavedAt;
+
   // In-app voice/text assistant (ui/voice_assistant_dialog.dart) - separate
   // from robot state, same reasoning as HYDRA-UMC-ANDROID-CONTROL's own
   // latestVoiceAssistantReply: a reply must never be mistaken for a
@@ -171,8 +182,12 @@ class RobotViewModel extends ChangeNotifier {
     // HYDRA-UMC-ANDROID-CONTROL's own equivalent - a signed-out user just
     // never reaches a screen that reads `state`, so this is harmless
     // either way.
-    final cached = await _stateCache.loadState();
-    if (cached != null) state = HydraState(cached);
+    final cached = await _stateCache.loadCachedState();
+    if (cached != null) {
+      state = HydraState(cached.raw);
+      isShowingCachedState = true;
+      cachedStateSavedAt = cached.savedAt;
+    }
     final saved = await _authPrefs.loadConnection();
     final token = await _authPrefs.loadToken();
     biometricAvailable = await _biometricHelper.isAvailable();
@@ -365,6 +380,7 @@ class RobotViewModel extends ChangeNotifier {
     try {
       final settings = await client.getSettings();
       state = HydraState(settings);
+      isShowingCachedState = false;
       _ensureSelectedRobot();
       _logTelemetry('Initial state synchronized via REST');
       notifyListeners();
@@ -410,6 +426,7 @@ class RobotViewModel extends ChangeNotifier {
       },
       onSettings: (payload) {
         state = HydraState(payload);
+        isShowingCachedState = false;
         _ensureSelectedRobot();
         notifyListeners();
       },

@@ -119,7 +119,12 @@ class _MainScreenState extends State<MainScreen> {
           ),
         ],
       ),
-      body: IndexedStack(index: _index, children: _screens),
+      body: Column(
+        children: [
+          if (vm.isShowingCachedState) _CachedStateBanner(savedAt: vm.cachedStateSavedAt),
+          Expanded(child: IndexedStack(index: _index, children: _screens)),
+        ],
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
         onDestinationSelected: (i) => setState(() => _index = i),
@@ -130,6 +135,45 @@ class _MainScreenState extends State<MainScreen> {
           NavigationDestination(icon: const Icon(Icons.view_in_ar), label: l10n.nav3d),
           NavigationDestination(icon: const Icon(Icons.terminal), label: l10n.navTelemetry),
           NavigationDestination(icon: const Icon(Icons.settings), label: l10n.navSettings),
+        ],
+      ),
+    );
+  }
+}
+
+/// I07: visible while `state` still comes from network/state_cache.dart's
+/// own persisted last-known tree rather than a real, live server response -
+/// see robot_view_model.dart's own isShowingCachedState header comment.
+/// Shown regardless of which of the 6 tabs is active, same as
+/// MainScreen's own SnackBar error surface above, since a stale robot
+/// state matters on every one of them, not only Dashboard.
+class _CachedStateBanner extends StatelessWidget {
+  final DateTime? savedAt;
+  const _CachedStateBanner({required this.savedAt});
+
+  static String _formatTime(DateTime dt) {
+    String two(int n) => n.toString().padLeft(2, '0');
+    return '${two(dt.hour)}:${two(dt.minute)}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final time = savedAt == null ? '--:--' : _formatTime(savedAt!.toLocal());
+    return Container(
+      width: double.infinity,
+      color: const Color(0xFFF59E0B),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      child: Row(
+        children: [
+          const Icon(Icons.history, size: 16, color: Colors.black87),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              l10n.dashboardCachedDataBanner(time),
+              style: const TextStyle(color: Colors.black87, fontSize: 12, fontWeight: FontWeight.w600),
+            ),
+          ),
         ],
       ),
     );

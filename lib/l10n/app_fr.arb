@@ -78,6 +78,9 @@
   "connStatusDisconnected": "Déconnecté",
   "connStatusError": "Erreur",
 
+  "dashboardCachedDataBanner": "Affichage de données en cache de {time} — reconnexion…",
+  "@dashboardCachedDataBanner": {"placeholders": {"time": {"type": "String"}}},
+
   "errLoginFailed": "Échec de connexion : le serveur a rejeté les identifiants",
   "errLoginError": "Erreur de connexion : {error}",
   "errFetchFailed": "Échec de la récupération initiale : {error}",
