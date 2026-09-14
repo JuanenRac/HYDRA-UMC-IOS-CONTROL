@@ -78,6 +78,9 @@
   "connStatusDisconnected": "Desconectado",
   "connStatusError": "Error",
 
+  "dashboardCachedDataBanner": "Mostrando datos en caché de las {time} — reconectando…",
+  "@dashboardCachedDataBanner": {"placeholders": {"time": {"type": "String"}}},
+
   "errLoginFailed": "Error de inicio de sesión: el servidor rechazó las credenciales",
   "errLoginError": "Error de inicio de sesión: {error}",
   "errFetchFailed": "Error al obtener los datos iniciales: {error}",

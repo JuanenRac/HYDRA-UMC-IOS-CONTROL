@@ -7,6 +7,29 @@ Version numbers below follow the ecosystem-wide auto-bump policy described in
 pre-policy version `0.0.0+1` the repo carried while the policy did not yet
 exist.
 
+## [0.1.8] - The offline state cache now says when it is showing stale data
+
+`lib/network/state_cache.dart`'s persisted last-known settings tree used
+to save/load with no timestamp at all - exactly the plain "visual cache"
+risk: nothing on screen ever said whether what was showing was five
+seconds or five days old, if a real reconnect never happened (a dead
+server, a wrong host after a device restore, ...). `saveState()` now also
+records the real save instant; a new `loadCachedState()` returns it
+alongside the cached tree as a `CachedState` (a build predating this
+field reports the epoch - unknown age is treated as maximally stale,
+never as "just saved"). `RobotViewModel` exposes this as
+`isShowingCachedState`/`cachedStateSavedAt`, set when `init()` loads a
+cache and cleared the moment either real path that replaces `state` with
+a live server response succeeds (the REST fetch in `connect()`, or the
+WS `onSettings` callback). `MainScreen` shows a real, visible banner
+("Showing cached data from HH:mm…") for as long as that stays true,
+regardless of which of the 6 tabs is active - mirrors
+HYDRA-UMC-WATCH's own real `LastKnownStateCache.kt` staleness pattern,
+ported to this persistent (not in-memory) cache. 9 new/updated tests
+across `state_cache_test.dart` and two new files
+(`robot_view_model_cached_state_test.dart`,
+`main_screen_cached_state_banner_test.dart`), `flutter analyze` clean.
+
 ## [0.1.7] - A rejected session token now tries to heal itself before logging out
 
 `0.1.6` stopped a `wsAuthRejected` (RFC 6455 1008) close from retrying

@@ -78,6 +78,9 @@
   "connStatusDisconnected": "未接続",
   "connStatusError": "エラー",
 
+  "dashboardCachedDataBanner": "{time} 時点のキャッシュデータを表示中 — 再接続しています…",
+  "@dashboardCachedDataBanner": {"placeholders": {"time": {"type": "String"}}},
+
   "errLoginFailed": "サインインに失敗しました: サーバーが認証情報を拒否しました",
   "errLoginError": "サインインエラー: {error}",
   "errFetchFailed": "初回データの取得に失敗しました: {error}",
