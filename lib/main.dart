@@ -208,7 +208,11 @@ class HydraUmcControlApp extends StatelessWidget {
 /// the WebSocket's own 3-second retry timer (network/hydra_websocket.dart)
 /// isn't guaranteed to have noticed and reconnected by the time the user
 /// switches back - resumed() asks RobotViewModel to reconnect explicitly
-/// rather than relying on that timer alone.
+/// rather than relying on that timer alone. paused() actively closes the
+/// socket and pauses the metrics poll instead of leaving both running
+/// against a connection the OS may suspend or kill on its own schedule -
+/// `inactive` (a system alert, the app switcher) is deliberately NOT
+/// treated as backgrounded here, since it's normally momentary.
 class _RootGate extends StatefulWidget {
   const _RootGate();
 
@@ -233,6 +237,8 @@ class _RootGateState extends State<_RootGate> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       context.read<RobotViewModel>().reconnectIfNeeded();
+    } else if (state == AppLifecycleState.paused) {
+      context.read<RobotViewModel>().pauseForBackground();
     }
   }
 
