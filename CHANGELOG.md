@@ -7,6 +7,22 @@ Version numbers below follow the ecosystem-wide auto-bump policy described in
 pre-policy version `0.0.0+1` the repo carried while the policy did not yet
 exist.
 
+## [0.1.9] - Actively pauses the WebSocket and metrics poll when backgrounded
+
+- Found while auditing the code: this app relied entirely on iOS's own
+  OS-level socket timeout to eventually notice a backgrounded connection
+  was dead, rather than actively closing it - HYDRA-UMC-ANDROID-CONTROL's
+  own equivalent already closes proactively.
+  `_RootGateState.didChangeAppLifecycleState` (`main.dart`) now also
+  reacts to `AppLifecycleState.paused` (not the merely-transient
+  `inactive` state a system alert or the app switcher also produces),
+  calling new `RobotViewModel.pauseForBackground()`: disconnects the
+  real WebSocket and cancels the 5s REST metrics poll the moment the app
+  leaves the foreground. `reconnectIfNeeded()` on resume already fully
+  re-establishes both, unchanged. 3 new tests against a real local
+  WebSocket server, one proving the server side actually observes the
+  connection close, not just a local status flag flipping.
+
 ## [0.1.8] - The offline state cache now says when it is showing stale data
 
 `lib/network/state_cache.dart`'s persisted last-known settings tree used

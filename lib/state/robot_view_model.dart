@@ -369,6 +369,30 @@ class RobotViewModel extends ChangeNotifier {
     unawaited(connect());
   }
 
+  /// Called when the app is actually backgrounded (main.dart's own
+  /// _RootGateState.didChangeAppLifecycleState, AppLifecycleState.paused
+  /// specifically - not the merely-transient `inactive` state a system
+  /// alert or the app switcher also produces). Real gap found while
+  /// auditing the code: this app relied entirely on iOS's own OS-level
+  /// socket timeout to eventually notice a backgrounded connection was
+  /// dead, rather than actively closing it - HYDRA-UMC-ANDROID-CONTROL's
+  /// own equivalent already closes proactively. Explicitly disconnecting
+  /// here stops the 5s REST metrics poll and releases the socket the
+  /// moment the app leaves the foreground, instead of leaving both alive
+  /// against a connection the OS may suspend or kill on its own schedule.
+  /// Safe to call while logged out or already disconnected - both
+  /// `_ws?.disconnect()`/`_metricsTimer?.cancel()` are no-ops then.
+  /// `connect()` (via `reconnectIfNeeded()` on resume) fully
+  /// re-establishes both, so nothing here needs its own undo path.
+  void pauseForBackground() {
+    if (connectionStatus == 'disconnected') return;
+    _ws?.disconnect();
+    _metricsTimer?.cancel();
+    connectionStatus = 'disconnected';
+    _logTelemetry('App backgrounded: WebSocket and metrics poll paused');
+    notifyListeners();
+  }
+
   Future<void> connect() async {
     final server = activeServer;
     final client = apiClient;
