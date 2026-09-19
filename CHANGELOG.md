@@ -116,7 +116,7 @@ already delivers the real request in full.
 as `test/hydra_websocket_reconnect_test.dart`) cover the real request
 shape, the client-identity header, and a real server-error path.
 
-## [0.1.4] - V07-015: a failed logout or a half-written session could resurrect an old token
+## [0.1.4] - a failed logout or a half-written session could resurrect an old token
 
 Same real fix as HYDRA-UMC-DSI's own `AuthPrefs`, found by
 static inspection of both files: `clearToken()` caught a failed
@@ -136,17 +136,17 @@ attempts the real secure delete, and cleared only by a fresh,
 successful `saveToken()`. `saveToken()` itself now reverts (best-effort)
 whatever it did manage to write if a later step in the same call fails.
 
-## [0.1.3] - REV-012: real regression found by independent revalidation
+## [0.1.3] - real regression found by independent revalidation
 
 An independent revalidation reproduced a real gap in v0.1.2's own
-IOS-01 fix (against a real fake `SecureTokenBackend`, no real platform
+secure-storage fix (against a real fake `SecureTokenBackend`, no real platform
 channel) - the exact same shape of bug also found and
-fixed in HYDRA-UMC-DSI's own `auth_prefs.dart` (REV-011):
+fixed in HYDRA-UMC-DSI's own `auth_prefs.dart`:
 
-- **REV-012 [P1]:** `saveToken()` wrapped every secure-storage write so a
+- `saveToken()` wrapped every secure-storage write so a
   failure fell back to writing the token in PLAIN `SharedPreferences` -
   exactly the failure of the protection mechanism itself silently
-  removing the guarantee IOS-01 was meant to provide. The biometric lock
+  removing the guarantee the earlier fix was meant to provide. The biometric lock
   screen would still do nothing to protect that plaintext copy
   underneath it. Fixed: a secure-storage write failure now keeps the
   session in memory ONLY, for the current app run - never written to
@@ -155,7 +155,7 @@ fixed in HYDRA-UMC-DSI's own `auth_prefs.dart` (REV-011):
   quietly living in a plaintext file (included in a normal iOS device
   backup, or a plain JSON file on Windows). Never regresses a device
   where secure storage genuinely works (this app's real, intended
-  Keychain/DPAPI deployment targets). A pre-IOS-01 legacy plaintext token
+  Keychain/DPAPI deployment targets). A pre-existing legacy plaintext token
   is still migrated in and read normally - that is reading pre-existing
   data, not a new plaintext write.
 - 2 new regression tests (one asserting the plaintext file is never
@@ -165,10 +165,9 @@ fixed in HYDRA-UMC-DSI's own `auth_prefs.dart` (REV-011):
   fallback as correct behavior were rewritten to assert the fix instead.
   `flutter analyze`/`flutter test` both clean.
 
-## [0.1.2] - IOS-01: real secure storage for the session token
+## [0.1.2] - Real secure storage for the session token
 
-- **IOS-01 (P1):**
-  the session token lived in the same plain `SharedPreferences` file as
+- The session token lived in the same plain `SharedPreferences` file as
   host/port and the biometric-enabled flag - a plain, unencrypted store
   (`NSUserDefaults` on iOS is included in a normal device backup). A
   biometric lock screen only gates the UI path back into the app; it never
