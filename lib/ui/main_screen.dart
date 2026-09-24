@@ -141,7 +141,7 @@ class _MainScreenState extends State<MainScreen> {
   }
 }
 
-/// I07: visible while `state` still comes from network/state_cache.dart's
+/// visible while `state` still comes from network/state_cache.dart's
 /// own persisted last-known tree rather than a real, live server response -
 /// see robot_view_model.dart's own isShowingCachedState header comment.
 /// Shown regardless of which of the 6 tabs is active, same as

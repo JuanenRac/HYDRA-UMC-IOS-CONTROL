@@ -84,7 +84,7 @@ class HydraApiClient {
     return _expectJson(resp);
   }
 
-  /// C08: exchanges a still-valid refresh token (returned alongside the
+  /// exchanges a still-valid refresh token (returned alongside the
   /// access token by login() above - see HYDRA-UMC-SERVER's own
   /// refresh_tokens.ts / REMOTE_API.md section 2a) for a fresh access
   /// token, no password involved: this app never stores one (auth_prefs.dart's
@@ -104,7 +104,7 @@ class HydraApiClient {
     return _expectJson(resp);
   }
 
-  /// C08: revokes a refresh token server-side on a real, intentional
+  /// revokes a refresh token server-side on a real, intentional
   /// logout - best-effort by design (the caller clears its own local state
   /// regardless; see robot_view_model.dart's own logout()). Never throws -
   /// a network error here must not block a local sign-out the user is
