@@ -113,7 +113,7 @@ void main() {
     );
   });
 
-  group('when secure storage is genuinely unavailable (REV-012: never falls back to plaintext)', () {
+  group('when secure storage is genuinely unavailable (never falls back to plaintext)', () {
     test('saveToken/loadToken stay usable via an in-memory-only session, never written to disk', () async {
       final secure = FakeSecureTokenBackend(alwaysFail: true);
       final authPrefs = AuthPrefs(secureBackend: secure);
