@@ -52,7 +52,7 @@ void main() {
     expect(await cache.loadState(), isNull);
   });
 
-  // I07: loadCachedState() is the real fix - a plain "visual cache" with
+  // loadCachedState is the real fix - a plain "visual cache" with
   // no way to know its own age. These prove that link is real.
   group('loadCachedState', () {
     test('returns null when nothing was ever saved', () async {

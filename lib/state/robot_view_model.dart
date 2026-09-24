@@ -42,7 +42,7 @@ class SystemMetrics {
 }
 
 class RobotViewModel extends ChangeNotifier {
-  // C08: injectable so login() / _attemptTokenRefresh() / logout() get real
+  // injectable so login / _attemptTokenRefresh / logout get real
   // test coverage against a fake AuthPrefs backed by a fake SecureTokenBackend,
   // the same pattern HYDRA-UMC-DSI's own RobotViewModel already uses.
   RobotViewModel({AuthPrefs? authPrefs}) : _authPrefs = authPrefs ?? AuthPrefs();
@@ -106,7 +106,7 @@ class RobotViewModel extends ChangeNotifier {
   dynamic selectedRobotId;
   SystemMetrics? metrics;
 
-  // I07: `state` shown on screen came from network/state_cache.dart's own
+  // `state` shown on screen came from network/state_cache.dart's own
   // persisted last-known tree, not yet from a real, live response - see
   // that file's own header comment for the real risk this closes. Set in
   // init() when a cache is loaded, cleared the moment either real path
@@ -274,7 +274,7 @@ class RobotViewModel extends ChangeNotifier {
       isLoggedIn = true;
       activeServer = server;
       await _authPrefs.saveConnection(server.host, server.port);
-      // C08: HYDRA-UMC-SERVER's own POST /api/login now also returns an
+      // HYDRA-UMC-SERVER's own POST /api/login now also returns an
       // opaque refreshToken (refresh_tokens.ts); a server predating this
       // feature simply omits it and resp['refreshToken'] is null, which
       // saveToken() treats as "leave any stored one alone".
@@ -305,7 +305,7 @@ class RobotViewModel extends ChangeNotifier {
     // clearing it until the next login() overwrote it or the process
     // exited.
     apiClient?.authToken = null;
-    // C08: revoke the refresh token server-side too, best-effort (see
+    // revoke the refresh token server-side too, best-effort (see
     // HydraApiClient.logoutRemote()'s own doc comment - it never throws or
     // blocks). The local clear below happens regardless.
     final client = apiClient;
@@ -318,7 +318,7 @@ class RobotViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// C08: try to recover a WebSocket 1008 (auth) close by exchanging the
+  /// try to recover a WebSocket 1008 (auth) close by exchanging the
   /// stored refresh token for a fresh access token, before concluding the
   /// session itself is dead. This app never stores a password (auth_prefs.dart's
   /// own header comment on why), so ANDROID-CONTROL's "replay the remembered
@@ -465,7 +465,7 @@ class RobotViewModel extends ChangeNotifier {
         // connection failure (wsConnectionLost/wsConnectFailed) is a
         // generic connectivity problem, never an auth one.
         //
-        // C08: before concluding the session itself is dead, try
+        // before concluding the session itself is dead, try
         // _attemptTokenRefresh() - most real 1008s are just the access
         // token's own time-based expiry, not an actual revocation. Only a
         // failed refresh still forces today's logout; a genuinely revoked

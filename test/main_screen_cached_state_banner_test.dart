@@ -3,7 +3,7 @@
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
 // GPL-3.0 - see LICENSE
 //
-// I07: real widget coverage for MainScreen's own cached-data banner - the
+// real widget coverage for MainScreen's own cached-data banner - the
 // visible half of state/robot_view_model.dart's own isShowingCachedState.
 // A logic-only test proving the flag flips correctly is not enough on its
 // own: this proves an operator looking at the actual screen really sees

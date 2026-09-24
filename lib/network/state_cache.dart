@@ -14,7 +14,7 @@
 // connect() the moment it succeeds; this cache exists purely for that
 // brief offline/reconnecting window, not as a source of truth.
 //
-// I07: this class used to save/load the raw tree with no timestamp at
+// this class used to save/load the raw tree with no timestamp at
 // all - exactly the plain "visual cache" the original idea warned
 // against, with no way for a caller to know whether what's on screen is
 // five seconds or five days old if a real reconnect never happens (a
@@ -74,7 +74,7 @@ class StateCache {
 
   /// Same real success/failure contract as [loadState] (null on first
   /// launch or a corrupt cache), but also carries the real save instant -
-  /// see this file's own I07 header note. A cache saved by an older app
+  /// see this file's own header note. A cache saved by an older app
   /// build with no recorded timestamp (an in-place update from before
   /// this field existed) reports [CachedState.savedAt] as
   /// `DateTime.fromMillisecondsSinceEpoch(0)` - unknown age is treated as

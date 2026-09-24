@@ -3,7 +3,7 @@
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
 // GPL-3.0 - see LICENSE
 //
-// I07: real end-to-end coverage that RobotViewModel.init() surfaces
+// real end-to-end coverage that RobotViewModel.init surfaces
 // network/state_cache.dart's own persisted last-known tree as a real,
 // visible "this might be stale" fact (isShowingCachedState/
 // cachedStateSavedAt) instead of silently rendering it as if it were
