@@ -5,6 +5,6 @@
 // `version:` line in pubspec.yaml at the moment of the last build.
 // =============================================================================
 
-const String kAppVersion = '0.1.7';
-const int kAppBuildNumber = 11;
-const String kAppVersionFull = '0.1.7+11';
+const String kAppVersion = '0.2.0';
+const int kAppBuildNumber = 12;
+const String kAppVersionFull = '0.2.0+12';

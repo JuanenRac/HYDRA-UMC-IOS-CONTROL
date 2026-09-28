@@ -7,6 +7,10 @@ Version numbers below follow the ecosystem-wide auto-bump policy described in
 pre-policy version `0.0.0+1` the repo carried while the policy did not yet
 exist.
 
+## [0.2.0] - Could no longer reach a server with TLS turned on
+
+- **Real bug, found reviewing this app for the same TLS rollout that fixed HYDRA-UMC-ANDROID-CONTROL/STUDIO/SUITE:** `ServerInfo`, `HydraApiClient` and `HydraWebSocket` all had `http://`/`ws://` hardcoded, with no way to reach a server that switched to HYDRA-UMC-SERVER's optional HTTPS/WSS-only mode (`TLS_CERT_PATH`/`TLS_KEY_PATH`, server.ts). `getHydraInfo()` now probes the current scheme first and, only if that gets no answer at all, retries once over HTTPS, remembered via `usesTls` for every later call through that same client - `login()` and `getSettings()` (this app's own two real entry points, a fresh sign-in and a restored session) both resolve it before their real request, and it is threaded into the WebSocket this app also opens. A plain-HTTP server (today's default) behaves exactly as before. `flutter analyze`: no issues. `flutter test`: all 59 tests pass, including the real local-server WebSocket reconnect suite.
+
 ## [0.1.9] - Actively pauses the WebSocket and metrics poll when backgrounded
 
 - Found while auditing the code: this app relied entirely on iOS's own

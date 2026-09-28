@@ -78,7 +78,7 @@ Stream<ServerInfo> discoverMdns({Duration timeout = const Duration(seconds: 4)})
           final apiClient = HydraApiClient(host, port);
           try {
             final info = await apiClient.getHydraInfo();
-            if (info != null) yield ServerInfo.fromHydraInfo(host, port, info);
+            if (info != null) yield ServerInfo.fromHydraInfo(host, port, info, useTls: apiClient.usesTls);
           } finally {
             apiClient.close();
           }
@@ -148,7 +148,7 @@ Stream<ServerInfo> scanSubnets({String? lastHost}) async* {
           final apiClient = HydraApiClient(host, defaultPort, client: client);
           final info = await apiClient.getHydraInfo();
           if (info != null && !controller.isClosed) {
-            controller.add(ServerInfo.fromHydraInfo(host, defaultPort, info));
+            controller.add(ServerInfo.fromHydraInfo(host, defaultPort, info, useTls: apiClient.usesTls));
           }
         }
       }

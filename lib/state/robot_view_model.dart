@@ -346,7 +346,7 @@ class RobotViewModel extends ChangeNotifier {
       // Reopen the socket with the fresh token - the WS's own onError has
       // already torn the old one down, so this is just a reconnect, no REST
       // refetch (the session was never actually lost, only the token).
-      _setupWebSocket(server, newToken);
+      _setupWebSocket(server, newToken, client.usesTls);
       return true;
     } catch (_) {
       return false;
@@ -425,15 +425,16 @@ class RobotViewModel extends ChangeNotifier {
       notifyListeners();
     }
 
-    _setupWebSocket(server, client.authToken);
+    _setupWebSocket(server, client.authToken, client.usesTls);
     _startMetricsLoop(client);
   }
 
-  void _setupWebSocket(ServerInfo server, String? token) {
+  void _setupWebSocket(ServerInfo server, String? token, bool useTls) {
     _ws?.disconnect();
     _ws = HydraWebSocket(
       host: server.host,
       port: server.port,
+      useTls: useTls,
       token: token,
       onStatus: (status) {
         connectionStatus = switch (status) {

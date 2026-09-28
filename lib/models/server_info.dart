@@ -30,6 +30,14 @@ class ServerInfo {
   final String username;
   final String password;
 
+  // True once a real probe (net/discovery.dart's own getHydraInfo) found
+  // this server only answers over HTTPS - server.ts's own optional
+  // TLS_CERT_PATH/TLS_KEY_PATH switches it to HTTPS/WSS-only, no HTTP
+  // fallback of its own. Never guessed independently - see
+  // HYDRA-UMC-ANDROID-CONTROL's HydraApiClient.usesTls and
+  // HYDRA-UMC-SUITE's ServerInfo.use_tls, the same real fix mirrored here.
+  final bool useTls;
+
   const ServerInfo({
     required this.host,
     this.port = 3000,
@@ -43,18 +51,19 @@ class ServerInfo {
     this.nickname = '',
     this.username = '',
     this.password = '',
+    this.useTls = false,
   });
 
-  String get baseUrl => 'http://$host:$port';
+  String get baseUrl => '${useTls ? 'https' : 'http'}://$host:$port';
 
   String wsUrl(String? token) {
-    final base = 'ws://$host:$port/ws';
+    final base = '${useTls ? 'wss' : 'ws'}://$host:$port/ws';
     return token != null ? '$base?token=$token' : base;
   }
 
   String get displayName => nickname.isNotEmpty ? nickname : (hostname.isNotEmpty ? hostname : host);
 
-  factory ServerInfo.fromHydraInfo(String host, int port, Map<String, dynamic> payload) {
+  factory ServerInfo.fromHydraInfo(String host, int port, Map<String, dynamic> payload, {bool useTls = false}) {
     return ServerInfo(
       host: host,
       port: port,
@@ -65,6 +74,7 @@ class ServerInfo {
       controllerCount: (payload['controllerCount'] ?? 0) as int,
       robotCount: (payload['robotCount'] ?? 0) as int,
       uptimeSeconds: (payload['uptimeSeconds'] ?? 0) as int,
+      useTls: useTls,
     );
   }
 
@@ -82,6 +92,7 @@ class ServerInfo {
       nickname: nickname ?? this.nickname,
       username: username ?? this.username,
       password: password ?? this.password,
+      useTls: useTls,
     );
   }
 

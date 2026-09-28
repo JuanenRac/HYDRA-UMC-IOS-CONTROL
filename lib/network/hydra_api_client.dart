@@ -47,7 +47,14 @@ class HydraApiException implements Exception {
 }
 
 class HydraApiClient {
-  final String baseUrl;
+  // Starts as plain HTTP - getHydraInfo() below switches it to HTTPS the
+  // first time a plain-HTTP probe gets no answer at all and an HTTPS one
+  // does (server.ts's own optional TLS_CERT_PATH/TLS_KEY_PATH switches a
+  // server to HTTPS/WSS-only, no HTTP fallback of its own). Mirrors
+  // HYDRA-UMC-ANDROID-CONTROL's own HydraApiClient.baseUrl/usesTls -
+  // same real fix, same reasoning, independently implemented per client.
+  String baseUrl;
+  bool get usesTls => baseUrl.startsWith('https://');
   String? authToken;
   final http.Client _client;
 
@@ -67,6 +74,13 @@ class HydraApiClient {
   static const Map<String, String> _clientHeaders = {'X-Hydra-Client': 'ios'};
 
   Future<Map<String, dynamic>> login(String username, String password) async {
+    // login() is this app's own real FIRST request against a fresh host
+    // (see this method's own timeout comment) - unlike getHydraInfo(),
+    // which discovery.dart always calls before ever reaching here, a
+    // direct "add server, log in" flow never gets a chance to learn the
+    // real scheme first. Resolve it here too, before spending the login
+    // attempt itself on a scheme that a TLS-only server won't answer.
+    await _resolveScheme();
     final resp = await _client
         .post(
           Uri.parse('$baseUrl/api/login'),
@@ -124,9 +138,41 @@ class HydraApiClient {
   }
 
   Future<Map<String, dynamic>?> getHydraInfo() async {
+    final direct = await _probeHydraInfo(baseUrl);
+    if (direct != null) return direct;
+    // A server with TLS_CERT_PATH/TLS_KEY_PATH set answers nothing
+    // sensible to plain HTTP - retry once over HTTPS before giving up,
+    // and remember it via baseUrl for every later call through this same
+    // client. Never the other way around: a plain-HTTP server that fails
+    // is just offline, not a reason to guess at HTTPS.
+    if (baseUrl.startsWith('http://')) {
+      final httpsUrl = baseUrl.replaceFirst('http://', 'https://');
+      final viaHttps = await _probeHydraInfo(httpsUrl);
+      if (viaHttps != null) {
+        baseUrl = httpsUrl;
+        return viaHttps;
+      }
+    }
+    return null;
+  }
+
+  /// Same scheme-resolution getHydraInfo() does, reused by login() - a
+  /// real GET /api/hydra-info probe (harmless, needs no credentials) just
+  /// to learn which scheme this host actually answers on, discarding the
+  /// payload itself since the caller here only cares about baseUrl.
+  Future<void> _resolveScheme() async {
+    if (baseUrl.startsWith('https://')) return;
+    if (await _probeHydraInfo(baseUrl) != null) return;
+    final httpsUrl = baseUrl.replaceFirst('http://', 'https://');
+    if (await _probeHydraInfo(httpsUrl) != null) baseUrl = httpsUrl;
+  }
+
+  /// One real probe of GET {base}/api/hydra-info, never throwing - see
+  /// getHydraInfo()'s own comment for why this exists as its own method.
+  Future<Map<String, dynamic>?> _probeHydraInfo(String base) async {
     try {
       final resp = await _client
-          .get(Uri.parse('$baseUrl/api/hydra-info'), headers: _clientHeaders)
+          .get(Uri.parse('$base/api/hydra-info'), headers: _clientHeaders)
           .timeout(const Duration(seconds: 3));
       if (resp.statusCode != 200) return null;
       final json = jsonDecode(resp.body) as Map<String, dynamic>;
@@ -138,6 +184,11 @@ class HydraApiClient {
   }
 
   Future<Map<String, dynamic>> getSettings() async {
+    // The other real entry point besides login() - RobotViewModel.connect()
+    // calls this directly for a restored session (a saved host/port with
+    // no fresh login step), which otherwise never resolves the scheme at
+    // all. See _resolveScheme()'s own doc comment.
+    await _resolveScheme();
     final resp = await _client
         .get(Uri.parse('$baseUrl/api/settings'), headers: {..._clientHeaders, ..._authHeaders})
         .timeout(const Duration(seconds: 5));

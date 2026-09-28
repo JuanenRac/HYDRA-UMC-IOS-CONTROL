@@ -37,6 +37,9 @@ const int wsClosePolicyViolation = 1008;
 class HydraWebSocket {
   final String host;
   final int port;
+  /// See buildConnectionUri's own doc comment - set from the same
+  /// HydraApiClient.usesTls that already probed this server.
+  final bool useTls;
   String? token;
   final void Function(WsStatus status) onStatus;
   final void Function(Map<String, dynamic> payload) onSettings;
@@ -57,6 +60,7 @@ class HydraWebSocket {
   HydraWebSocket({
     required this.host,
     required this.port,
+    this.useTls = false,
     this.token,
     required this.onStatus,
     required this.onSettings,
@@ -77,8 +81,13 @@ class HydraWebSocket {
     required String host,
     required int port,
     String? token,
+    // True to open wss:// instead of ws:// - set this from the same
+    // HydraApiClient.usesTls that already probed this server (see that
+    // class's own getHydraInfo()), never guessed independently: a plain
+    // WebSocket has no HTTP response of its own to detect TLS-only from.
+    bool useTls = false,
   }) => Uri(
-    scheme: 'ws',
+    scheme: useTls ? 'wss' : 'ws',
     host: host,
     port: port,
     path: '/ws',
@@ -94,7 +103,7 @@ class HydraWebSocket {
     // (see DISEÑO_SYNC_DELTAS.txt section 3/8q3). A server that doesn't
     // recognize it just keeps sending the full tree under "delta" like
     // before, so this is safe regardless of server version.
-    final url = buildConnectionUri(host: host, port: port, token: token);
+    final url = buildConnectionUri(host: host, port: port, token: token, useTls: useTls);
     try {
       final channel = WebSocketChannel.connect(url);
       _channel = channel;
