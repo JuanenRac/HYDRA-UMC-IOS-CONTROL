@@ -13,7 +13,7 @@ exist.
 
 ## [0.1.9] - Actively pauses the WebSocket and metrics poll when backgrounded
 
-- Found while auditing the code: this app relied entirely on iOS's own
+- Found on code review: this app relied entirely on iOS's own
   OS-level socket timeout to eventually notice a backgrounded connection
   was dead, rather than actively closing it - HYDRA-UMC-ANDROID-CONTROL's
   own equivalent already closes proactively.
