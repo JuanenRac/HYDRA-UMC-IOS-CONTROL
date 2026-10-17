@@ -43,7 +43,7 @@
 - **摄像头**（`lib/ui/camera_screen.dart`、`lib/ui/widgets/mjpeg_view.dart`）—— 一个小型的手写 MJPEG 流解析器（无第三方包）,一个明确的“摄像头已禁用”状态（而非静默显示空白画面）,以及一个可直接从服务器打开/关闭机器人视觉系统的开关（`server.ts` 的 `"vision"` 原子指令）。
 - **3D 视图**（`lib/ui/three_d_screen.dart`）—— 通过 WebView 嵌入 HYDRA-UMC-STUDIO 自身的实时 3D 视口（`?hideUI=true&robotId=&token=`）,与 Android 应用的方式相同,原因也相同（免费获得真实的、当前正在使用的 3D 场景）。在 `webview_flutter` 不支持的平台（本仓库用于构建验证的 Windows 桌面目标）上,会回退到一个诚实的占位符。
 - **系统指标**（`lib/state/robot_view_model.dart`）—— 每 5 秒轮询一次 `GET /api/system/metrics`,与其他 2 个客户端的节奏相同,显示在仪表盘中。
-- **7 语言界面**（`lib/l10n/`，标准的 `flutter gen-l10n` 流程）—— 英语、西班牙语、法语、德语、意大利语、日语和中文，与本生态系统的其他客户端保持一致。`设置 > 语言` 中的持久化设置默认跟随系统语言；`RobotViewModel.lastError` 现在是带类型的 `HydraError`，而不是预先格式化好的英文文本，因此业务逻辑层的错误提示（登录/连接/指令失败）也能正确本地化，而不只是界面上的静态文本。
+- **8 语言界面**（`lib/l10n/`，标准的 `flutter gen-l10n` 流程）—— 英语、西班牙语、法语、德语、意大利语、日语和中文，与本生态系统的其他客户端保持一致。`设置 > 语言` 中的持久化设置默认跟随系统语言；`RobotViewModel.lastError` 现在是带类型的 `HydraError`，而不是预先格式化好的英文文本，因此业务逻辑层的错误提示（登录/连接/指令失败）也能正确本地化，而不只是界面上的静态文本。
 - **离线状态缓存**（`lib/network/state_cache.dart`）—— 最后一次已知的设置树会连同真实的保存时刻一起持久化到磁盘（1 秒防抖），这样在真正的 `connect()` 往返请求仍在进行时，仪表盘/控制界面会立即显示真实（即使可能已过时）的机器人数据，而不是空白状态。只要这种情况还成立，一个真实可见的提示条(而不是默默猜测)就会显示"正在显示 HH:mm 的缓存数据"。一旦真正的数据获取成功，就会被替换。
 - **遥测**（`lib/ui/telemetry_screen.dart`）—— 一个终端风格、最新在前的日志，记录真实的连接/登录/指令生命周期事件，最多保留 50 条，并提供清除日志的操作——与 HYDRA-UMC-ANDROID-CONTROL 自身的遥测标签页相同的"Matrix 绿"配色约定。
 - **应用内语音助手**（`lib/ui/voice_assistant_dialog.dart`）—— 应用栏中的麦克风图标会打开一个对话框，可输入问题或指令,通过与 HYDRA-UMC-ANDROID-CONTROL 自身应用内语音按钮及其手表中继相同的真实 `POST /api/voice/turn` 路由发送给 `HYDRA-UMC-VOICE-UI`。绝不上传音频——目前仅支持文本输入,因为 iOS 原生语音识别需要 Speech 框架,而这个仅限 Windows 的开发环境无法针对真实设备/Xcode 进行编译或验证。回复绝不会直接发出机器人指令。
@@ -107,9 +107,9 @@ HYDRA-UMC-IOS-CONTROL/
 │   ├── state/
 │   │   ├── robot_view_model.dart    # 每个界面都监听的单一 ChangeNotifier
 │   │   └── hydra_error.dart         # 面向 RobotViewModel 的类型化错误接口（自身无 BuildContext）
-│   ├── l10n/                        # 真实生成的本地化文件（7 种语言）——见仓库根目录的 l10n.yaml
+│   ├── l10n/                        # 真实生成的本地化文件（8 种语言）——见仓库根目录的 l10n.yaml
 │   │   ├── app_localizations.dart   # 生成的基类
-│   │   ├── app_localizations_en.dart, _es.dart, _it.dart, _fr.dart, _de.dart, _ja.dart, _zh.dart
+│   │   ├── app_localizations_en.dart, _es.dart, _it.dart, _fr.dart, _de.dart, _ja.dart, _zh.dart, _pt.dart
 │   │   └── language_prefs.dart      # 持久化的语言覆盖设置（shared_preferences）
 │   └── ui/
 │       ├── login_screen.dart        # 主机/端口/用户/密码字段 + “扫描本地网络”
@@ -132,7 +132,7 @@ HYDRA-UMC-IOS-CONTROL/
 ├── test/                             # widget_test、auth_prefs_test、websocket_uri_test、hydra_websocket_reconnect_test、format_uptime_test、localization_test、state_cache_test、robot_view_model_cached_state_test、main_screen_cached_state_banner_test、telemetry_log_test、voice_turn_test
 ├── images/
 ├── README.md                         # 本文件
-└── README_spa.md / README_ita.md / README_fra.md / README_deu.md / README_zho.md / README_jpn.md  # 翻译
+└── README_spa.md / README_ita.md / README_fra.md / README_deu.md / README_zho.md / README_jpn.md / README_por.md  # 翻译
 ```
 
 ## 🔗 相关项目
@@ -157,7 +157,7 @@ HYDRA-UMC-IOS-CONTROL/
 - **[HYDRA-UMC-BRIDGE-UAV](https://github.com/JuanenRac/HYDRA-UMC-BRIDGE-UAV)** —— 面向搭载摄像头的无人机的协调边界,具备真实的 MAVLink 指令发送器。
 
 **直接相关**
-- **[HYDRA-UMC-WATCH](https://github.com/JuanenRac/HYDRA-UMC-WATCH)** —— 具备真实触觉提醒与配对手机语音中继功能的 WearOS 伴侣应用;本应用的 Apple Watch 伴侣,可从手腕一目了然地控制并查看状态。
+- **[HYDRA-UMC-WATCH](https://github.com/JuanenRac/HYDRA-UMC-WATCH)** —— 具备真实触觉提醒与配对手机语音中继功能的 WearOS 伴侣应用;HYDRA-UMC-ANDROID-CONTROL 的腕上伴侣(仅限 WearOS;本 iOS 应用目前还没有对应的 Apple Watch 版本)。
 - **[HYDRA-UMC-HIL-BRIDGE](https://github.com/JuanenRac/HYDRA-UMC-HIL-BRIDGE)** —— 在仿真与真实硬件之间路由指令的真实硬件在环安全联锁;让本应用能够以硬件在环方式远程控制数字孪生的桥接。
 
 **生态系统中的其他项目**
@@ -247,4 +247,4 @@ HYDRA-UMC-IOS-CONTROL/
 
 源代码采用 **GNU 通用公共许可证 v3.0（GPL-3.0）**——见 [`LICENSE`](LICENSE)。
 
-文档（本 README 及其自身的翻译版本——`README_spa.md`、`README_ita.md`、`README_fra.md`、`README_deu.md`、`README_zho.md`、`README_jpn.md`）依据 **知识共享 署名-相同方式共享 4.0 国际许可协议（CC BY-SA 4.0）** 提供。完整文本见 https://creativecommons.org/licenses/by-sa/4.0/。
+文档（本 README 及其自身的翻译版本——`README_spa.md`、`README_ita.md`、`README_fra.md`、`README_deu.md`、`README_zho.md`、`README_jpn.md`、`README_por.md`）依据 **知识共享 署名-相同方式共享 4.0 国际许可协议（CC BY-SA 4.0）** 提供。完整文本见 https://creativecommons.org/licenses/by-sa/4.0/。

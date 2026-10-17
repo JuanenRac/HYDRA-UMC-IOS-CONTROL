@@ -43,7 +43,7 @@ Wi-Fi 経由で [HYDRA-UMC](https://github.com/JuanenRac/HYDRA-UMC) プラット
 - **カメラ**（`lib/ui/camera_screen.dart`、`lib/ui/widgets/mjpeg_view.dart`）—— 小さな手作りの MJPEG ストリームパーサー（サードパーティパッケージなし）、（サイレントに空白のフィードを表示するのではなく）明確な「カメラ無効」状態、そしてサーバーから直接ロボットのビジョンシステムをオン/オフする切り替えスイッチ（`server.ts` の `"vision"` 原子指令）。
 - **3D ビュー**（`lib/ui/three_d_screen.dart`）—— HYDRA-UMC-STUDIO 自身のリアルタイム 3D ビューポートを WebView に埋め込みます（`?hideUI=true&robotId=&token=`）。Android アプリと同じアプローチで、同じ理由からです（実際の、現在提供されている 3D シーンを無料で得られます）。`webview_flutter` がサポートしていないプラットフォーム（本リポジトリのビルド検証に使用される Windows デスクトップターゲット）では、正直なプレースホルダーにフォールバックします。
 - **システム指標**（`lib/state/robot_view_model.dart`）—— `GET /api/system/metrics` を 5 秒ごとにポーリングします。他の 2 つのクライアントと同じ頻度で、ダッシュボードに表示されます。
-- **7言語対応UI**（`lib/l10n/`、標準の `flutter gen-l10n` パイプライン）—— 英語・スペイン語・フランス語・ドイツ語・イタリア語・日本語・中国語に対応し、このエコシステムの他のクライアントと同じです。`設定 > 言語` に保存される上書き設定はデフォルトでOSのロケールに従います。`RobotViewModel.lastError` は整形済みの英語テキストではなく型付きの `HydraError` になっているため、ビジネスロジック側のエラーメッセージ（サインイン・接続・コマンド失敗)も画面の静的なテキストと同様に正しくローカライズされます。
+- **8言語対応UI**（`lib/l10n/`、標準の `flutter gen-l10n` パイプライン）—— 英語・スペイン語・フランス語・ドイツ語・イタリア語・日本語・中国語・ポルトガル語に対応し、このエコシステムの他のクライアントと同じです。`設定 > 言語` に保存される上書き設定はデフォルトでOSのロケールに従います。`RobotViewModel.lastError` は整形済みの英語テキストではなく型付きの `HydraError` になっているため、ビジネスロジック側のエラーメッセージ（サインイン・接続・コマンド失敗)も画面の静的なテキストと同様に正しくローカライズされます。
 - **オフライン状態キャッシュ**（`lib/network/state_cache.dart`）—— 最後に把握した設定ツリーを、実際に保存した時刻とともにディスクに保存します（1秒のデバウンス付き）。これにより、実際の `connect()` の往復通信がまだ進行中でも、ダッシュボード/操作画面が空の状態ではなく、多少古い可能性はあっても実際のロボットデータをすぐに表示します。その間は「HH:mm 時点のキャッシュデータ」という実際に見えるバナー(単なる無言の推測ではなく)が表示されます。実際の取得が成功した瞬間に置き換えられます。
 - **テレメトリ**（`lib/ui/telemetry_screen.dart`）—— 接続・サインイン・コマンドの実際のライフサイクルイベントを新しい順に表示するターミナル風のログで、最大50件まで保持し、ログを消去する操作も備えています。HYDRA-UMC-ANDROID-CONTROL 自身のテレメトリタブと同じ「マトリックスグリーン」の配色です。
 - **アプリ内音声アシスタント**（`lib/ui/voice_assistant_dialog.dart`）—— アプリバーのマイクアイコンをタップするとダイアログが開き、質問や指示を入力できます。これは HYDRA-UMC-ANDROID-CONTROL 自身のアプリ内音声ボタンや Watch リレーと同じ実際の `POST /api/voice/turn` ルートを経由して `HYDRA-UMC-VOICE-UI` に送信されます。音声がアップロードされることは一切なく、現時点ではテキスト入力のみです。iOS のネイティブ音声認識には Speech フレームワークが必要ですが、この Windows 専用の開発環境では実機/Xcode に対してビルドや検証を行うことができないためです。返信が直接ロボットコマンドを発行することもありません。
@@ -107,9 +107,9 @@ HYDRA-UMC-IOS-CONTROL/
 │   ├── state/
 │   │   ├── robot_view_model.dart    # すべての画面がリッスンする単一の ChangeNotifier
 │   │   └── hydra_error.dart         # RobotViewModel向けの型付きエラーサーフェス(独自のBuildContextを持たない)
-│   ├── l10n/                        # 実際に生成されたローカライゼーション(7言語) - リポジトリルートのl10n.yamlを参照
+│   ├── l10n/                        # 実際に生成されたローカライゼーション(8言語) - リポジトリルートのl10n.yamlを参照
 │   │   ├── app_localizations.dart   # 生成されたベースクラス
-│   │   ├── app_localizations_en.dart, _es.dart, _it.dart, _fr.dart, _de.dart, _ja.dart, _zh.dart
+│   │   ├── app_localizations_en.dart, _es.dart, _it.dart, _fr.dart, _de.dart, _ja.dart, _zh.dart, _pt.dart
 │   │   └── language_prefs.dart      # 永続化された言語上書き設定(shared_preferences)
 │   └── ui/
 │       ├── login_screen.dart        # ホスト/ポート/ユーザー/パスワードフィールド + 「ローカルネットワークをスキャン」
@@ -132,7 +132,7 @@ HYDRA-UMC-IOS-CONTROL/
 ├── test/                             # widget_test、auth_prefs_test、websocket_uri_test、hydra_websocket_reconnect_test、format_uptime_test、localization_test、state_cache_test、robot_view_model_cached_state_test、main_screen_cached_state_banner_test、telemetry_log_test、voice_turn_test
 ├── images/
 ├── README.md                         # 本ファイル
-└── README_spa.md / README_ita.md / README_fra.md / README_deu.md / README_zho.md / README_jpn.md  # 翻訳
+└── README_spa.md / README_ita.md / README_fra.md / README_deu.md / README_zho.md / README_jpn.md / README_por.md  # 翻訳
 ```
 
 ## 🔗 関連プロジェクト
@@ -157,7 +157,7 @@ HYDRA-UMC-IOS-CONTROL/
 - **[HYDRA-UMC-BRIDGE-UAV](https://github.com/JuanenRac/HYDRA-UMC-BRIDGE-UAV)** — 実際の MAVLink コマンド送信機能を持つ、カメラ搭載 UAV の調整境界。
 
 **直接関連**
-- **[HYDRA-UMC-WATCH](https://github.com/JuanenRac/HYDRA-UMC-WATCH)** — 実際の触覚アラートとペアリングされたスマートフォンへの音声リレーを備えた WearOS コンパニオンアプリ。本アプリの Apple Watch コンパニオンであり、手首から一目で制御・状態確認ができる。
+- **[HYDRA-UMC-WATCH](https://github.com/JuanenRac/HYDRA-UMC-WATCH)** — 実際の触覚アラートとペアリングされたスマートフォンへの音声リレーを備えた WearOS コンパニオンアプリ。HYDRA-UMC-ANDROID-CONTROL の手首用コンパニオン（WearOS のみ。この iOS アプリにはまだ対応する Apple Watch 版がない）。
 - **[HYDRA-UMC-HIL-BRIDGE](https://github.com/JuanenRac/HYDRA-UMC-HIL-BRIDGE)** — シミュレーションと実際のハードウェアの間でコマンドをルーティングする、実際のハードウェア・イン・ザ・ループ安全インターロック。本アプリからデジタルツインをハードウェア・イン・ザ・ループでリモート制御できるブリッジ。
 
 **エコシステムの他のプロジェクト**
@@ -247,4 +247,4 @@ HYDRA-UMC-IOS-CONTROL/
 
 ソースコードは **GNU General Public License v3.0（GPL-3.0）**——[`LICENSE`](LICENSE) を参照してください。
 
-ドキュメント（本 README およびその自身の翻訳版——`README_spa.md`、`README_ita.md`、`README_fra.md`、`README_deu.md`、`README_zho.md`、`README_jpn.md`）は、**クリエイティブ・コモンズ 表示-継承 4.0 国際（CC BY-SA 4.0）** の下で提供されます。全文は https://creativecommons.org/licenses/by-sa/4.0/ を参照してください。
+ドキュメント（本 README およびその自身の翻訳版——`README_spa.md`、`README_ita.md`、`README_fra.md`、`README_deu.md`、`README_zho.md`、`README_jpn.md`、`README_por.md`）は、**クリエイティブ・コモンズ 表示-継承 4.0 国際（CC BY-SA 4.0）** の下で提供されます。全文は https://creativecommons.org/licenses/by-sa/4.0/ を参照してください。

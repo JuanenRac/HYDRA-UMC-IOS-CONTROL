@@ -43,7 +43,7 @@ Esta app tiene como objetivo iOS/iPadOS, pero está construida en **Flutter** en
 - **Cámara** (`lib/ui/camera_screen.dart`, `lib/ui/widgets/mjpeg_view.dart`) - un pequeño analizador de stream MJPEG hecho a mano (sin paquete de terceros), un estado claro de "Camera Disabled" en vez de una imagen en blanco silenciosa, y un interruptor para activar/desactivar el sistema de visión de un robot directamente desde el servidor (el comando atómico `"vision"` propio de `server.ts`).
 - **Vista 3D** (`lib/ui/three_d_screen.dart`) - embebe el propio viewport 3D en tiempo real de HYDRA-UMC-STUDIO en un WebView (`?hideUI=true&robotId=&token=`), el mismo enfoque que la app de Android, por la misma razón (obtiene gratis la escena 3D real, actualmente en producción). Recae en un placeholder honesto en plataformas que `webview_flutter` no soporta (el target de escritorio Windows de este repositorio, usado para verificación de build).
 - **Métricas del sistema** (`lib/state/robot_view_model.dart`) - `GET /api/system/metrics` consultado cada 5s, la misma cadencia que los otros 2 clientes, mostrado en el Dashboard.
-- **UI en 7 idiomas** (`lib/l10n/`, pipeline estándar `flutter gen-l10n`) - inglés, español, francés, alemán, italiano, japonés y chino, igualando al resto de clientes de este ecosistema. Un ajuste persistido en `Ajustes > Idioma` usa por defecto el idioma del sistema; `RobotViewModel.lastError` es un `HydraError` tipado en lugar de texto en inglés ya formateado, así que los mensajes de error de la lógica de negocio (fallos de inicio de sesión/conexión/comando) también se traducen correctamente, no solo el texto estático de las pantallas.
+- **UI en 8 idiomas** (`lib/l10n/`, pipeline estándar `flutter gen-l10n`) - inglés, español, francés, alemán, italiano, japonés, chino y portugués, igualando al resto de clientes de este ecosistema. Un ajuste persistido en `Ajustes > Idioma` usa por defecto el idioma del sistema; `RobotViewModel.lastError` es un `HydraError` tipado en lugar de texto en inglés ya formateado, así que los mensajes de error de la lógica de negocio (fallos de inicio de sesión/conexión/comando) también se traducen correctamente, no solo el texto estático de las pantallas.
 - **Caché de estado sin conexión** (`lib/network/state_cache.dart`) - el último árbol de ajustes conocido se guarda en disco (con debounce de 1s) junto con el instante real en que se guardó, así que las pantallas de Dashboard/Control muestran datos reales, aunque potencialmente desactualizados, inmediatamente al arrancar en vez de un estado vacío mientras el `connect()` real todavía está en curso. Un aviso real y visible (no una suposición silenciosa) indica "mostrando datos en caché de las HH:mm" mientras eso siga siendo cierto. Se sustituye por los datos reales en cuanto la conexión tiene éxito.
 - **Telemetría** (`lib/ui/telemetry_screen.dart`) - un registro estilo terminal, más reciente primero, de eventos reales de conexión/inicio de sesión/comandos, limitado a 50 entradas, con una acción para borrarlo - la misma convención "verde Matrix" que la propia pestaña de Telemetría de HYDRA-UMC-ANDROID-CONTROL.
 - **Asistente de Voz en la App** (`lib/ui/voice_assistant_dialog.dart`) - un icono de micrófono en la barra superior abre un diálogo para escribir una pregunta o una orden, enviada a `HYDRA-UMC-VOICE-UI` por la misma ruta real `POST /api/voice/turn` que usan el botón de voz propio de HYDRA-UMC-ANDROID-CONTROL y su relé con el reloj emparejado. Nunca sube audio - solo texto por ahora, ya que el reconocimiento de voz propio de iOS necesita el framework Speech nativo, que este entorno de desarrollo solo-Windows no puede compilar ni verificar contra un dispositivo real/Xcode. Una respuesta nunca emite un comando de robot directamente.
@@ -117,9 +117,9 @@ HYDRA-UMC-IOS-CONTROL/
 │   ├── state/
 │   │   ├── robot_view_model.dart    # Unico ChangeNotifier que escucha cada pantalla
 │   │   └── hydra_error.dart         # Superficie de error tipada para RobotViewModel (sin BuildContext propio)
-│   ├── l10n/                        # Localizaciones reales generadas (7 idiomas) - ver l10n.yaml en la raíz del repo
+│   ├── l10n/                        # Localizaciones reales generadas (8 idiomas) - ver l10n.yaml en la raíz del repo
 │   │   ├── app_localizations.dart   # Clase base generada
-│   │   ├── app_localizations_en.dart, _es.dart, _it.dart, _fr.dart, _de.dart, _ja.dart, _zh.dart
+│   │   ├── app_localizations_en.dart, _es.dart, _it.dart, _fr.dart, _de.dart, _ja.dart, _zh.dart, _pt.dart
 │   │   └── language_prefs.dart      # Override de idioma persistido (shared_preferences)
 │   └── ui/
 │       ├── login_screen.dart        # Campos de host/puerto/usuario/pass + "Scan local network"
@@ -142,7 +142,7 @@ HYDRA-UMC-IOS-CONTROL/
 ├── test/                             # widget_test, auth_prefs_test, websocket_uri_test, hydra_websocket_reconnect_test, format_uptime_test, localization_test, state_cache_test, robot_view_model_cached_state_test, main_screen_cached_state_banner_test, telemetry_log_test, voice_turn_test
 ├── images/
 ├── README.md                         # este archivo (ingles)
-└── README_spa.md / README_ita.md / README_fra.md / README_deu.md / README_zho.md / README_jpn.md  # traducciones
+└── README_spa.md / README_ita.md / README_fra.md / README_deu.md / README_zho.md / README_jpn.md / README_por.md  # traducciones
 ```
 
 ## 🔗 Proyectos Relacionados
@@ -167,7 +167,7 @@ Este proyecto es parte del ecosistema de robótica HYDRA-UMC del mismo autor (Ju
 - **[HYDRA-UMC-BRIDGE-UAV](https://github.com/JuanenRac/HYDRA-UMC-BRIDGE-UAV)** — barrera de coordinación para UAV equipados con cámara, con un emisor de comandos MAVLink real.
 
 **Directamente Relacionados**
-- **[HYDRA-UMC-WATCH](https://github.com/JuanenRac/HYDRA-UMC-WATCH)** — app compañera de WearOS con alertas hápticas reales y un relé de voz al teléfono emparejado; la compañera Apple Watch de esta app, para control y estado de un vistazo desde la muñeca.
+- **[HYDRA-UMC-WATCH](https://github.com/JuanenRac/HYDRA-UMC-WATCH)** — app compañera de WearOS con alertas hápticas reales y un relé de voz al teléfono emparejado; la compañera de muñeca de HYDRA-UMC-ANDROID-CONTROL (solo WearOS: esta app de iOS aún no tiene contraparte para Apple Watch).
 - **[HYDRA-UMC-HIL-BRIDGE](https://github.com/JuanenRac/HYDRA-UMC-HIL-BRIDGE)** — enclavamiento de seguridad real hardware-in-the-loop que enruta comandos entre simulación y hardware real; el puente que permite a esta app controlar de forma remota el gemelo digital, hardware-in-the-loop.
 
 **También Forma Parte del Ecosistema**
@@ -257,4 +257,4 @@ Este proyecto es parte del ecosistema de robótica HYDRA-UMC del mismo autor (Ju
 
 GNU General Public License v3.0 (GPL-3.0) para el código fuente - ver [`LICENSE`](LICENSE).
 
-La documentación (este README y sus propias traducciones - `README_spa.md`, `README_ita.md`, `README_fra.md`, `README_deu.md`, `README_zho.md`, `README_jpn.md`) está disponible bajo **Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)**. Texto completo en https://creativecommons.org/licenses/by-sa/4.0/.
+La documentación (este README y sus propias traducciones - `README_spa.md`, `README_ita.md`, `README_fra.md`, `README_deu.md`, `README_zho.md`, `README_jpn.md`, `README_por.md`) está disponible bajo **Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)**. Texto completo en https://creativecommons.org/licenses/by-sa/4.0/.

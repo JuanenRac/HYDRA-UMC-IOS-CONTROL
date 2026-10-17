@@ -43,7 +43,7 @@ This app targets iOS/iPadOS, but it is built in **Flutter** rather than Swift/Sw
 - **Camera** (`lib/ui/camera_screen.dart`, `lib/ui/widgets/mjpeg_view.dart`) - a small hand-rolled MJPEG stream parser (no third-party package), a clear "Camera Disabled" state instead of a silently blank feed, and a switch to turn a robot's vision system on/off directly from the server (`server.ts`'s `"vision"` atomic command).
 - **3D View** (`lib/ui/three_d_screen.dart`) - embeds HYDRA-UMC-STUDIO's own real-time 3D viewport in a WebView (`?hideUI=true&robotId=&token=`), same approach as the Android app, for the same reason (gets the real, currently-shipping 3D scene for free). Falls back to an honest placeholder on platforms `webview_flutter` doesn't support (this repo's Windows desktop target, used for build verification).
 - **System metrics** (`lib/state/robot_view_model.dart`) - `GET /api/system/metrics` polled every 5s, same cadence as the other 2 clients, shown in the Dashboard.
-- **7-language UI** (`lib/l10n/`, standard `flutter gen-l10n` pipeline) - English, Spanish, French, German, Italian, Japanese and Chinese, matching every other client in this ecosystem. A persisted `Settings > Language` override defaults to the OS locale; `RobotViewModel.lastError` is a typed `HydraError` rather than pre-formatted English text, so business-logic error messages (login/connection/command failures) localize correctly too, not just static screen chrome.
+- **8-language UI** (`lib/l10n/`, standard `flutter gen-l10n` pipeline) - English, Spanish, French, German, Italian, Japanese, Chinese and Portuguese, matching every other client in this ecosystem. A persisted `Settings > Language` override defaults to the OS locale; `RobotViewModel.lastError` is a typed `HydraError` rather than pre-formatted English text, so business-logic error messages (login/connection/command failures) localize correctly too, not just static screen chrome.
 - **Offline state cache** (`lib/network/state_cache.dart`) - the last known settings tree persists to disk (debounced 1s) alongside the real instant it was saved, so the Dashboard/Control screens show real, if possibly stale, robot data immediately on launch instead of an empty state while the live `connect()` round-trip is still in flight. A real, visible banner (not just a silent guess) says "showing cached data from HH:mm" for as long as that stays true. Superseded by the real fetch the instant it succeeds.
 - **Telemetry** (`lib/ui/telemetry_screen.dart`) - a terminal-style, newest-first log of real connection/login/command lifecycle events, capped at 50 entries, with a clear-log action - same "Matrix Green" convention as HYDRA-UMC-ANDROID-CONTROL's own Telemetry tab.
 - **In-App Voice Assistant** (`lib/ui/voice_assistant_dialog.dart`) - a mic icon in the app bar opens a dialog to type a question or an order, sent to `HYDRA-UMC-VOICE-UI` through the same real `POST /api/voice/turn` Server route HYDRA-UMC-ANDROID-CONTROL's own in-app voice button and paired-Watch relay use. Never uploads audio - text input only for now, since on-device speech recognition needs the native iOS Speech framework this Windows-only development environment cannot build or verify against a real device/Xcode. A reply never invokes a robot command directly.
@@ -117,9 +117,9 @@ HYDRA-UMC-IOS-CONTROL/
 │   ├── state/
 │   │   ├── robot_view_model.dart    # Single ChangeNotifier every screen listens to
 │   │   └── hydra_error.dart         # Typed error surface for RobotViewModel (no BuildContext of its own)
-│   ├── l10n/                        # Real generated localizations (7 languages) - see l10n.yaml at repo root
+│   ├── l10n/                        # Real generated localizations (8 languages) - see l10n.yaml at repo root
 │   │   ├── app_localizations.dart   # Generated base class
-│   │   ├── app_localizations_en.dart, _es.dart, _it.dart, _fr.dart, _de.dart, _ja.dart, _zh.dart
+│   │   ├── app_localizations_en.dart, _es.dart, _it.dart, _fr.dart, _de.dart, _ja.dart, _zh.dart, _pt.dart
 │   │   └── language_prefs.dart      # Persisted language override (shared_preferences)
 │   └── ui/
 │       ├── login_screen.dart        # Host/port/user/pass fields + "Scan local network"
@@ -142,7 +142,7 @@ HYDRA-UMC-IOS-CONTROL/
 ├── test/                             # widget_test, auth_prefs_test, websocket_uri_test, hydra_websocket_reconnect_test, format_uptime_test, localization_test, state_cache_test, robot_view_model_cached_state_test, main_screen_cached_state_banner_test, telemetry_log_test, voice_turn_test
 ├── images/
 ├── README.md                         # this file
-└── README_spa.md / README_ita.md / README_fra.md / README_deu.md / README_zho.md / README_jpn.md  # translations
+└── README_spa.md / README_ita.md / README_fra.md / README_deu.md / README_zho.md / README_jpn.md / README_por.md  # translations
 ```
 
 ## 🔗 Related Projects
@@ -167,7 +167,7 @@ This project is part of the HYDRA-UMC robotics ecosystem by the same author (Jua
 - **[HYDRA-UMC-BRIDGE-UAV](https://github.com/JuanenRac/HYDRA-UMC-BRIDGE-UAV)** — coordination boundary for camera-equipped UAVs, with a real MAVLink command sender.
 
 **Directly Related**
-- **[HYDRA-UMC-WATCH](https://github.com/JuanenRac/HYDRA-UMC-WATCH)** — WearOS companion app with real haptic alerts and a paired-phone voice relay; the Apple Watch companion to this app, for control and status at a glance from the wrist.
+- **[HYDRA-UMC-WATCH](https://github.com/JuanenRac/HYDRA-UMC-WATCH)** — WearOS companion app with real haptic alerts and a paired-phone voice relay; the wrist companion of HYDRA-UMC-ANDROID-CONTROL (WearOS only - this iOS app has no Apple Watch counterpart yet).
 - **[HYDRA-UMC-HIL-BRIDGE](https://github.com/JuanenRac/HYDRA-UMC-HIL-BRIDGE)** — real hardware-in-the-loop safety interlock routing commands between simulation and real hardware; the bridge that lets this app remote-control the digital twin, hardware-in-the-loop.
 
 **Also Part of the Ecosystem**
@@ -257,4 +257,4 @@ This project is part of the HYDRA-UMC robotics ecosystem by the same author (Jua
 
 GNU General Public License v3.0 (GPL-3.0) for the source code - see [`LICENSE`](LICENSE).
 
-The documentation (this README and its own translations - `README_spa.md`, `README_ita.md`, `README_fra.md`, `README_deu.md`, `README_zho.md`, `README_jpn.md`) is available under **Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)**. Full text at https://creativecommons.org/licenses/by-sa/4.0/.
+The documentation (this README and its own translations - `README_spa.md`, `README_ita.md`, `README_fra.md`, `README_deu.md`, `README_zho.md`, `README_jpn.md`, `README_por.md`) is available under **Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)**. Full text at https://creativecommons.org/licenses/by-sa/4.0/.
