@@ -18,7 +18,7 @@
 //     own access has been disabled server-side (Config > Remote Access,
 //     per-client, identified via the X-Hydra-Client: ios header every
 //     request below carries)
-//   - GET  /api/settings            - full current state, no auth needed
+//   - GET  /api/settings            - full current state, needs a bearer token (either role)
 //   - POST /api/settings            - overwrite the whole state,
 //     read-modify-write, requires an ADMIN bearer token (an "operator"
 //     account gets 403 - see server.ts's own requireAdmin())
@@ -29,7 +29,7 @@
 //     affectedIds (self + combinedWith) itself, persists to disk, and
 //     broadcasts a WS "delta" to every other connected client on its own.
 //   - GET  /api/system/metrics      - host CPU/memory/temp/uptime/network,
-//     no auth needed
+//     no auth needed unless the server runs with HYDRA_UMC_INFO_AUTH=required
 // =============================================================================
 
 import 'dart:async';
