@@ -30,7 +30,7 @@ Wi-Fi 経由で [HYDRA-UMC](https://github.com/JuanenRac/HYDRA-UMC) プラット
 
 | | |
 |---|---|
-| バージョン | `0.2.4` |
+| バージョン | `0.2.5` |
 | 成熟度 | 確立 |
 | 技術 | Flutter 3.x / Dart |
 | 対象 | iPhone または iPad |
@@ -142,7 +142,7 @@ HYDRA-UMC-IOS-CONTROL/
 ├── ios/                              # Xcode プロジェクト（macOS からのみビルド可能）
 ├── windows/                          # Windows デスクトップターゲット——Mac なしでのビルド検証
 ├── docs/ARCHITECTURE.md
-├── test/                             # widget_test、auth_prefs_test、websocket_uri_test、hydra_websocket_reconnect_test、format_uptime_test、localization_test、state_cache_test、robot_view_model_cached_state_test、main_screen_cached_state_banner_test、telemetry_log_test、voice_turn_test
+├── test/                             # widget_test、auth_prefs_test、websocket_uri_test、hydra_websocket_reconnect_test、format_uptime_test、localization_test、state_cache_test、robot_view_model_cached_state_test、main_screen_cached_state_banner_test、telemetry_log_test、voice_turn_test、hostile_answers_test、hydra_error_test
 ├── images/
 ├── README.md                         # 本ファイル
 └── README_spa.md / README_ita.md / README_fra.md / README_deu.md / README_zho.md / README_jpn.md / README_por.md  # 翻訳

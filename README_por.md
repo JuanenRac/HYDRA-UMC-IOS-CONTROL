@@ -30,7 +30,7 @@ Uma aplicação Flutter multiplataforma (Dart) que controla um robô da platafor
 
 | | |
 |---|---|
-| Versão | `0.2.4` |
+| Versão | `0.2.5` |
 | Maturidade | Estabelecido |
 | Tecnologia | Flutter 3.x / Dart |
 | Destino | Um iPhone ou iPad |
@@ -152,7 +152,7 @@ HYDRA-UMC-IOS-CONTROL/
 ├── ios/                              # Projeto Xcode (compilar apenas a partir do macOS)
 ├── windows/                          # Alvo de desktop Windows - verificação de compilação sem um Mac
 ├── docs/ARCHITECTURE.md
-├── test/                             # widget_test, auth_prefs_test, websocket_uri_test, hydra_websocket_reconnect_test, format_uptime_test, localization_test, state_cache_test, robot_view_model_cached_state_test, main_screen_cached_state_banner_test, telemetry_log_test, voice_turn_test
+├── test/                             # widget_test, auth_prefs_test, websocket_uri_test, hydra_websocket_reconnect_test, format_uptime_test, localization_test, state_cache_test, robot_view_model_cached_state_test, main_screen_cached_state_banner_test, telemetry_log_test, voice_turn_test, hostile_answers_test, hydra_error_test
 ├── images/
 ├── README.md                         # este ficheiro
 └── README_spa.md / README_ita.md / README_fra.md / README_deu.md / README_zho.md / README_jpn.md / README_por.md  # traduções

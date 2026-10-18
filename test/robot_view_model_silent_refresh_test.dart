@@ -49,6 +49,9 @@ class _FakeServer {
   int refreshCalls = 0;
   String currentLoginToken = 'initial-token';
   String currentRefreshToken = 'initial-refresh-token';
+  // True from the start of a test whose session is revoked: set before the
+  // sign-in, so the answer does not depend on how fast the first 1008 arrives.
+  bool rejectRefresh = false;
   String refreshedToken = 'renewed-token';
   String refreshedRefreshToken = 'renewed-refresh-token';
 
@@ -105,7 +108,7 @@ class _FakeServer {
           break;
         case 'POST /api/refresh':
           refreshCalls++;
-          if (json['refreshToken'] != currentRefreshToken) {
+          if (rejectRefresh || json['refreshToken'] != currentRefreshToken) {
             request.response.statusCode = HttpStatus.unauthorized;
             request.response.write(jsonEncode({'error': 'Invalid or expired refresh token'}));
           } else {
@@ -174,6 +177,7 @@ void main() {
   test('a WS 1008 close with an unrecognized refresh token still forces a real logout', () async {
     final fakeServer = await _FakeServer.start([true]);
     addTearDown(fakeServer.close);
+    fakeServer.rejectRefresh = true;
 
     final vm = RobotViewModel(authPrefs: AuthPrefs(secureBackend: _FakeSecureBackend()));
     addTearDown(vm.dispose);
@@ -185,7 +189,6 @@ void main() {
     // consumeRefreshToken() contract this mirrors) - the token login()
     // actually received and stored no longer matches what the server will
     // accept on the refresh attempt the 1008 close below triggers.
-    fakeServer.currentRefreshToken = 'a-different-token-now';
 
     final deadline = DateTime.now().add(const Duration(seconds: 5));
     while (vm.isLoggedIn && DateTime.now().isBefore(deadline)) {

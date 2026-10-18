@@ -30,7 +30,7 @@
 
 | | |
 |---|---|
-| 版本 | `0.2.4` |
+| 版本 | `0.2.5` |
 | 成熟度 | 成熟 |
 | 技术栈 | Flutter 3.x / Dart |
 | 目标 | iPhone 或 iPad |
@@ -142,7 +142,7 @@ HYDRA-UMC-IOS-CONTROL/
 ├── ios/                              # Xcode 项目（仅可在 macOS 上构建）
 ├── windows/                          # Windows 桌面目标——无需 Mac 即可进行构建验证
 ├── docs/ARCHITECTURE.md
-├── test/                             # widget_test、auth_prefs_test、websocket_uri_test、hydra_websocket_reconnect_test、format_uptime_test、localization_test、state_cache_test、robot_view_model_cached_state_test、main_screen_cached_state_banner_test、telemetry_log_test、voice_turn_test
+├── test/                             # widget_test、auth_prefs_test、websocket_uri_test、hydra_websocket_reconnect_test、format_uptime_test、localization_test、state_cache_test、robot_view_model_cached_state_test、main_screen_cached_state_banner_test、telemetry_log_test、voice_turn_test、hostile_answers_test、hydra_error_test
 ├── images/
 ├── README.md                         # 本文件
 └── README_spa.md / README_ita.md / README_fra.md / README_deu.md / README_zho.md / README_jpn.md / README_por.md  # 翻译
