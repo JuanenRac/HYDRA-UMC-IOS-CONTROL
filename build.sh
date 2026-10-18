@@ -35,7 +35,7 @@ printf '\n'
 # Linux/macOS build (there is no linux/ or macos/ platform folder here).
 set -euo pipefail
 pause() {
-    read -r -p "Press Enter to close this window..." _ || true
+    if [ -t 0 ] && [ "${HYDRA_UMC_CI:-}" != "1" ] && [ -z "${CI:-}" ]; then read -r -p "Press Enter to close this window..." _ || true; fi
 }
 trap pause EXIT
 
