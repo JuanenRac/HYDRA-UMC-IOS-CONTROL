@@ -1,7 +1,7 @@
 // =============================================================================
 // HYDRA-UMC CONTROL (iOS/Flutter) - ui/biometric_gate_screen.dart
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
-// GPL-3.0 - see LICENSE
+// GPL-3.0-or-later - see LICENSE
 //
 // Shown by main.dart's _RootGate instead of MainScreen/LoginScreen while
 // RobotViewModel.needsBiometricUnlock is true - a saved session exists but

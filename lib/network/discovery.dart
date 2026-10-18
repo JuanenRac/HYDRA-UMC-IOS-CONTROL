@@ -1,7 +1,7 @@
 // =============================================================================
 // HYDRA-UMC CONTROL (iOS/Flutter) - network/discovery.dart
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
-// GPL-3.0 - see LICENSE
+// GPL-3.0-or-later - see LICENSE
 //
 // Two independent discovery paths, both feeding the same "Scan local
 // network" sheet in ui/login_screen.dart:

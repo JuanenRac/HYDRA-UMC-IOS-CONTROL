@@ -1,7 +1,7 @@
 // =============================================================================
 // HYDRA-UMC CONTROL (iOS/Flutter) - network/biometric_helper.dart
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
-// GPL-3.0 - see LICENSE
+// GPL-3.0-or-later - see LICENSE
 //
 // Thin wrapper over package:local_auth, playing the same role
 // HYDRA-UMC-ANDROID-CONTROL's own util/BiometricHelper.kt plays there:

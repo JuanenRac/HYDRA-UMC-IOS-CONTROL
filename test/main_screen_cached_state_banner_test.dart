@@ -1,7 +1,7 @@
 // =============================================================================
 // HYDRA-UMC CONTROL (iOS/Flutter) - test/main_screen_cached_state_banner_test.dart
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
-// GPL-3.0 - see LICENSE
+// GPL-3.0-or-later - see LICENSE
 //
 // real widget coverage for MainScreen's own cached-data banner - the
 // visible half of state/robot_view_model.dart's own isShowingCachedState.

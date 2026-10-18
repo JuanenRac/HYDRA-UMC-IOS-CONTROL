@@ -1,7 +1,7 @@
 // =============================================================================
 // HYDRA-UMC CONTROL (iOS/Flutter) - network/auth_prefs.dart
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
-// GPL-3.0 - see LICENSE
+// GPL-3.0-or-later - see LICENSE
 //
 // Persists the last server (host/port) across app launches via
 // shared_preferences, so the user doesn't have to type an IP every time -

@@ -1,7 +1,7 @@
 // =============================================================================
 // HYDRA-UMC-IOS-CONTROL - test/voice_turn_test.dart
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
-// GPL-3.0 - see LICENSE
+// GPL-3.0-or-later - see LICENSE
 //
 // HydraApiClient.postVoiceTurn() - real coverage against a real local
 // dart:io HttpServer, not a mocked http.Client - same "real local server"

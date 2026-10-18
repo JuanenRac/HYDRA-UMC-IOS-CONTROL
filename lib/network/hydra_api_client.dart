@@ -1,7 +1,7 @@
 // =============================================================================
 // HYDRA-UMC CONTROL (iOS/Flutter) - network/hydra_api_client.dart
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
-// GPL-3.0 - see LICENSE
+// GPL-3.0-or-later - see LICENSE
 //
 // Talks the exact contract in HYDRA-UMC-SERVER/docs/REMOTE_API.md - the
 // headless backend split out of HYDRA-UMC STUDIO's own process (STUDIO is

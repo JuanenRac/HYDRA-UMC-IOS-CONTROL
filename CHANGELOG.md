@@ -7,6 +7,11 @@ Version numbers below follow the ecosystem-wide auto-bump policy described in
 pre-policy version `0.0.0+1` the repo carried while the policy did not yet
 exist.
 
+## [0.2.4]
+
+- Build version synchronized with `hydra-umc.project.json` and the repository-native version source.
+- The licence is written as GPL-3.0-or-later in every header and in the package metadata.
+
 ## [0.2.3] - One-tap global STOP
 
 - **Global STOP:** a red **STOP** button in the app bar of every tab (Dashboard, Control, Camera, 3D, Telemetry, Settings) stops every robot of every controller with one tap: no long press and no confirmation. It calls `POST /api/stop-all` at once (bearer token and client header, no body), without waiting for any refresh, and works for an admin and an operator account. A robot reserved by another account is stopped too.

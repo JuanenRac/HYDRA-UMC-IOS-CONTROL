@@ -1,7 +1,7 @@
 // =============================================================================
 // HYDRA-UMC CONTROL (iOS/Flutter) - state/hydra_error.dart
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
-// GPL-3.0 - see LICENSE
+// GPL-3.0-or-later - see LICENSE
 //
 // RobotViewModel (a plain ChangeNotifier, no BuildContext of its own) needs
 // to report user-facing errors, but only a widget's build() can resolve a

@@ -1,7 +1,7 @@
 // =============================================================================
 // HYDRA-UMC-IOS-CONTROL - test/hydra_websocket_reconnect_test.dart
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
-// GPL-3.0 - see LICENSE
+// GPL-3.0-or-later - see LICENSE
 //
 // Found while auditing the code:
 // network/hydra_websocket.dart's real reconnection logic has no dedicated

@@ -1,7 +1,7 @@
 // =============================================================================
 // HYDRA-UMC CONTROL (iOS/Flutter) - network/state_cache.dart
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
-// GPL-3.0 - see LICENSE
+// GPL-3.0-or-later - see LICENSE
 //
 // Ported from HYDRA-UMC-ANDROID-CONTROL's own network/StateCache.kt: a
 // persistent cache of the last known settings tree (models/hydra_state.dart's

@@ -1,7 +1,7 @@
 // =============================================================================
 // HYDRA-UMC CONTROL (iOS/Flutter) - models/assistant_reply.dart
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
-// GPL-3.0 - see LICENSE
+// GPL-3.0-or-later - see LICENSE
 //
 // Reply shape for POST /api/voice/turn (Server relays to HYDRA-UMC-VOICE-UI)
 // - mirrors HYDRA-UMC-ANDROID-CONTROL's own wear/WatchVoiceRelayContract.kt

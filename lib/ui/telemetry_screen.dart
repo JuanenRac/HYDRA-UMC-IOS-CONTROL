@@ -1,7 +1,7 @@
 // =============================================================================
 // HYDRA-UMC CONTROL (iOS/Flutter) - ui/telemetry_screen.dart
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
-// GPL-3.0 - see LICENSE
+// GPL-3.0-or-later - see LICENSE
 //
 // Ported from HYDRA-UMC-ANDROID-CONTROL's own ui/TelemetryScreen.kt (the
 // Logs tab only - that file's own second "Ecosystem" tab reads a separate
