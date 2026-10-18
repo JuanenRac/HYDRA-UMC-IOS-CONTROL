@@ -7,6 +7,14 @@ Version numbers below follow the ecosystem-wide auto-bump policy described in
 pre-policy version `0.0.0+1` the repo carried while the policy did not yet
 exist.
 
+## [0.2.3] - One-tap global STOP
+
+- **Global STOP:** a red **STOP** button in the app bar of every tab (Dashboard, Control, Camera, 3D, Telemetry, Settings) stops every robot of every controller with one tap: no long press and no confirmation. It calls `POST /api/stop-all` at once (bearer token and client header, no body), without waiting for any refresh, and works for an admin and an operator account. A robot reserved by another account is stopped too.
+- **Result robot by robot:** a banner under the app bar lists each robot (stopped or not, the reason, "reserved by ..." when someone else holds it), turns red with a warning when a robot failed or the server could not save the stop, and is closed by the user. The state is read again afterwards.
+- **STOP that gets through:** a network error is retried once with a short timeout; a server over its rate limit (429) or without the route (404) is answered with the per-robot stop of every robot; when nothing answers, a persistent "STOP not confirmed" banner with a Retry button stays until a later STOP gets an answer.
+- **Control tab:** the long-press E-STOP of the selected robot is replaced by a big one-tap global STOP; the round per-robot stop next to play/pause keeps its long-press protection.
+- STOP, its descriptions and the result texts in the 8 languages; 8 new tests (93 in all) against a local server: the request, the per-robot answer, a failed/unsaved/reserved robot, the 429 and 404 fall back, the retry, the persistent state and the token renewal.
+
 ## [0.2.2] - Home pose no longer crashes the Control screen, session renewal, clear server refusals
 
 - **The Control screen no longer disappears at the home pose:** the server writes whole numbers without decimals, so a joint at 0 arrived as an integer and `as double` threw, replacing the whole Control screen (STOP, jog, play) with the error screen. Joint angles are now read as numbers whatever their form (`RobotView.joint`); device answers with other number types no longer break the network scan either.

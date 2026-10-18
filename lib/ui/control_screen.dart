@@ -3,11 +3,11 @@
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
 // GPL-3.0 - see LICENSE
 //
-// Real long-press protection on E-STOP/STOP (a quick tap does nothing but
-// a short haptic + hint, only a genuine hold sends the command) - a
-// safety-critical control like this needs to be hard to trigger by
-// accident, so a tap alone must never be enough to stop or e-stop a
-// running robot.
+// The emergency control is the global STOP (ui/widgets/stop_all.dart): one
+// tap, no confirmation, every robot. The round per-robot stop next to
+// play/pause keeps its long-press protection (a quick tap only gives a short
+// haptic + hint): it is a routine stop of the selected robot, not the
+// emergency control.
 // =============================================================================
 
 import 'package:flutter/material.dart';
@@ -19,6 +19,7 @@ import '../models/hydra_state.dart';
 import '../state/robot_view_model.dart';
 import 'widgets/digital_readout.dart';
 import 'widgets/joystick_pad.dart';
+import 'widgets/stop_all.dart';
 
 class ControlScreen extends StatefulWidget {
   const ControlScreen({super.key});
@@ -199,15 +200,7 @@ class _ControlScreenState extends State<ControlScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _LongPressButton(
-            color: Colors.red,
-            icon: Icons.dangerous,
-            tooltip: isCombined ? l10n.controlEstopAllHold : l10n.controlEstopHold,
-            onConfirm: () {
-              HapticFeedback.heavyImpact();
-              vm.sendCommand('stop');
-            },
-          ),
+          const StopAllButton(large: true),
           IconButton.filled(
             onPressed: robot != null && robot.online ? () => vm.sendCommand('play') : null,
             icon: const Icon(Icons.play_arrow),

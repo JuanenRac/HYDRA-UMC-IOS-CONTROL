@@ -40,7 +40,7 @@ Esta aplicação destina-se a iOS/iPadOS, mas é construída em **Flutter** em v
 - **Sincronização atómica de comandos** (o `_sendAtomicCommand()` do `lib/state/robot_view_model.dart`) - cada escrita (play/pause/stop/jog/válvula/bomba/velocidade/visão) usa o endpoint real `POST /api/robot/:id/command`, um payload pequeno e dirigido em vez de sobrescrever toda a árvore de definições, com a propagação correta dos robôs combinados (`combinedWith`) para os 5 comandos que a precisam.
 - **Sincronização WebSocket em direto** (`lib/network/hydra_websocket.dart`) - anexa sempre `?token=` ao URL da ligação (o upgrade `/ws` do `server.ts` exige-o incondicionalmente), trata ambos os tipos de difusão `"settings"` e `"delta"`, volta a ligar-se automaticamente quando cai.
 - **Painel** (`lib/ui/dashboard_screen.dart`) - cartões por robô, reativos em tempo real através do próprio `ChangeNotifier` do `Provider`, convenção de LED (verde a pulsar = ativo, vermelho fixo = inativo) e apresentação de robôs combinados (mostrada apenas do lado do seguidor, resolvida por id) em linha com o Dashboard Overview do próprio HYDRA-UMC-STUDIO.
-- **Controlo manual** (`lib/ui/control_screen.dart`, `lib/ui/widgets/joystick_pad.dart`) - D-pad de jog (com/sem alvo da mesa XY), cursores de velocidade/aceleração, interruptores de válvula/bomba e proteção real de pressão longa no E-STOP/STOP (um toque rápido só dá uma vibração háptica + uma dica visual, só um verdadeiro toque prolongado envia o comando).
+- **Controlo manual** (`lib/ui/control_screen.dart`, `lib/ui/widgets/joystick_pad.dart`) - D-pad de jog (com/sem alvo da mesa XY), cursores de velocidade/aceleração, interruptores de válvula/bomba e o **STOP** global (`lib/ui/widgets/stop_all.dart`): um só toque, sem pressão longa nem confirmação, pára todos os robôs (`POST /api/stop-all`) e fica na barra superior de cada separador, incluindo o de Controlo. A resposta é mostrada robô a robô (aviso se um robô falhou ou a paragem não foi guardada; os robôs reservados por outra conta ficam assinalados), um erro de rede é repetido uma vez, um servidor acima do seu limite de pedidos ou sem essa rota é servido com a paragem por robô, e se ninguém responder fica um aviso permanente «STOP não confirmado» até um STOP posterior obter resposta. O botão redondo de paragem por robô mantém a sua proteção de pressão longa.
 - **Câmara** (`lib/ui/camera_screen.dart`, `lib/ui/widgets/mjpeg_view.dart`) - um pequeno analisador de fluxo MJPEG feito à mão (sem pacote de terceiros), um estado claro «Câmara desativada» em vez de uma imagem em branco silenciosa e um interruptor para ligar/desligar o sistema de visão de um robô diretamente a partir do servidor (o comando atómico `"vision"` do `server.ts`).
 - **Vista 3D** (`lib/ui/three_d_screen.dart`) - embebe a vista 3D em tempo real do próprio HYDRA-UMC-STUDIO numa WebView (`?hideUI=true&robotId=&token=`), a mesma abordagem da aplicação Android e pela mesma razão (obtém de graça a cena 3D real e atualmente distribuída). Recorre a um marcador honesto nas plataformas que o `webview_flutter` não suporta (o alvo de desktop Windows deste repositório, usado para verificação de compilação).
 - **Métricas do sistema** (`lib/state/robot_view_model.dart`) - `GET /api/system/metrics` consultado a cada 5 s, a mesma cadência dos outros 2 clientes, mostrado no Painel.
@@ -107,7 +107,8 @@ HYDRA-UMC-IOS-CONTROL/
 │   ├── models/
 │   │   ├── server_info.dart         # Entrada de descoberta/ligação - espelha o ServerInfo dos outros 2 clientes
 │   │   ├── hydra_state.dart         # RobotView/ControllerView/HydraState - vistas finas e mutáveis sobre a árvore bruta do settings.json
-│   │   └── assistant_reply.dart    # modelo da resposta do assistente de voz na aplicação
+│   │   ├── assistant_reply.dart    # modelo da resposta do assistente de voz na aplicação
+│   │   └── stop_all_result.dart    # resposta do STOP global, robô a robô
 │   ├── network/
 │   │   ├── hydra_api_client.dart    # REST: login, definições, comando atómico de robô, métricas do sistema
 │   │   ├── hydra_websocket.dart     # Cliente de sincronização em direto /ws
@@ -135,6 +136,7 @@ HYDRA-UMC-IOS-CONTROL/
 │       ├── settings_screen.dart     # Informação da ligação + terminar sessão
 │       └── widgets/
 │           ├── joystick_pad.dart     # D-pad de jog (deliberadamente não um manípulo analógico, ver o cabeçalho do ficheiro)
+│           ├── stop_all.dart            # botão STOP global e o seu aviso de resultado / «não confirmado»
 │           ├── digital_readout.dart, status_led.dart
 │           └── mjpeg_view.dart       # Analisador de fluxo MJPEG feito à mão
 ├── ios/                              # Projeto Xcode (compilar apenas a partir do macOS)

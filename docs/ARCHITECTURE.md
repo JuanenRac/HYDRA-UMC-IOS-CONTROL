@@ -59,6 +59,19 @@ under-documents relative to what it actually does).
   not have, 409 when the robot is reserved by another account, and a 200
   with `warnings` when it applied nothing - the app shows each and undoes
   its optimistic change.
+- `POST /api/stop-all` - the **global STOP**: no body, any signed-in account.
+  One tap in the app bar of every tab (`lib/ui/widgets/stop_all.dart`) calls
+  `RobotViewModel.stopAll()` at once, without waiting for any refresh, with
+  the bearer token and the `X-Hydra-Client` header. The answer
+  (`success`, `stoppedCount`, `failedCount`, `persisted`, and per robot
+  `stopped`, `valvesOff`, `pumpsOff`, `reservedBy`, `error`) is shown robot by
+  robot; a failed robot or an unsaved stop is a warning, and a robot reserved
+  by another account is marked (the server stops it anyway). A network error is
+  retried once with a 2 s timeout; a 429 (rate limit) or a 404 (older server)
+  is answered with the per-robot `stop` for every known robot; if nothing
+  answers, a persistent "STOP not confirmed" banner stays until a later STOP
+  gets an answer. The state is read again afterwards (the WebSocket deltas
+  usually arrive first).
 - `WebSocket /ws` - live push: the server sends the current state on
   connect, then broadcasts every change (from any client) to every connected
   client. The token travels as the `hydra.bearer` subprotocol; a server from

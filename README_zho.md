@@ -40,7 +40,7 @@
 - **原子化指令同步**（`lib/state/robot_view_model.dart` 自身的 `_sendAtomicCommand()`）—— 每一次写入（播放/暂停/停止/点动/阀门/泵/速度/视觉）都使用真实的 `POST /api/robot/:id/command` 端点,发送一个小型的定向负载,而非覆盖整棵设置树,并对需要它的 5 种指令进行正确的合并机器人（`combinedWith`）传播。
 - **实时 WebSocket 同步**（`lib/network/hydra_websocket.dart`）—— 始终在连接 URL 中附加 `?token=`（`server.ts` 自身的 `/ws` 升级请求无条件地要求它）,同时处理 `"settings"` 和 `"delta"` 两种广播类型,断线后自动重连。
 - **仪表盘**（`lib/ui/dashboard_screen.dart`）—— 每机器人卡片,通过 `Provider` 自身的 `ChangeNotifier` 实时响应,LED 惯例（绿色脉冲=活动,红色常亮=非活动）,以及合并机器人显示（仅在从属方一侧显示,按 id 解析）,与 HYDRA-UMC-STUDIO 自身的仪表盘概览一致。
-- **手动控制**（`lib/ui/control_screen.dart`、`lib/ui/widgets/joystick_pad.dart`）—— 点动方向键（带/不带 XY 工作台目标）、速度/加速度滑块、阀门/泵开关,以及紧急停止/停止按钮上真实的长按保护（快速轻触不会产生任何效果,只有触感反馈+视觉提示,只有真正的长按才会发送指令）。
+- **手动控制**（`lib/ui/control_screen.dart`、`lib/ui/widgets/joystick_pad.dart`）—— 点动方向键（带/不带 XY 工作台目标）、速度/加速度滑块、阀门/泵开关,以及全局 **STOP**（`lib/ui/widgets/stop_all.dart`）：只需轻触一次，无需长按也无需确认，即可停止所有机器人（`POST /api/stop-all`），并固定显示在每个标签页（包括控制标签页）的顶部栏中。结果按机器人逐个显示（有机器人失败或停止未保存时给出警告，被其他账户预约的机器人会被标出），网络错误会重试一次，超出请求限制或没有该路由的服务器则改用逐个机器人停止，若无人应答，则会一直显示“STOP 未确认”横幅，直到之后的某次 STOP 得到应答。圆形的单机器人停止按钮保留长按保护。
 - **摄像头**（`lib/ui/camera_screen.dart`、`lib/ui/widgets/mjpeg_view.dart`）—— 一个小型的手写 MJPEG 流解析器（无第三方包）,一个明确的“摄像头已禁用”状态（而非静默显示空白画面）,以及一个可直接从服务器打开/关闭机器人视觉系统的开关（`server.ts` 的 `"vision"` 原子指令）。
 - **3D 视图**（`lib/ui/three_d_screen.dart`）—— 通过 WebView 嵌入 HYDRA-UMC-STUDIO 自身的实时 3D 视口（`?hideUI=true&robotId=&token=`）,与 Android 应用的方式相同,原因也相同（免费获得真实的、当前正在使用的 3D 场景）。在 `webview_flutter` 不支持的平台（本仓库用于构建验证的 Windows 桌面目标）上,会回退到一个诚实的占位符。
 - **系统指标**（`lib/state/robot_view_model.dart`）—— 每 5 秒轮询一次 `GET /api/system/metrics`,与其他 2 个客户端的节奏相同,显示在仪表盘中。
@@ -97,7 +97,8 @@ HYDRA-UMC-IOS-CONTROL/
 │   ├── models/
 │   │   ├── server_info.dart         # 发现/连接条目——与其他 2 个客户端中的 ServerInfo 镜像一致
 │   │   ├── hydra_state.dart         # RobotView/ControllerView/HydraState——原始 settings.json 树的薄型可变视图
-│   │   └── assistant_reply.dart    # 应用内语音助手的回复模型
+│   │   ├── assistant_reply.dart    # 应用内语音助手的回复模型
+│   │   └── stop_all_result.dart    # 全局 STOP 的应答（按机器人）
 │   ├── network/
 │   │   ├── hydra_api_client.dart    # REST：登录、设置、原子化机器人指令、系统指标
 │   │   ├── hydra_websocket.dart     # /ws 实时同步客户端
@@ -125,6 +126,7 @@ HYDRA-UMC-IOS-CONTROL/
 │       ├── settings_screen.dart     # 连接信息 + 退出登录
 │       └── widgets/
 │           ├── joystick_pad.dart     # 点动方向键（刻意不采用模拟摇杆，见文件头部说明）
+│           ├── stop_all.dart            # 全局 STOP 按钮及其结果/“未确认”横幅
 │           ├── digital_readout.dart, status_led.dart
 │           └── mjpeg_view.dart       # 手写的 MJPEG 流解析器
 ├── ios/                              # Xcode 项目（仅可在 macOS 上构建）

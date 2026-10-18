@@ -40,7 +40,7 @@ Questa app punta a iOS/iPadOS, ma è costruita in **Flutter** anziché Swift/Swi
 - **Sincronizzazione comandi atomici** (il `_sendAtomicCommand()` proprio di `lib/state/robot_view_model.dart`) - ogni scrittura (play/pause/stop/jog/valve/pump/speed/vision) usa l'endpoint reale `POST /api/robot/:id/command`, un payload piccolo e mirato invece di sovrascrivere l'intero albero settings, con propagazione corretta del robot combinato (`combinedWith`) per i 5 comandi che ne hanno bisogno.
 - **Sincronizzazione WebSocket in tempo reale** (`lib/network/hydra_websocket.dart`) - allega sempre `?token=` all'URL di connessione (l'upgrade `/ws` proprio di `server.ts` lo richiede incondizionatamente), gestisce sia i tipi di broadcast `"settings"` che `"delta"`, si riconnette automaticamente alla caduta.
 - **Dashboard** (`lib/ui/dashboard_screen.dart`) - schede per robot, reattive in tempo reale tramite il `ChangeNotifier` proprio di `Provider`, convenzione LED (verde pulsante = attivo, rosso fisso = inattivo) e visualizzazione robot combinato (mostrata solo sul lato follower, risolta per id) che corrisponde alla propria Dashboard Overview di HYDRA-UMC-STUDIO.
-- **Controllo Manuale** (`lib/ui/control_screen.dart`, `lib/ui/widgets/joystick_pad.dart`) - D-pad di jog (con/senza target tavola XY), slider velocità/accelerazione, interruttori valvola/pompa, e protezione reale a pressione prolungata su E-STOP/STOP (un tocco rapido non fa nulla se non un feedback aptico + visivo, solo una pressione sostenuta genuina invia il comando).
+- **Controllo Manuale** (`lib/ui/control_screen.dart`, `lib/ui/widgets/joystick_pad.dart`) - D-pad di jog (con/senza target tavola XY), slider velocità/accelerazione, interruttori valvola/pompa, e lo **STOP** globale (`lib/ui/widgets/stop_all.dart`): un solo tocco, senza pressione prolungata né conferma, ferma tutti i robot (`POST /api/stop-all`) e sta nella barra superiore di ogni scheda, anche in quella di Controllo. La risposta è mostrata robot per robot (avviso se un robot è fallito o l'arresto non è stato salvato; i robot riservati da un altro account sono segnalati), un errore di rete viene ritentato una volta, un server oltre il suo limite di richieste o senza quella route riceve l'arresto robot per robot, e se nessuno risponde resta un avviso permanente «STOP non confermato» finché uno STOP successivo non ottiene risposta. Il pulsante rotondo di arresto per robot mantiene la sua protezione a pressione prolungata.
 - **Camera** (`lib/ui/camera_screen.dart`, `lib/ui/widgets/mjpeg_view.dart`) - un piccolo parser dello stream MJPEG scritto a mano (nessun pacchetto di terze parti), uno stato chiaro "Camera Disabled" invece di un feed vuoto silenzioso, e un interruttore per attivare/disattivare il sistema di visione di un robot direttamente dal server (il comando atomico `"vision"` proprio di `server.ts`).
 - **Vista 3D** (`lib/ui/three_d_screen.dart`) - incorpora il viewport 3D in tempo reale proprio di HYDRA-UMC-STUDIO in una WebView (`?hideUI=true&robotId=&token=`), lo stesso approccio dell'app Android, per lo stesso motivo (ottiene gratuitamente la scena 3D reale, attualmente in produzione). Ricade su un placeholder onesto sulle piattaforme che `webview_flutter` non supporta (il target desktop Windows di questo repository, usato per la verifica della build).
 - **Metriche di sistema** (`lib/state/robot_view_model.dart`) - `GET /api/system/metrics` interrogato ogni 5s, la stessa cadenza degli altri 2 client, mostrato nella Dashboard.
@@ -108,7 +108,8 @@ HYDRA-UMC-IOS-CONTROL/
 │   ├── models/
 │   │   ├── server_info.dart         # Voce di discovery/connessione - rispecchia ServerInfo negli altri 2 client
 │   │   ├── hydra_state.dart         # RobotView/ControllerView/HydraState - viste mutabili sottili sull'albero grezzo di settings.json
-│   │   └── assistant_reply.dart    # modello di risposta dell'assistente vocale integrato
+│   │   ├── assistant_reply.dart    # modello di risposta dell'assistente vocale integrato
+│   │   └── stop_all_result.dart    # risposta dello STOP globale, robot per robot
 │   ├── network/
 │   │   ├── hydra_api_client.dart    # REST: login, settings, comando atomico robot, metriche di sistema
 │   │   ├── hydra_websocket.dart     # Client di sincronizzazione live via /ws
@@ -136,6 +137,7 @@ HYDRA-UMC-IOS-CONTROL/
 │       ├── settings_screen.dart     # Informazioni di connessione + disconnessione
 │       └── widgets/
 │           ├── joystick_pad.dart     # D-pad di jog (deliberatamente non uno stick analogico, vedi intestazione del file)
+│           ├── stop_all.dart            # pulsante STOP globale e il suo avviso di risultato / «non confermato»
 │           ├── digital_readout.dart, status_led.dart
 │           └── mjpeg_view.dart       # Parser dello stream MJPEG scritto a mano
 ├── ios/                              # Progetto Xcode (compilare solo da macOS)

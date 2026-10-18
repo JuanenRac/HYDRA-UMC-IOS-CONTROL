@@ -40,7 +40,7 @@ This app targets iOS/iPadOS, but it is built in **Flutter** rather than Swift/Sw
 - **Atomic command sync** (`lib/state/robot_view_model.dart`'s own `_sendAtomicCommand()`) - every write (play/pause/stop/jog/valve/pump/speed/vision) uses the real `POST /api/robot/:id/command` endpoint, a small targeted payload rather than overwriting the whole settings tree, with correct combined-robot (`combinedWith`) propagation for the 5 commands that need it.
 - **Live WebSocket sync** (`lib/network/hydra_websocket.dart`) - always attaches `?token=` to the connection URL (`server.ts`'s own `/ws` upgrade requires it unconditionally), handles both `"settings"` and `"delta"` broadcast types, auto-reconnects on drop.
 - **Dashboard** (`lib/ui/dashboard_screen.dart`) - per-robot cards, reactive in real time via `Provider`'s own `ChangeNotifier`, LED convention (green pulsing = active, red solid = inactive) and combined-robot display (shown on the follower side only, resolved by id) matching HYDRA-UMC-STUDIO's own Dashboard Overview.
-- **Manual Control** (`lib/ui/control_screen.dart`, `lib/ui/widgets/joystick_pad.dart`) - jog D-pad (with/without XY table target), speed/acceleration sliders, valve/pump toggles, and real long-press protection on E-STOP/STOP (a quick tap does nothing but a haptic + visual hint, only a genuine hold sends the command).
+- **Manual Control** (`lib/ui/control_screen.dart`, `lib/ui/widgets/joystick_pad.dart`) - jog D-pad (with/without XY table target), speed/acceleration sliders, valve/pump toggles, and the global **STOP** (`lib/ui/widgets/stop_all.dart`): one tap, no long press and no confirmation, it stops every robot (`POST /api/stop-all`) and sits in the app bar of every tab, the Control tab included. The answer is shown robot by robot (a warning when a robot failed or the stop was not saved; robots reserved by someone else are marked), a network error is retried once, a server over its rate limit or without that route is answered with the per-robot stop, and when nothing answers a persistent "STOP not confirmed" banner stays until a later STOP gets an answer. The round per-robot stop keeps its long-press protection.
 - **Camera** (`lib/ui/camera_screen.dart`, `lib/ui/widgets/mjpeg_view.dart`) - a small hand-rolled MJPEG stream parser (no third-party package), a clear "Camera Disabled" state instead of a silently blank feed, and a switch to turn a robot's vision system on/off directly from the server (`server.ts`'s `"vision"` atomic command).
 - **3D View** (`lib/ui/three_d_screen.dart`) - embeds HYDRA-UMC-STUDIO's own real-time 3D viewport in a WebView (`?hideUI=true&robotId=&token=`), same approach as the Android app, for the same reason (gets the real, currently-shipping 3D scene for free). Falls back to an honest placeholder on platforms `webview_flutter` doesn't support (this repo's Windows desktop target, used for build verification).
 - **System metrics** (`lib/state/robot_view_model.dart`) - `GET /api/system/metrics` polled every 5s, same cadence as the other 2 clients, shown in the Dashboard.
@@ -107,7 +107,8 @@ HYDRA-UMC-IOS-CONTROL/
 │   ├── models/
 │   │   ├── server_info.dart         # Discovery/connection entry - mirrors ServerInfo in the other 2 clients
 │   │   ├── hydra_state.dart         # RobotView/ControllerView/HydraState - thin mutable views over the raw settings.json tree
-│   │   └── assistant_reply.dart    # assistant reply model for the in-app voice assistant
+│   │   ├── assistant_reply.dart    # assistant reply model for the in-app voice assistant
+│   │   └── stop_all_result.dart    # answer of the global STOP, robot by robot
 │   ├── network/
 │   │   ├── hydra_api_client.dart    # REST: login, settings, atomic robot command, system metrics
 │   │   ├── hydra_websocket.dart     # /ws live sync client
@@ -135,6 +136,7 @@ HYDRA-UMC-IOS-CONTROL/
 │       ├── settings_screen.dart     # Connection info + sign out
 │       └── widgets/
 │           ├── joystick_pad.dart     # Jog D-pad (deliberately not an analog stick, see file header)
+│           ├── stop_all.dart            # the global STOP button and its result / "not confirmed" banner
 │           ├── digital_readout.dart, status_led.dart
 │           └── mjpeg_view.dart       # Hand-rolled MJPEG stream parser
 ├── ios/                              # Xcode project (build only from macOS)

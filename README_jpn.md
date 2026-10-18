@@ -40,7 +40,7 @@ Wi-Fi 経由で [HYDRA-UMC](https://github.com/JuanenRac/HYDRA-UMC) プラット
 - **原子的な指令同期**（`lib/state/robot_view_model.dart` 自身の `_sendAtomicCommand()`）—— すべての書き込み（再生/一時停止/停止/ジョグ/バルブ/ポンプ/速度/ビジョン）は、実際の `POST /api/robot/:id/command` エンドポイントを使用し、設定ツリー全体を上書きするのではなく、小さな標的を絞ったペイロードを送信し、それが必要な 5 つの指令に対しては正しい統合ロボット（`combinedWith`）の伝播を行います。
 - **リアルタイム WebSocket 同期**（`lib/network/hydra_websocket.dart`）—— 接続 URL には常に `?token=` を付加します（`server.ts` 自身の `/ws` アップグレードは無条件にこれを要求します）。`"settings"` と `"delta"` の両方のブロードキャストタイプを処理し、切断時には自動的に再接続します。
 - **ダッシュボード**（`lib/ui/dashboard_screen.dart`）—— ロボットごとのカード、`Provider` 自身の `ChangeNotifier` によるリアルタイムの反応、LED の慣例（緑の点滅=アクティブ、赤の点灯=非アクティブ）、そして統合ロボット表示（フォロワー側でのみ表示され、id で解決されます）——HYDRA-UMC-STUDIO 自身のダッシュボード概要と一致しています。
-- **手動制御**（`lib/ui/control_screen.dart`、`lib/ui/widgets/joystick_pad.dart`）—— ジョグ方向パッド（XY テーブルターゲットあり/なし）、速度/加速度スライダー、バルブ/ポンプのトグル、そして緊急停止/停止に対する実際の長押し保護（すばやいタップでは何も起こらず、触感フィードバック+視覚的なヒントのみで、本当に長押しした場合にのみ指令が送信されます）。
+- **手動制御**（`lib/ui/control_screen.dart`、`lib/ui/widgets/joystick_pad.dart`）—— ジョグ方向パッド（XY テーブルターゲットあり/なし）、速度/加速度スライダー、バルブ/ポンプのトグル、そしてグローバル **STOP**（`lib/ui/widgets/stop_all.dart`）—— 1 回のタップのみで、長押しも確認もなく、全ロボットを停止し（`POST /api/stop-all`）、制御タブを含むすべてのタブの上部バーに常時表示されます。結果はロボットごとに表示され（ロボットが失敗した場合や停止が保存されなかった場合は警告、他のアカウントが予約中のロボットには印）、ネットワークエラーは 1 回再試行され、リクエスト上限を超えたサーバーやそのルートがないサーバーにはロボットごとの停止で対応し、応答がない場合は後の STOP が応答を得るまで「STOP 未確認」の表示が残ります。丸いロボット単位の停止ボタンは長押し保護を維持します。
 - **カメラ**（`lib/ui/camera_screen.dart`、`lib/ui/widgets/mjpeg_view.dart`）—— 小さな手作りの MJPEG ストリームパーサー（サードパーティパッケージなし）、（サイレントに空白のフィードを表示するのではなく）明確な「カメラ無効」状態、そしてサーバーから直接ロボットのビジョンシステムをオン/オフする切り替えスイッチ（`server.ts` の `"vision"` 原子指令）。
 - **3D ビュー**（`lib/ui/three_d_screen.dart`）—— HYDRA-UMC-STUDIO 自身のリアルタイム 3D ビューポートを WebView に埋め込みます（`?hideUI=true&robotId=&token=`）。Android アプリと同じアプローチで、同じ理由からです（実際の、現在提供されている 3D シーンを無料で得られます）。`webview_flutter` がサポートしていないプラットフォーム（本リポジトリのビルド検証に使用される Windows デスクトップターゲット）では、正直なプレースホルダーにフォールバックします。
 - **システム指標**（`lib/state/robot_view_model.dart`）—— `GET /api/system/metrics` を 5 秒ごとにポーリングします。他の 2 つのクライアントと同じ頻度で、ダッシュボードに表示されます。
@@ -97,7 +97,8 @@ HYDRA-UMC-IOS-CONTROL/
 │   ├── models/
 │   │   ├── server_info.dart         # 発見/接続エントリ——他の 2 つのクライアントの ServerInfo をミラーリング
 │   │   ├── hydra_state.dart         # RobotView/ControllerView/HydraState——生の settings.json ツリーに対する薄い可変ビュー
-│   │   └── assistant_reply.dart    # アプリ内音声アシスタントの返信モデル
+│   │   ├── assistant_reply.dart    # アプリ内音声アシスタントの返信モデル
+│   │   └── stop_all_result.dart    # グローバル STOP の応答（ロボットごと）
 │   ├── network/
 │   │   ├── hydra_api_client.dart    # REST：ログイン、設定、原子的ロボット指令、システム指標
 │   │   ├── hydra_websocket.dart     # /ws リアルタイム同期クライアント
@@ -125,6 +126,7 @@ HYDRA-UMC-IOS-CONTROL/
 │       ├── settings_screen.dart     # 接続情報 + サインアウト
 │       └── widgets/
 │           ├── joystick_pad.dart     # ジョグ方向パッド（意図的にアナログスティックではない、ファイルヘッダー参照）
+│           ├── stop_all.dart            # グローバル STOP ボタンと、その結果／「未確認」バナー
 │           ├── digital_readout.dart, status_led.dart
 │           └── mjpeg_view.dart       # 手作りの MJPEG ストリームパーサー
 ├── ios/                              # Xcode プロジェクト（macOS からのみビルド可能）

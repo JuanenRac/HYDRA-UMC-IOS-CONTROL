@@ -17,6 +17,7 @@ import 'settings_screen.dart';
 import 'telemetry_screen.dart';
 import 'three_d_screen.dart';
 import 'voice_assistant_dialog.dart';
+import 'widgets/stop_all.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -102,6 +103,8 @@ class _MainScreenState extends State<MainScreen> {
       appBar: AppBar(
         title: Text(vm.activeServer?.displayName ?? 'HYDRA-UMC CONTROL'),
         actions: [
+          // The global STOP: one tap, every robot, on every tab.
+          const StopAllButton(),
           IconButton(
             icon: const Icon(Icons.mic),
             tooltip: l10n.voiceAssistantTitle,
@@ -127,6 +130,7 @@ class _MainScreenState extends State<MainScreen> {
       ),
       body: Column(
         children: [
+          const StopAllBanner(),
           if (vm.isShowingCachedState) _CachedStateBanner(savedAt: vm.cachedStateSavedAt),
           Expanded(child: IndexedStack(index: _index, children: _screens)),
         ],
