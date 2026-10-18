@@ -67,7 +67,7 @@ class _MetricsBar extends StatelessWidget {
           const SizedBox(width: 16),
           _stat(Icons.storage, '${metrics.memoryUsage}%'),
           const SizedBox(width: 16),
-          _stat(Icons.thermostat, '${metrics.temp.toStringAsFixed(0)}°C'),
+          _stat(Icons.thermostat, metrics.tempIsReal ? '${metrics.temp.toStringAsFixed(0)}°C' : '--'),
           const Spacer(),
           Text(
             AppLocalizations.of(context)!.dashboardUptime(formatUptime(metrics.uptime)),

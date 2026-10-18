@@ -28,7 +28,10 @@ import '../l10n/app_localizations.dart';
 import '../state/robot_view_model.dart';
 
 class ThreeDScreen extends StatefulWidget {
-  const ThreeDScreen({super.key});
+  /// False until the tab is first shown: the viewer is a whole web page
+  /// (Three.js) and is not loaded at start-up for a tab nobody opened.
+  final bool active;
+  const ThreeDScreen({super.key, this.active = true});
 
   @override
   State<ThreeDScreen> createState() => _ThreeDScreenState();
@@ -44,6 +47,18 @@ class _ThreeDScreenState extends State<ThreeDScreen> {
     final server = vm.activeServer;
     final robotId = vm.selectedRobotId;
     final token = vm.apiClient?.authToken;
+    if (!vm.isLoggedIn) {
+      // Signed out: the page keeps the session token in its own web storage
+      // (STUDIO saves it from the address), outside the Keychain. Empty it.
+      if (_controller != null) {
+        _controller!.clearLocalStorage();
+        _controller!.clearCache();
+        _controller!.loadRequest(Uri.parse('about:blank'));
+        _loadedUrl = null;
+      }
+      return const SizedBox.shrink();
+    }
+    if (!widget.active && _controller == null) return const SizedBox.shrink();
 
     if (server == null || robotId == null) {
       return Center(child: Text(AppLocalizations.of(context)!.threedNoRobotSelected, style: const TextStyle(color: Colors.grey)));
@@ -63,7 +78,13 @@ class _ThreeDScreenState extends State<ThreeDScreen> {
       );
     }
 
-    final url = '${server.baseUrl}/?hideUI=true&robotId=$robotId&token=${token ?? ''}';
+    // The scheme the client learned (https for a TLS server), and the query
+    // built as a query: the token and the id are encoded, not pasted.
+    final base = Uri.parse(vm.serverBaseUrl ?? server.baseUrl);
+    final url = base.replace(
+      path: '/',
+      queryParameters: {'hideUI': 'true', 'robotId': '$robotId', 'token': token ?? ''},
+    ).toString();
     // The controller is created once and reused, and loadRequest() only
     // fires when the URL actually changes (a different robot/server/token) -
     // build() itself runs on every RobotViewModel.notifyListeners() call

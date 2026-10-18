@@ -161,7 +161,7 @@ class HydraUmcControlApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => RobotViewModel()..init(),
+      create: (_) => RobotViewModel()..init(purgeStaleKeychain: true),
       child: Consumer<RobotViewModel>(
         builder: (context, vm, _) => MaterialApp(
           title: 'HYDRA-UMC Control',

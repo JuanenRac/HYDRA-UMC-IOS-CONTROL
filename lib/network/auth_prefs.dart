@@ -68,8 +68,14 @@ abstract class SecureTokenBackend {
 }
 
 class FlutterSecureStorageBackend implements SecureTokenBackend {
+  // Items are readable only after the first unlock and never leave this
+  // device (no iCloud Keychain sync, no migration to another phone through a
+  // backup): the session belongs to this installation.
   FlutterSecureStorageBackend([FlutterSecureStorage? storage])
-    : _storage = storage ?? const FlutterSecureStorage();
+    : _storage = storage ??
+          const FlutterSecureStorage(
+            iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock_this_device),
+          );
 
   final FlutterSecureStorage _storage;
 
@@ -138,7 +144,17 @@ class AuthPrefs {
   // server predating refresh-token support, whose login response omits it)
   // leaves whatever refresh token was already stored untouched rather than
   // wiping it. A non-null value replaces the stored one.
-  Future<void> saveToken(String token, String username, {String? refreshToken}) async {
+  //
+  // `replaceRefreshToken` is for a real login: it makes an absent
+  // refreshToken DELETE the stored one instead of leaving it, so a refresh
+  // token left behind by a previous account (a logout whose delete failed)
+  // can never become valid again for the account that signs in next.
+  Future<void> saveToken(
+    String token,
+    String username, {
+    String? refreshToken,
+    bool replaceRefreshToken = false,
+  }) async {
     var tokenWritten = false;
     try {
       await _secure.write(_keyToken, token);
@@ -146,6 +162,8 @@ class AuthPrefs {
       await _secure.write(_keyUsername, username);
       if (refreshToken != null) {
         await _secure.write(_keyRefreshToken, refreshToken);
+      } else if (replaceRefreshToken) {
+        await _secure.delete(_keyRefreshToken);
       }
       // Secure storage is now the source of truth - clear any stale
       // plaintext copy left by a pre-IOS-01 session, and any in-memory-
@@ -159,7 +177,7 @@ class AuthPrefs {
       await prefs.remove(_keyLoggedOut);
       _inMemoryToken = null;
       _inMemoryUsername = null;
-      if (refreshToken != null) _inMemoryRefreshToken = null;
+      if (refreshToken != null || replaceRefreshToken) _inMemoryRefreshToken = null;
     } catch (e) {
       // the token write above may already have succeeded before
       // THIS step failed - reverting it (best-effort) keeps secure
@@ -186,8 +204,41 @@ class AuthPrefs {
       );
       _inMemoryToken = token;
       _inMemoryUsername = username;
-      if (refreshToken != null) _inMemoryRefreshToken = refreshToken;
+      if (refreshToken != null || replaceRefreshToken) _inMemoryRefreshToken = refreshToken;
     }
+  }
+
+  static const _keyUseTls = 'hydra_use_tls';
+  static const _keyInstallMarker = 'hydra_install_marker';
+
+  /// The scheme the saved server was last seen answering. Once it spoke TLS
+  /// the app starts on https and never probes it over plain http again.
+  Future<void> saveUseTls(bool useTls) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyUseTls, useTls);
+  }
+
+  Future<bool> loadUseTls() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_keyUseTls) ?? false;
+  }
+
+  /// On iOS the Keychain survives uninstalling the app, while the app's own
+  /// preferences do not. On the first launch of a fresh installation (no
+  /// install marker) whatever session is still in the Keychain belongs to a
+  /// previous installation, possibly of another person: it is erased
+  /// instead of being resumed.
+  Future<void> purgeStaleKeychainOnFirstRun() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool(_keyInstallMarker) ?? false) return;
+    try {
+      await _secure.delete(_keyToken);
+      await _secure.delete(_keyUsername);
+      await _secure.delete(_keyRefreshToken);
+    } catch (e) {
+      debugPrint('AuthPrefs: could not clear the previous installation\'s session ($e).');
+    }
+    await prefs.setBool(_keyInstallMarker, true);
   }
 
   Future<String?> loadToken() async {

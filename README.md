@@ -11,7 +11,8 @@
   <a href="README_ita.md">🇮🇹 Italiano</a> |
   <a href="README_deu.md">🇩🇪 Deutsch</a> |
   <a href="README_zho.md">🇨🇳 简体中文</a> |
-  <a href="README_jpn.md">🇯🇵 日本語</a>
+  <a href="README_jpn.md">🇯🇵 日本語</a> |
+  <a href="README_por.md">🇵🇹 Português</a>
 </p>
 
 
@@ -33,10 +34,10 @@ This app targets iOS/iPadOS, but it is built in **Flutter** rather than Swift/Sw
 
 ## 🏗️ What's implemented
 
-- **Login** (`lib/ui/login_screen.dart`, `lib/state/robot_view_model.dart`) - editable server IP/port and operator credential fields plus `POST /api/login`; no account or password is pre-filled. A production server requires explicitly configured bootstrap credentials for its first administrator, and additional lower-privilege "operator" accounts can be created from Config > Users in the browser UI. The session token persists across launches via `shared_preferences`. A "Scan local network" button (`lib/network/discovery.dart`) finds servers without the user needing to already know the IP.
+- **Login** (`lib/ui/login_screen.dart`, `lib/state/robot_view_model.dart`) - editable server IP/port and operator credential fields plus `POST /api/login`; no account or password is pre-filled. A production server requires explicitly configured bootstrap credentials for its first administrator, and additional lower-privilege "operator" accounts can be created from Config > Users in the browser UI. The session token persists across launches in the iOS Keychain (`flutter_secure_storage`); the host and port are kept with `shared_preferences`. A "Scan local network" button (`lib/network/discovery.dart`) finds servers without the user needing to already know the IP.
 - **Network discovery** (`lib/network/discovery.dart`) - two independent paths run at once from the "Scan local network" sheet: real mDNS/Bonjour (`discoverMdns()`, queries the `_hydra._tcp.local` service `server.ts` publishes via the `multicast_dns` package - this app is the first of the ecosystem's 3 remote clients to add it) plus a concurrent brute-force scan of `GET /api/hydra-info` across this device's own real local subnet(s) (`scanSubnets()`, derived from `dart:io`'s `NetworkInterface.list()` rather than a single hardcoded guess, since a phone's LAN is just as likely to be `192.168.0.x` or `10.x.x.x` as `192.168.1.x`, falling back to `192.168.1.x` only if interface enumeration itself comes back empty). mDNS failing quietly on an unentitled iOS build is expected (Apple's own Multicast Networking entitlement isn't granted by a plain `flutter build ios`) - the subnet scan keeps working independently either way.
 - **Biometric login gate** (`lib/network/biometric_helper.dart`, `lib/ui/biometric_gate_screen.dart`) - Face ID/Touch ID/Windows Hello via `package:local_auth`, an optional `Settings` toggle that gates restoring an already-valid saved session on launch (this app never stores a raw password, only a bearer token - adapted from HYDRA-UMC-ANDROID-CONTROL's own password-refill design to that difference).
-- **Atomic command sync** (`lib/state/robot_view_model.dart`'s own `_sendAtomicCommand()`) - every write (enable/disable/play/pause/stop/jog/valve/pump/speed/vision) uses the real `POST /api/robot/:id/command` endpoint, a small targeted payload rather than overwriting the whole settings tree, with correct combined-robot (`combinedWith`) propagation for the 5 commands that need it.
+- **Atomic command sync** (`lib/state/robot_view_model.dart`'s own `_sendAtomicCommand()`) - every write (play/pause/stop/jog/valve/pump/speed/vision) uses the real `POST /api/robot/:id/command` endpoint, a small targeted payload rather than overwriting the whole settings tree, with correct combined-robot (`combinedWith`) propagation for the 5 commands that need it.
 - **Live WebSocket sync** (`lib/network/hydra_websocket.dart`) - always attaches `?token=` to the connection URL (`server.ts`'s own `/ws` upgrade requires it unconditionally), handles both `"settings"` and `"delta"` broadcast types, auto-reconnects on drop.
 - **Dashboard** (`lib/ui/dashboard_screen.dart`) - per-robot cards, reactive in real time via `Provider`'s own `ChangeNotifier`, LED convention (green pulsing = active, red solid = inactive) and combined-robot display (shown on the follower side only, resolved by id) matching HYDRA-UMC-STUDIO's own Dashboard Overview.
 - **Manual Control** (`lib/ui/control_screen.dart`, `lib/ui/widgets/joystick_pad.dart`) - jog D-pad (with/without XY table target), speed/acceleration sliders, valve/pump toggles, and real long-press protection on E-STOP/STOP (a quick tap does nothing but a haptic + visual hint, only a genuine hold sends the command).
@@ -69,7 +70,7 @@ flutter analyze          # static analysis - no compiler needed
 flutter test             # widget tests
 dart run tool/bump_version.dart  # bump the version, same as build.sh/build.bat do
 flutter build windows    # produces build/windows/x64/runner/Release/hydra_umc_control.exe
-flutter run -d windows   # or -d <ios-device-id> from a Mac, or -d chrome for a quick web preview
+flutter run -d windows   # or -d <ios-device-id> from a Mac
 ```
 
 **Building the real iOS `.ipa`** requires Xcode on macOS - from that machine: `flutter build ipa` (or open `ios/Runner.xcworkspace` in Xcode directly). This cannot be done from Windows; see "Why Flutter, not native Swift" above.
@@ -111,7 +112,7 @@ HYDRA-UMC-IOS-CONTROL/
 │   │   ├── hydra_api_client.dart    # REST: login, settings, atomic robot command, system metrics
 │   │   ├── hydra_websocket.dart     # /ws live sync client
 │   │   ├── discovery.dart           # Concurrent scan of this device's own real local subnet(s) against GET /api/hydra-info
-│   │   ├── auth_prefs.dart          # Persisted connection + token (shared_preferences)
+│   │   ├── auth_prefs.dart          # Persisted connection (shared_preferences) + token (Keychain)
 │   │   ├── biometric_helper.dart    # Thin wrapper over package:local_auth (Face ID/Touch ID gate)
 │   │   └── state_cache.dart         # Ported from Android's own StateCache.kt - last-known-good state persisted across launches
 │   ├── state/

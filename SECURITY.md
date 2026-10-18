@@ -10,4 +10,6 @@ Report privately to `electrohobby3d@gmail.com`.
 
 The client never pre-populates a reusable administrator password. Operators
 enter the credentials issued by their server bootstrap process; tokens are
-stored only through the platform's secure storage mechanism.
+stored through the platform's secure storage mechanism (the iOS Keychain,
+this device only). The 3D view is a web page that keeps the session token in
+its own web storage while it is open; that storage is emptied on sign-out.

@@ -8,8 +8,9 @@
 		<string>$(DEVELOPMENT_LANGUAGE)</string>
 		<key>CFBundleDisplayName</key>
 		<string>HYDRA-UMC Control</string>
-		<!-- HYDRA-UMC-SERVER's own backend is plain http/ws, no TLS, by design
-	     (REMOTE_API.md's own "trusted LAN" model) - iOS's App Transport
+		<!-- HYDRA-UMC-SERVER answers plain http/ws by default (REMOTE_API.md's
+	     "trusted LAN" model) and https/wss when it is started with a
+	     certificate (TLS_CERT_PATH/TLS_KEY_PATH) - iOS's App Transport
 	     Security blocks all cleartext HTTP by default. NSAllowsLocalNetworking
 	     (iOS 10+) permits it for local/private-network addresses specifically
 	     (the target is always a LAN IP the user types or discovery finds),
@@ -25,6 +26,25 @@
 		<!-- iOS 14+ requires this description to show the "Local Network" access
 	     prompt - triggered by network/discovery.dart's own subnet scan and
 	     by every plain HTTP/WS request to a LAN server. -->
+		<!-- Bonjour service types the app browses (network/discovery.dart's mDNS):
+		     since iOS 14 a type not listed here receives no answers. -->
+		<key>NSBonjourServices</key>
+		<array>
+			<string>_hydra._tcp</string>
+		</array>
+		<!-- Without the list of languages iOS treats the app as English only,
+		     whatever the .arb files offer. -->
+		<key>CFBundleLocalizations</key>
+		<array>
+			<string>en</string>
+			<string>es</string>
+			<string>de</string>
+			<string>fr</string>
+			<string>it</string>
+			<string>ja</string>
+			<string>zh-Hans</string>
+			<string>pt</string>
+		</array>
 		<key>NSLocalNetworkUsageDescription</key>
 		<string>HYDRA-UMC Control connects to a HYDRA-UMC STUDIO server on your local network to control real robots.</string>
 		<!-- Required by iOS for Face ID specifically (Touch ID needs no

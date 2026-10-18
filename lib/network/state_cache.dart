@@ -50,9 +50,31 @@ class StateCache {
   static const _keyLastState = 'hydra_last_state';
   static const _keySavedAtMs = 'hydra_last_state_saved_at_ms';
 
+  /// Keys of the settings tree that hold credentials and never go to disk.
+  static const _secretKeys = {'ipUsername', 'ipPassword'};
+
+  /// [value] without any secret key at any depth, as a copy.
+  static dynamic redactSecrets(dynamic value) {
+    if (value is Map) {
+      return {
+        for (final entry in value.entries)
+          if (!_secretKeys.contains(entry.key)) entry.key: redactSecrets(entry.value),
+      };
+    }
+    if (value is List) return value.map(redactSecrets).toList();
+    return value;
+  }
+
+  /// Erases the saved copy (a sign-out: it belongs to that session).
+  Future<void> clear() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_keyLastState);
+    await prefs.remove(_keySavedAtMs);
+  }
+
   Future<void> saveState(Map<String, dynamic> raw) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_keyLastState, jsonEncode(raw));
+    await prefs.setString(_keyLastState, jsonEncode(redactSecrets(raw)));
     await prefs.setInt(_keySavedAtMs, DateTime.now().millisecondsSinceEpoch);
   }
 

@@ -41,7 +41,29 @@ import '../models/assistant_reply.dart';
 
 class HydraApiException implements Exception {
   final String message;
-  HydraApiException(this.message);
+  /// HTTP status of the server's answer; null when there was no answer.
+  final int? statusCode;
+  /// The stable `code` field of the server's JSON error body
+  /// (TOKEN_EXPIRED, TOKEN_INVALID, SESSION_REVOKED, ...), when it sent one.
+  final String? code;
+  /// The server's own `error` text, when it sent one.
+  final String? serverMessage;
+  HydraApiException(this.message, {this.statusCode, this.code, this.serverMessage});
+
+  /// A 401, or a 403 that says the token expired or is invalid: a refresh or
+  /// a new login can cure it. (A plain 403 is a missing role permission.)
+  bool get isSessionProblem =>
+      statusCode == 401 || (statusCode == 403 && (code == 'TOKEN_EXPIRED' || code == 'TOKEN_INVALID'));
+
+  /// A 403 about the account's role, not about the session.
+  bool get isPermissionDenied => statusCode == 403 && !isSessionProblem;
+
+  /// The robot is reserved by another account (the server's 409).
+  bool get isReservedByAnother => statusCode == 409;
+
+  /// The server refused the command itself (unknown command, a value it cannot take).
+  bool get isRejectedCommand => statusCode == 400;
+
   @override
   String toString() => message;
 }
@@ -58,12 +80,22 @@ class HydraApiClient {
   String? authToken;
   final http.Client _client;
 
-  HydraApiClient(String host, int port, {http.Client? client})
-      : baseUrl = 'http://$host:$port',
+  /// [useTls] starts the client on https:// - for a server that was already
+  /// seen answering TLS. It never goes back to plain http by itself: a server
+  /// that once spoke TLS and now answers over http is not trusted with a
+  /// password or a token in the clear.
+  HydraApiClient(String host, int port, {http.Client? client, bool useTls = false})
+      : baseUrl = '${useTls ? 'https' : 'http'}://$host:$port',
         _client = client ?? http.Client();
 
   Map<String, String> get _authHeaders =>
       authToken != null ? {'Authorization': 'Bearer $authToken'} : const {};
+
+  /// Headers for requests made outside this class (the live camera stream):
+  /// the client identity and the bearer token. A server started with
+  /// HYDRA_UMC_CAMERA_AUTH=required refuses the picture without a signed-in
+  /// client; the token goes in a header, never in the address.
+  Map<String, String> get mediaHeaders => {..._clientHeaders, ..._authHeaders};
 
   /// Self-identifies this client to server.ts's own per-client remote-access
   /// toggles (Config > Remote Access) - lets the project owner disable this
@@ -206,14 +238,20 @@ class HydraApiClient {
     _expectJson(resp);
   }
 
-  Future<Map<String, dynamic>> postRobotCommand(dynamic robotId, Map<String, dynamic> payload) async {
+  /// [timeout] is 5 s for an ordinary command; a STOP uses a shorter one so a
+  /// stuck connection is given up and retried quickly.
+  Future<Map<String, dynamic>> postRobotCommand(
+    dynamic robotId,
+    Map<String, dynamic> payload, {
+    Duration timeout = const Duration(seconds: 5),
+  }) async {
     final resp = await _client
         .post(
           Uri.parse('$baseUrl/api/robot/$robotId/command'),
           headers: {'Content-Type': 'application/json', ..._clientHeaders, ..._authHeaders},
           body: jsonEncode(payload),
         )
-        .timeout(const Duration(seconds: 5));
+        .timeout(timeout);
     return _expectJson(resp);
   }
 
@@ -242,14 +280,34 @@ class HydraApiClient {
 
   Future<Map<String, dynamic>> getSystemMetrics() async {
     final resp = await _client
-        .get(Uri.parse('$baseUrl/api/system/metrics'), headers: _clientHeaders)
+        .get(Uri.parse('$baseUrl/api/system/metrics'), headers: {..._clientHeaders, ..._authHeaders})
         .timeout(const Duration(seconds: 5));
     return _expectJson(resp);
   }
 
   Map<String, dynamic> _expectJson(http.Response resp) {
     if (resp.statusCode < 200 || resp.statusCode >= 300) {
-      throw HydraApiException('HTTP ${resp.statusCode} from ${resp.request?.url.path}');
+      // The server's error body carries a reason (`error`) and, for the auth
+      // middleware, a stable `code`: keep both so the caller can tell an
+      // expired session from a missing permission, an unknown command (400)
+      // or a robot reserved by someone else (409).
+      String? code;
+      String? serverMessage;
+      try {
+        final body = jsonDecode(resp.body);
+        if (body is Map) {
+          if (body['code'] is String) code = body['code'] as String;
+          if (body['error'] is String) serverMessage = body['error'] as String;
+        }
+      } catch (_) {
+        // Not JSON (a proxy's HTML page, say): the status alone has to do.
+      }
+      throw HydraApiException(
+        'HTTP ${resp.statusCode} from ${resp.request?.url.path}',
+        statusCode: resp.statusCode,
+        code: code,
+        serverMessage: serverMessage,
+      );
     }
     try {
       return jsonDecode(resp.body) as Map<String, dynamic>;

@@ -30,13 +30,16 @@ class _MainScreenState extends State<MainScreen> {
   RobotViewModel? _vm;
   HydraError? _lastShownError;
 
-  static const _screens = [
-    DashboardScreen(),
-    ControlScreen(),
-    CameraScreen(),
-    ThreeDScreen(),
-    TelemetryScreen(),
-    SettingsScreen(),
+  // The camera and the 3D viewer know whether their tab is the one shown:
+  // all tabs stay alive side by side (IndexedStack), and a picture stream
+  // that nobody is looking at is wasted data, battery and server load.
+  List<Widget> get _screens => [
+    const DashboardScreen(),
+    const ControlScreen(),
+    CameraScreen(active: _index == 2),
+    ThreeDScreen(active: _index == 3),
+    const TelemetryScreen(),
+    const SettingsScreen(),
   ];
 
   @override
@@ -71,6 +74,9 @@ class _MainScreenState extends State<MainScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(err.localize(AppLocalizations.of(context)!)), backgroundColor: const Color(0xFFB91C1C)),
       );
+      // Shown: forget it, so the same error happening again is shown again.
+      _vm?.acknowledgeError();
+      _lastShownError = null;
     }
   }
 
