@@ -121,5 +121,19 @@
   "voiceAssistantInputLabel": "Tapez votre demande",
   "voiceAssistantRequiresConfirmation": "Ceci nécessite une confirmation avant de prendre effet.",
   "voiceSend": "Envoyer",
-  "actionClose": "Fermer"
+  "actionClose": "Fermer",
+  "settingsBlockCachedCommands": "Bloquer les commandes sur données enregistrées",
+  "settingsBlockCachedCommandsSubtitle": "Ne pas envoyer de commandes tant que l'écran affiche la copie enregistrée et non l'état réel (le STOP n'est jamais bloqué)",
+  "errSavedDataBlocked": "Commande non envoyée : l'écran affiche des données enregistrées, pas l'état réel",
+  "loginScanSkipMobileVpn": "Ne pas analyser les réseaux de données mobiles ni VPN",
+  "jogNorthWest": "Jog X moins, Y plus",
+  "jogNorth": "Jog Y plus",
+  "jogNorthEast": "Jog X plus, Y plus",
+  "jogWest": "Jog X moins",
+  "jogEast": "Jog X plus",
+  "jogSouthWest": "Jog X moins, Y moins",
+  "jogSouth": "Jog Y moins",
+  "jogSouthEast": "Jog X plus, Y moins",
+  "jogZUp": "Jog Z plus",
+  "jogZDown": "Jog Z moins"
 }

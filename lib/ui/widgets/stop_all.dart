@@ -68,7 +68,7 @@ class StopAllButton extends StatelessWidget {
           style: FilledButton.styleFrom(
             backgroundColor: color,
             foregroundColor: Colors.white,
-            minimumSize: const Size(64, 40),
+            minimumSize: const Size(64, 44),
             padding: const EdgeInsets.symmetric(horizontal: 12),
           ),
           icon: const Icon(Icons.front_hand, size: 18),

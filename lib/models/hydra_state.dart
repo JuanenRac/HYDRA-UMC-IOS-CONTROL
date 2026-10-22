@@ -234,17 +234,5 @@ class HydraState {
 
   RobotView? robotById(dynamic robotId) => activeController?.robotById(robotId);
 
-  /// Shallow merge of an incoming delta/settings payload into this state's
-  /// own raw tree - top-level keys from [other] replace this state's own,
-  /// everything else in this state's own tree is left untouched. Used when
-  /// a WS "delta" broadcast (an atomic per-robot command from another
-  /// client) arrives - the payload IS the full tree either way (see
-  /// server.ts's own broadcastSettings()), so a full replace is
-  /// actually correct here, not a partial merge - kept as a named method
-  /// for symmetry with the other 2 clients' own equivalent step.
-  void merge(Map<String, dynamic> other) {
-    raw.addAll(other);
-  }
-
   Map<String, dynamic> toJson() => raw;
 }

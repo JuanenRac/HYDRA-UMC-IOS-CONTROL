@@ -121,5 +121,19 @@
   "voiceAssistantInputLabel": "リクエストを入力",
   "voiceAssistantRequiresConfirmation": "これは反映される前に確認が必要です。",
   "voiceSend": "送信",
-  "actionClose": "閉じる"
+  "actionClose": "閉じる",
+  "settingsBlockCachedCommands": "保存済みデータでは操作を送らない",
+  "settingsBlockCachedCommandsSubtitle": "画面が実際の状態ではなく保存済みのコピーを表示している間は操作を送りません（停止は決してブロックされません）",
+  "errSavedDataBlocked": "操作は送信されませんでした：画面は実際の状態ではなく保存済みデータを表示しています",
+  "loginScanSkipMobileVpn": "モバイルデータ回線とVPNはスキャンしない",
+  "jogNorthWest": "X負・Y正へジョグ",
+  "jogNorth": "Y正へジョグ",
+  "jogNorthEast": "X正・Y正へジョグ",
+  "jogWest": "X負へジョグ",
+  "jogEast": "X正へジョグ",
+  "jogSouthWest": "X負・Y負へジョグ",
+  "jogSouth": "Y負へジョグ",
+  "jogSouthEast": "X正・Y負へジョグ",
+  "jogZUp": "Z正へジョグ",
+  "jogZDown": "Z負へジョグ"
 }

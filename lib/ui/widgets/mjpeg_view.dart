@@ -16,6 +16,8 @@
 //    is shown, not the oldest, so the picture never lags further behind.
 //  - The pending bytes are capped, so a stream that never produces a frame
 //    end (corrupt, or an error page) cannot grow the buffer without limit.
+//  - The stream is closed when the app leaves the foreground and opened again
+//    when it returns, so a backgrounded app does not keep downloading video.
 //  - Every connection attempt carries a generation number: the answer of an
 //    attempt that was replaced (the address changed, the widget was disposed)
 //    is dropped instead of leaving a second stream running.
@@ -55,24 +57,49 @@ const int mjpegMaxBufferBytes = 4 * 1024 * 1024;
 class MjpegView extends StatefulWidget {
   final String url;
   final Map<String, String>? headers;
-  const MjpegView({super.key, required this.url, this.headers});
+
+  /// Creates the HTTP client of each connection (a test passes a fake).
+  final http.Client Function()? clientFactory;
+  const MjpegView({super.key, required this.url, this.headers, this.clientFactory});
 
   @override
   State<MjpegView> createState() => _MjpegViewState();
 }
 
-class _MjpegViewState extends State<MjpegView> {
+class _MjpegViewState extends State<MjpegView> with WidgetsBindingObserver {
   Uint8List? _frame;
   StreamSubscription<List<int>>? _sub;
   http.Client? _client;
   bool _hasError = false;
   String? _reason;
   int _generation = 0;
+  bool _pausedByLifecycle = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _start();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    switch (state) {
+      case AppLifecycleState.paused:
+      case AppLifecycleState.hidden:
+      case AppLifecycleState.detached:
+        if (_client != null || _sub != null) {
+          _stop();
+          _pausedByLifecycle = true;
+        }
+      case AppLifecycleState.resumed:
+        if (_pausedByLifecycle) {
+          _pausedByLifecycle = false;
+          _start();
+        }
+      case AppLifecycleState.inactive:
+        break;
+    }
   }
 
   @override
@@ -89,7 +116,7 @@ class _MjpegViewState extends State<MjpegView> {
 
   Future<void> _start() async {
     final generation = ++_generation;
-    final client = http.Client();
+    final client = (widget.clientFactory ?? http.Client.new)();
     _client = client;
     var pending = BytesBuilder(copy: false);
     try {
@@ -155,6 +182,7 @@ class _MjpegViewState extends State<MjpegView> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _stop();
     super.dispose();
   }

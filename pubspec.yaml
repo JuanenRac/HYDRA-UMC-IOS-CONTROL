@@ -112,9 +112,8 @@ flutter:
   # see https://flutter.dev/to/font-from-package
 
 # flutter_launcher_icons config (dart run flutter_launcher_icons) - real app
-# icon replacing flutter create's default placeholder, cropped from this
-# repo's own images/HYDRA_UMC_IOS_CONTROL_BANNER.jpg (the square control-
-# panel/phone centerpiece, not the wide banner as-is - a non-square source
+# icon replacing flutter create's default placeholder, taken from this
+# repo's own images/app_icon_source.png (a square source: a non-square one
 # would get squashed into the icon's square canvas). ios/windows only:
 # android was never a build target here (flutter create --platforms=ios,
 # windows, see docs/ARCHITECTURE.md).

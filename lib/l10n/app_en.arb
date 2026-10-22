@@ -141,5 +141,19 @@
   "voiceAssistantInputLabel": "Type your request",
   "voiceAssistantRequiresConfirmation": "This requires confirmation before it takes effect.",
   "voiceSend": "Send",
-  "actionClose": "Close"
+  "actionClose": "Close",
+  "settingsBlockCachedCommands": "Block commands on saved data",
+  "settingsBlockCachedCommandsSubtitle": "Do not send commands while the screen shows the saved copy instead of the live state (STOP is never blocked)",
+  "errSavedDataBlocked": "Command not sent: the screen shows saved data, not the live state",
+  "loginScanSkipMobileVpn": "Do not scan mobile-data or VPN networks",
+  "jogNorthWest": "Jog X minus, Y plus",
+  "jogNorth": "Jog Y plus",
+  "jogNorthEast": "Jog X plus, Y plus",
+  "jogWest": "Jog X minus",
+  "jogEast": "Jog X plus",
+  "jogSouthWest": "Jog X minus, Y minus",
+  "jogSouth": "Jog Y minus",
+  "jogSouthEast": "Jog X plus, Y minus",
+  "jogZUp": "Jog Z plus",
+  "jogZDown": "Jog Z minus"
 }

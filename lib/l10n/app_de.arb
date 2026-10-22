@@ -121,5 +121,19 @@
   "voiceAssistantInputLabel": "Anfrage eingeben",
   "voiceAssistantRequiresConfirmation": "Dies erfordert eine Bestätigung, bevor es wirksam wird.",
   "voiceSend": "Senden",
-  "actionClose": "Schließen"
+  "actionClose": "Schließen",
+  "settingsBlockCachedCommands": "Befehle bei gespeicherten Daten sperren",
+  "settingsBlockCachedCommandsSubtitle": "Keine Befehle senden, solange der Bildschirm die gespeicherte Kopie statt des Livezustands zeigt (STOP wird nie gesperrt)",
+  "errSavedDataBlocked": "Befehl nicht gesendet: Der Bildschirm zeigt gespeicherte Daten, nicht den Livezustand",
+  "loginScanSkipMobileVpn": "Mobilfunk- und VPN-Netze nicht durchsuchen",
+  "jogNorthWest": "Jog X minus, Y plus",
+  "jogNorth": "Jog Y plus",
+  "jogNorthEast": "Jog X plus, Y plus",
+  "jogWest": "Jog X minus",
+  "jogEast": "Jog X plus",
+  "jogSouthWest": "Jog X minus, Y minus",
+  "jogSouth": "Jog Y minus",
+  "jogSouthEast": "Jog X plus, Y minus",
+  "jogZUp": "Jog Z plus",
+  "jogZDown": "Jog Z minus"
 }

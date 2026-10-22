@@ -11,6 +11,7 @@ import 'package:provider/provider.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/server_info.dart';
+import '../network/client_prefs.dart';
 import '../network/discovery.dart';
 import '../state/robot_view_model.dart';
 
@@ -27,9 +28,19 @@ class _LoginScreenState extends State<LoginScreen> {
   final _userCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
   bool _isSubmitting = false;
+  bool _skipMobileVpn = false;
+  final _clientPrefs = ClientPrefs();
 
   StreamSubscription<ServerInfo>? _scanSub;
   StreamSubscription<ServerInfo>? _mdnsSub;
+
+  @override
+  void initState() {
+    super.initState();
+    _clientPrefs.loadSkipMobileAndVpnNetworks().then((value) {
+      if (mounted) setState(() => _skipMobileVpn = value);
+    });
+  }
 
   @override
   void dispose() {
@@ -82,7 +93,10 @@ class _LoginScreenState extends State<LoginScreen> {
     );
 
     _scanSub?.cancel();
-    _scanSub = scanSubnets(lastHost: _hostCtrl.text.trim().isEmpty ? null : _hostCtrl.text.trim()).listen(
+    _scanSub = scanSubnets(
+      lastHost: _hostCtrl.text.trim().isEmpty ? null : _hostCtrl.text.trim(),
+      skipMobileAndVpn: _skipMobileVpn,
+    ).listen(
       addResult,
       onDone: () {
         subnetDone = true;
@@ -232,6 +246,18 @@ class _LoginScreenState extends State<LoginScreen> {
                     icon: const Icon(Icons.wifi_find, size: 18),
                     label: Text(l10n.loginScanNetwork),
                   ),
+                ),
+                CheckboxListTile(
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  controlAffinity: ListTileControlAffinity.leading,
+                  title: Text(l10n.loginScanSkipMobileVpn),
+                  value: _skipMobileVpn,
+                  onChanged: (value) {
+                    final v = value ?? false;
+                    setState(() => _skipMobileVpn = v);
+                    _clientPrefs.saveSkipMobileAndVpnNetworks(v);
+                  },
                 ),
                 const SizedBox(height: 4),
                 TextField(

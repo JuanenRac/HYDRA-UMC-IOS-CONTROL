@@ -8,6 +8,13 @@ All notable changes to this project are documented here.
 - Added `tools/hydra_project_tool.py`: the same `validate`, `test`, `version`, `status` and `bump` commands in every repository. The checks run with `HYDRA_UMC_CI=1` and fail if the version changes; only `bump` changes it.
 - The live connection no longer falls back to `/ws?token=`: the token travels only as the `hydra.bearer` subprotocol, which every server since the subprotocol was added answers and which the server now requires (it refuses the address form by default). A server that does not answer it is reported as a failed connection instead of being handed the token in the address. A token that a subprotocol cannot carry is reported as rejected and no connection is attempted; `ServerInfo.wsUrl()` (unused) is gone. Three tests replace the one that expected the fallback.
 - The README and the architecture notes describe the subprotocol as the only form.
+- New switch in Settings, off by default: "Block commands on saved data". While the screen shows the saved copy of the robot state instead of the live one, every command except STOP is held back with its own message. Its choice is kept between launches.
+- New switch on the sign-in screen, off by default: "Do not scan mobile-data or VPN networks". The subnet scan then leaves out those interfaces of the phone (mobile data, tunnels, VPN) instead of sweeping their address ranges.
+- Accessibility: every jog D-pad button is announced by VoiceOver with its axis and direction (in the eight languages) and activates with one step; the D-pad cells are 44 pt (they were about 41) and the Z buttons are as wide as their column, so the whole button takes the touch, not only the arrow. The global STOP button is 44 pt high.
+- The live camera picture is closed when the app goes to the background and opened again when it comes back, instead of downloading video the user cannot see.
+- Removed the unused `postSettings` and `HydraState.merge`; the notes in the API client no longer say that every server seeds an `admin/admin` account (a production server has none).
+- Fixed stale comments and metadata: the project manifest build and notes, the icon-source comment in `pubspec.yaml`, and the test list in the eight READMEs.
+- Tests: 4 new files (saved-data block, interface filter, jog pad accessibility and size, camera lifecycle). The block, the label and the size tests fail with the previous code.
 
 ## [0.2.6]
 

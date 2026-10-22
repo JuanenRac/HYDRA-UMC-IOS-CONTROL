@@ -53,6 +53,7 @@
 - **实时 WebSocket 同步**（`lib/network/hydra_websocket.dart`）—— 以 `hydra.bearer` 子协议发送令牌，从不放入连接 URL（`server.ts` 默认拒绝 `/ws?token=`），同时处理 `"settings"` 和 `"delta"` 两种广播类型,断线后自动重连。
 - **仪表盘**（`lib/ui/dashboard_screen.dart`）—— 每机器人卡片,通过 `Provider` 自身的 `ChangeNotifier` 实时响应,LED 惯例（绿色脉冲=活动,红色常亮=非活动）,以及合并机器人显示（仅在从属方一侧显示,按 id 解析）,与 HYDRA-UMC-STUDIO 自身的仪表盘概览一致。
 - **手动控制**（`lib/ui/control_screen.dart`、`lib/ui/widgets/joystick_pad.dart`）—— 点动方向键（带/不带 XY 工作台目标）、速度/加速度滑块、阀门/泵开关,以及全局 **STOP**（`lib/ui/widgets/stop_all.dart`）：只需轻触一次，无需长按也无需确认，即可停止所有机器人（`POST /api/stop-all`），并固定显示在每个标签页（包括控制标签页）的顶部栏中。结果按机器人逐个显示（有机器人失败或停止未保存时给出警告，被其他账户预约的机器人会被标出），网络错误会重试一次，超出请求限制或没有该路由的服务器则改用逐个机器人停止，若无人应答，则会一直显示“STOP 未确认”横幅，直到之后的某次 STOP 得到应答。圆形的单机器人停止按钮保留长按保护。
+- **可选开关** - 两个开关，默认均为关闭：*显示已保存数据时禁止发送指令*（设置）会在屏幕显示的是机器人状态的已保存副本而非实时状态时，拦截除停止以外的所有指令；*不扫描移动数据网络和VPN*（登录界面）会在子网扫描中排除这些网络接口。点动方向键按钮至少 44 pt，VoiceOver 会读出其轴和方向；应用处于后台时，摄像头画面会被关闭。
 - **摄像头**（`lib/ui/camera_screen.dart`、`lib/ui/widgets/mjpeg_view.dart`）—— 一个小型的手写 MJPEG 流解析器（无第三方包）,一个明确的“摄像头已禁用”状态（而非静默显示空白画面）,以及一个可直接从服务器打开/关闭机器人视觉系统的开关（`server.ts` 的 `"vision"` 原子指令）。
 - **3D 视图**（`lib/ui/three_d_screen.dart`）—— 通过 WebView 嵌入 HYDRA-UMC-STUDIO 自身的实时 3D 视口（`?hideUI=true&robotId=&token=`）,与 Android 应用的方式相同,原因也相同（免费获得真实的、当前正在使用的 3D 场景）。在 `webview_flutter` 不支持的平台（本仓库用于构建验证的 Windows 桌面目标）上,会回退到一个诚实的占位符。
 - **系统指标**（`lib/state/robot_view_model.dart`）—— 每 5 秒轮询一次 `GET /api/system/metrics`,与其他 2 个客户端的节奏相同,显示在仪表盘中。
@@ -144,7 +145,7 @@ HYDRA-UMC-IOS-CONTROL/
 ├── ios/                              # Xcode 项目（仅可在 macOS 上构建）
 ├── windows/                          # Windows 桌面目标——无需 Mac 即可进行构建验证
 ├── docs/ARCHITECTURE.md
-├── test/                             # widget_test、auth_prefs_test、websocket_uri_test、hydra_websocket_reconnect_test、format_uptime_test、localization_test、state_cache_test、robot_view_model_cached_state_test、main_screen_cached_state_banner_test、telemetry_log_test、voice_turn_test、hostile_answers_test、hydra_error_test
+├── test/                             # widget_test, auth_prefs_test, discovery_interfaces_test, format_uptime_test, hostile_answers_test, hydra_error_test, hydra_websocket_reconnect_test, hydra_websocket_token_test, joystick_pad_test, localization_test, main_screen_cached_state_banner_test, mjpeg_lifecycle_test, robot_view_model_background_pause_test, robot_view_model_cached_state_test, robot_view_model_server_errors_test, robot_view_model_silent_refresh_test, robot_view_model_stop_all_test, saved_data_block_test, session_storage_test, state_cache_test, telemetry_log_test, voice_turn_test, websocket_uri_test
 ├── images/
 ├── README.md                         # 本文件
 └── README_spa.md / README_ita.md / README_fra.md / README_deu.md / README_zho.md / README_jpn.md / README_por.md  # 翻译

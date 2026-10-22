@@ -30,6 +30,7 @@ import '../network/auth_prefs.dart';
 import '../network/biometric_helper.dart';
 import '../network/hydra_api_client.dart';
 import '../network/hydra_websocket.dart';
+import '../network/client_prefs.dart';
 import '../network/state_cache.dart';
 import 'hydra_error.dart';
 
@@ -61,6 +62,11 @@ class RobotViewModel extends ChangeNotifier {
   final BiometricHelper _biometricHelper = BiometricHelper();
   final LanguagePrefs _languagePrefs = LanguagePrefs();
   final StateCache _stateCache = StateCache();
+  final ClientPrefs _clientPrefs = ClientPrefs();
+
+  /// When on, commands are not sent while [isShowingCachedState] is true (the
+  /// screen shows the saved copy, not the live state). STOP is never blocked.
+  bool blockCommandsOnSavedData = false;
 
   HydraState state = HydraState();
   HydraApiClient? apiClient;
@@ -223,6 +229,7 @@ class RobotViewModel extends ChangeNotifier {
     // is still in flight - genuinely useful right after the phone comes
     // back into WiFi range. Superseded by the real fetch the moment
     // connect() succeeds; see network/state_cache.dart's own header comment.
+    blockCommandsOnSavedData = await _clientPrefs.loadBlockCommandsOnSavedData();
     final cached = await _stateCache.loadCachedState();
     if (cached != null) {
       state = HydraState(cached.raw);
@@ -295,6 +302,12 @@ class RobotViewModel extends ChangeNotifier {
     needsBiometricUnlock = false;
     isLoggedIn = false;
     unawaited(_authPrefs.clearToken());
+    notifyListeners();
+  }
+
+  Future<void> setBlockCommandsOnSavedData(bool value) async {
+    blockCommandsOnSavedData = value;
+    await _clientPrefs.saveBlockCommandsOnSavedData(value);
     notifyListeners();
   }
 
@@ -750,6 +763,11 @@ class RobotViewModel extends ChangeNotifier {
   }) async {
     final robotId = robotIdOverride ?? selectedRobotId;
     if (robotId == null) return;
+    if (blockCommandsOnSavedData && isShowingCachedState && command != 'stop') {
+      lastError = const HydraError(HydraErrorKind.savedDataBlocked);
+      notifyListeners();
+      return;
+    }
     final target = state.robotById(robotId);
     if (target == null) {
       lastError = const HydraError(HydraErrorKind.robotNotFound);

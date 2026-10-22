@@ -121,5 +121,19 @@
   "voiceAssistantInputLabel": "Escribe tu solicitud",
   "voiceAssistantRequiresConfirmation": "Esto requiere confirmación antes de aplicarse.",
   "voiceSend": "Enviar",
-  "actionClose": "Cerrar"
+  "actionClose": "Cerrar",
+  "settingsBlockCachedCommands": "Bloquear órdenes con datos guardados",
+  "settingsBlockCachedCommandsSubtitle": "No enviar órdenes mientras la pantalla muestra la copia guardada y no el estado real (el STOP nunca se bloquea)",
+  "errSavedDataBlocked": "Orden no enviada: la pantalla muestra datos guardados, no el estado real",
+  "loginScanSkipMobileVpn": "No explorar redes de datos móviles ni VPN",
+  "jogNorthWest": "Mover X menos, Y más",
+  "jogNorth": "Mover Y más",
+  "jogNorthEast": "Mover X más, Y más",
+  "jogWest": "Mover X menos",
+  "jogEast": "Mover X más",
+  "jogSouthWest": "Mover X menos, Y menos",
+  "jogSouth": "Mover Y menos",
+  "jogSouthEast": "Mover X más, Y menos",
+  "jogZUp": "Mover Z más",
+  "jogZDown": "Mover Z menos"
 }

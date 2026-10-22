@@ -121,5 +121,19 @@
   "voiceAssistantInputLabel": "输入你的请求",
   "voiceAssistantRequiresConfirmation": "这需要确认后才会生效。",
   "voiceSend": "发送",
-  "actionClose": "关闭"
+  "actionClose": "关闭",
+  "settingsBlockCachedCommands": "显示已保存数据时禁止发送指令",
+  "settingsBlockCachedCommandsSubtitle": "屏幕显示的是已保存副本而非实时状态时，不发送指令（停止永远不会被阻止）",
+  "errSavedDataBlocked": "指令未发送：屏幕显示的是已保存数据，而不是实时状态",
+  "loginScanSkipMobileVpn": "不扫描移动数据网络和VPN",
+  "jogNorthWest": "点动 X减、Y加",
+  "jogNorth": "点动 Y加",
+  "jogNorthEast": "点动 X加、Y加",
+  "jogWest": "点动 X减",
+  "jogEast": "点动 X加",
+  "jogSouthWest": "点动 X减、Y减",
+  "jogSouth": "点动 Y减",
+  "jogSouthEast": "点动 X加、Y减",
+  "jogZUp": "点动 Z加",
+  "jogZDown": "点动 Z减"
 }

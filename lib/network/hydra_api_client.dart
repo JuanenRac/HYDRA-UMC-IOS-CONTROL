@@ -10,18 +10,16 @@
 // of truth - worth verifying against the server's own code rather than
 // trusting the doc blindly):
 //   - POST /api/login               - obtain a bearer token. Real multi-user
-//     accounts (server.ts's own users.ts) - every server seeds a default
-//     admin/admin account on its own first-ever start, and can have
-//     additional lower-privilege "operator" accounts created from
-//     Config > Users in the browser UI.
+//     accounts (the server's users.ts): the operator always supplies the
+//     credentials, no account is assumed. A production server has no
+//     built-in account - its first administrator comes from the
+//     HYDRA_UMC_BOOTSTRAP_ADMIN_* settings - and lower-privilege "operator"
+//     accounts are created from Config > Users in the browser UI.
 //   - GET  /api/hydra-info          - discovery/identity, 404 if this app's
 //     own access has been disabled server-side (Config > Remote Access,
 //     per-client, identified via the X-Hydra-Client: ios header every
 //     request below carries)
 //   - GET  /api/settings            - full current state, needs a bearer token (either role)
-//   - POST /api/settings            - overwrite the whole state,
-//     read-modify-write, requires an ADMIN bearer token (an "operator"
-//     account gets 403 - see server.ts's own requireAdmin())
 //   - POST /api/stop-all            - global stop of every robot
 //   - POST /api/robot/:id/command   - atomic per-robot command (stop/play/
 //     pause/jog/tool/valve/pump/speed/vision), requires a bearer token of
@@ -232,17 +230,6 @@ class HydraApiClient {
         .get(Uri.parse('$baseUrl/api/settings'), headers: {..._clientHeaders, ..._authHeaders})
         .timeout(const Duration(seconds: 5));
     return _expectJson(resp);
-  }
-
-  Future<void> postSettings(Map<String, dynamic> payload) async {
-    final resp = await _client
-        .post(
-          Uri.parse('$baseUrl/api/settings'),
-          headers: {'Content-Type': 'application/json', ..._clientHeaders, ..._authHeaders},
-          body: jsonEncode(payload),
-        )
-        .timeout(const Duration(seconds: 5));
-    _expectJson(resp);
   }
 
   /// [timeout] is 5 s for an ordinary command; a STOP uses a shorter one so a

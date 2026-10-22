@@ -45,6 +45,9 @@ enum HydraErrorKind {
   commandRejected,
   commandNotApplied,
   stopNotConfirmed,
+  // A command was held back because the screen shows saved data and the
+  // operator turned on the block for that case.
+  savedDataBlocked,
 }
 
 class HydraError {
@@ -88,6 +91,8 @@ class HydraError {
         return l10n.errCommandNotApplied(params['command'] ?? '', params['reason'] ?? '');
       case HydraErrorKind.stopNotConfirmed:
         return l10n.errStopNotConfirmed;
+      case HydraErrorKind.savedDataBlocked:
+        return l10n.errSavedDataBlocked;
     }
   }
 }

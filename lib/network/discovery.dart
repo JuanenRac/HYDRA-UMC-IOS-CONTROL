@@ -100,7 +100,31 @@ const int _scanConcurrency = 32;
 /// differs, then the common-default fallback so a fresh install with no
 /// saved host and an interface query that comes back empty still tries
 /// something instead of scanning nothing.
-Future<List<String>> _candidatePrefixes({String? lastHost}) async {
+/// True for the interface names iOS (and the other platforms) give to the
+/// mobile-data link (`pdp_ip*`, `rmnet*`, `ccmni*`, `wwan*`) and to VPN or
+/// tunnel interfaces (`utun*`, `ipsec*`, `ppp*`, `tun*`, `tap*`, `wg*`).
+bool isMobileOrVpnInterface(String name) {
+  final n = name.toLowerCase();
+  const prefixes = ['pdp_ip', 'rmnet', 'ccmni', 'wwan', 'utun', 'ipsec', 'ppp', 'tun', 'tap', 'wg'];
+  return prefixes.any(n.startsWith);
+}
+
+/// The /24 prefix ("a.b.c") of every IPv4 address in [interfaces]
+/// (name -> addresses), leaving out the mobile-data and VPN ones when
+/// [skipMobileAndVpn] is true.
+Set<String> prefixesOfInterfaces(Map<String, List<String>> interfaces, {bool skipMobileAndVpn = false}) {
+  final prefixes = <String>{};
+  for (final entry in interfaces.entries) {
+    if (skipMobileAndVpn && isMobileOrVpnInterface(entry.key)) continue;
+    for (final address in entry.value) {
+      final parts = address.split('.');
+      if (parts.length == 4) prefixes.add(parts.sublist(0, 3).join('.'));
+    }
+  }
+  return prefixes;
+}
+
+Future<List<String>> _candidatePrefixes({String? lastHost, bool skipMobileAndVpn = false}) async {
   final prefixes = <String>{};
   try {
     final interfaces = await NetworkInterface.list(
@@ -108,12 +132,10 @@ Future<List<String>> _candidatePrefixes({String? lastHost}) async {
       includeLoopback: false,
       includeLinkLocal: false,
     );
-    for (final iface in interfaces) {
-      for (final addr in iface.addresses) {
-        final parts = addr.address.split('.');
-        if (parts.length == 4) prefixes.add(parts.sublist(0, 3).join('.'));
-      }
-    }
+    prefixes.addAll(prefixesOfInterfaces(
+      {for (final iface in interfaces) iface.name: iface.addresses.map((a) => a.address).toList()},
+      skipMobileAndVpn: skipMobileAndVpn,
+    ));
   } on SocketException {
     // No usable interface info (sandboxed platform, no network) - fall
     // through to the lastHost/default fallbacks below.
@@ -133,8 +155,11 @@ Future<List<String>> _candidatePrefixes({String? lastHost}) async {
 /// [_candidatePrefixes]) for a real HYDRA-UMC STUDIO server, yielding each
 /// match as soon as it's found rather than waiting for the whole sweep to
 /// finish.
-Stream<ServerInfo> scanSubnets({String? lastHost}) async* {
-  final prefixes = await _candidatePrefixes(lastHost: lastHost);
+///
+/// With [skipMobileAndVpn] the mobile-data and VPN interfaces of the phone are
+/// left out of the sweep (off by default, which scans every interface).
+Stream<ServerInfo> scanSubnets({String? lastHost, bool skipMobileAndVpn = false}) async* {
+  final prefixes = await _candidatePrefixes(lastHost: lastHost, skipMobileAndVpn: skipMobileAndVpn);
 
   final client = http.Client();
   try {

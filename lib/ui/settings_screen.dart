@@ -56,6 +56,14 @@ class SettingsScreen extends StatelessWidget {
           ),
         ],
         const Divider(),
+        SwitchListTile(
+          secondary: const Icon(Icons.history_toggle_off),
+          title: Text(l10n.settingsBlockCachedCommands),
+          subtitle: Text(l10n.settingsBlockCachedCommandsSubtitle),
+          value: vm.blockCommandsOnSavedData,
+          onChanged: (value) => vm.setBlockCommandsOnSavedData(value),
+        ),
+        const Divider(),
         ListTile(
           leading: const Icon(Icons.language),
           title: Text(l10n.settingsLanguage),
