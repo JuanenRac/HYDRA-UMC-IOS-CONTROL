@@ -27,7 +27,7 @@ the same one HYDRA-UMC SUITE and HYDRA-UMC-ANDROID-CONTROL use, not a
 separate mobile-specific protocol. That document itself notes it can
 drift from `server.ts`, the real source of truth, so it's worth verifying
 against the server's own code rather than trusting the doc alone (the
-`/ws` upgrade requires `?token=` unconditionally, and
+`/ws` upgrade requires the token, as the `hydra.bearer` subprotocol, and
 `POST /api/robot/:id/command` is a real, working atomic endpoint the doc
 under-documents relative to what it actually does).
 
@@ -74,8 +74,8 @@ under-documents relative to what it actually does).
   usually arrive first).
 - `WebSocket /ws` - live push: the server sends the current state on
   connect, then broadcasts every change (from any client) to every connected
-  client. The token travels as the `hydra.bearer` subprotocol; a server from
-  before that falls back to `?token=` in the address.
+  client. The token travels as the `hydra.bearer` subprotocol and never in the
+  address; a server that does not answer it is a failed connection.
 - `GET /api/system/metrics` - host CPU/memory/temperature/uptime, polled
   every 5s for the Dashboard. It carries the bearer token (a server run with
   `HYDRA_UMC_INFO_AUTH=required` needs it); a host with no temperature

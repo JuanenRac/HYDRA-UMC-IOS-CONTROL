@@ -660,7 +660,7 @@ class RobotViewModel extends ChangeNotifier {
   /// multi-controller swarm. Validates the robot exists locally BEFORE
   /// touching anything: if it doesn't, the delta is discarded and a full
   /// reload is forced instead of ever creating a "ghost" robot from a
-  /// partial patch - DISEÑO_SYNC_DELTAS.txt section 5b mitigation (b),
+  /// partial patch - the delta-sync design mitigation (b),
   /// non-optional.
   void _applyRobotDelta(Map<String, dynamic> msg) {
     final controllerId = msg['controllerId'];

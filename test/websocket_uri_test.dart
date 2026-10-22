@@ -8,7 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hydra_umc_control/network/hydra_websocket.dart';
 
 void main() {
-  test('encodes an opaque bearer token as one WebSocket query value', () {
+  test('never puts the bearer token, whatever characters it holds, into the WebSocket address', () {
     final uri = HydraWebSocket.buildConnectionUri(
       host: '192.168.1.20',
       port: 3000,
@@ -17,7 +17,8 @@ void main() {
 
     expect(uri.scheme, 'ws');
     expect(uri.path, '/ws');
-    expect(uri.queryParameters['token'], 'token+with/characters?and=value');
+    expect(uri.queryParameters.containsKey('token'), isFalse);
+    expect(uri.toString(), isNot(contains('characters')));
     expect(uri.queryParameters['remoteApiVersion'], '2');
   });
 }
