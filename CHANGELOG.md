@@ -368,27 +368,9 @@ fixed in HYDRA-UMC-DSI's own `auth_prefs.dart`:
   `lib/network/hydra_api_client.dart` header, and the README (+4
   translations).
 
-## Versioning policy introduced
+## Earlier history
 
-- **Automatic version bump on every real build.** `build.sh`/`build.bat`
-  now run `tool/bump_version.dart` before `flutter build`, which bumps
-  `pubspec.yaml`'s `version:` line on every invocation: patch +1, with an
-  odometer-style carry into minor once patch would exceed 9 (`0.0.9` ->
-  `0.1.0`), and a plain monotonic build-number (+1, no carry). No manual
-  version editing from here on.
-- `lib/app_version.dart` (generated, not hand-edited) now exposes
-  `kAppVersion`/`kAppBuildNumber`/`kAppVersionFull` at runtime, regenerated
-  by the same script - avoids adding `package_info_plus` as a new runtime
-  dependency just to show the version in the UI.
-- Settings screen (`lib/ui/settings_screen.dart`) now shows the running
-  app's version and build number.
-- Build scripts (`build.sh`/`build.bat`) now print a visible banner
-  (project, what the script does, author, license) on every run, and keep
-  their window open at the end (success or failure) instead of closing
-  immediately.
-- This file added, seeded from the real project history below.
-
-## 0.0.0+1 and prior (pre-versioning-policy history)
+### 0.0.0+1 and prior (pre-versioning-policy history)
 
 - Repo created as a placeholder, then scoped out: iOS/iPadOS control app
   for a HYDRA-UMC robot over Wi-Fi or Bluetooth via the Compute Module 5.
