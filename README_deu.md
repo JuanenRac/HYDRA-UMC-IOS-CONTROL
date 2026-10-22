@@ -69,8 +69,8 @@ Erfordert das [Flutter SDK](https://docs.flutter.dev/get-started/install) (stabl
 ### Build-Skripte
 
 ```bash
-./build.sh     # Git Bash / WSL - flutter pub get + Versions-Bump + flutter build windows
-build.bat      # cmd.exe / PowerShell - flutter pub get + Versions-Bump + flutter build windows
+./build.sh     # Git Bash / WSL - flutter pub get + flutter build windows
+build.bat      # cmd.exe / PowerShell - flutter pub get + flutter build windows
 ```
 
 Beide erzeugen `build/windows/x64/runner/Release/hydra_umc_control.exe`, und beide erhöhen zuerst die App-Version - siehe [Versionierung](#-versionierung) unten.
@@ -90,18 +90,14 @@ flutter run -d windows   # oder -d <ios-device-id> von einem Mac aus
 
 ## 🔢 Versionierung
 
-Dieses Repository folgt einer ökosystemweiten Richtlinie: Die Version
-wird bei **jedem echten Build** automatisch erhöht, ohne die
-`version:`-Zeile in `pubspec.yaml` manuell zu bearbeiten.
-`build.sh`/`build.bat` führen `tool/bump_version.dart` vor dem Aufruf
-von `flutter build` aus und wenden dabei an:
+Dieses Repository folgt einer Richtlinie für das gesamte Ökosystem: Bauen ändert die Version nie. Der explizite `bump`-Befehl (`python tools/hydra_project_tool.py bump`) führt `tool/bump_version.dart` aus und wendet dabei an:
 
-- **Patch, Kilometerzähler-Stil (Basis 10):** +1 bei jedem Build;
+- **Patch, Kilometerzähler-Stil (Basis 10):** +1 bei jedem Bump;
   sobald 9 überschritten würde, wird auf 0 zurückgesetzt und minor
   bekommt +1 - z. B. `0.0.9` -> `0.1.0`. Major wird nie automatisch
   angefasst.
 - **Build-Nummer** (der Teil nach `+`): ein einfacher monotoner
-  Zähler, +1 bei jedem Build, ohne Übertrag.
+  Zähler, +1 bei jedem Bump, ohne Übertrag.
 
 Dasselbe Skript regeneriert `lib/app_version.dart` (generiert, nicht
 manuell bearbeitet - eine einfache `const`-Datei, keine neue
@@ -115,7 +111,7 @@ anzuzeigen. Siehe [CHANGELOG.md](CHANGELOG.md) für die Versionshistorie.
 HYDRA-UMC-IOS-CONTROL/
 ├── build.bat, build.sh              # flutter pub get + Versions-Bump + flutter build windows
 ├── tool/
-│   └── bump_version.dart            # Versions-Bump-Skript, von build.bat/build.sh vor jedem Build ausgeführt (siehe Versionierung oben)
+│   └── bump_version.dart            # Versionserhöhung im Kilometerzähler-Stil (nur vom expliziten `bump`-Befehl ausgeführt)
 ├── lib/
 │   ├── main.dart                    # App-Einstiegspunkt, ChangeNotifierProvider + Login-Gate
 │   ├── app_version.dart             # GENERIERT - von tool/bump_version.dart neu erzeugt, nicht manuell bearbeiten

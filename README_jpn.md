@@ -69,11 +69,11 @@ Wi-Fi 経由で [HYDRA-UMC](https://github.com/JuanenRac/HYDRA-UMC) プラット
 ### ビルドスクリプト
 
 ```bash
-./build.sh     # Git Bash / WSL —— flutter pub get + バージョン加算 + flutter build windows
-build.bat      # cmd.exe / PowerShell —— flutter pub get + バージョン加算 + flutter build windows
+./build.sh     # Git Bash / WSL —— flutter pub get + flutter build windows
+build.bat      # cmd.exe / PowerShell —— flutter pub get + flutter build windows
 ```
 
-どちらも `build/windows/x64/runner/Release/hydra_umc_control.exe` を生成し、どちらも最初にアプリのバージョンを加算します——下記の[バージョン管理](#-バージョン管理)参照。
+どちらも `build/windows/x64/runner/Release/hydra_umc_control.exe` を生成し、どちらもアプリのバージョンを変更しません——下記の[バージョン管理](#-バージョン管理)参照。
 
 ### 手動ビルド
 
@@ -90,10 +90,10 @@ flutter run -d windows   # または Mac 上で -d <ios-device-id>
 
 ## 🔢 バージョン管理
 
-本リポジトリは、エコシステム全体で統一されたポリシーに従います：バージョンは**実際のビルドのたび**に自動的に加算され、`pubspec.yaml` の `version:` 行を手動で編集する必要はありません。`build.sh`/`build.bat` は、`flutter build` を呼び出す前に `tool/bump_version.dart` を実行し、以下を適用します：
+このリポジトリはエコシステム全体の方針に従います：ビルドはバージョンを一切変更しません。明示的な `bump` コマンド（`python tools/hydra_project_tool.py bump`）が `tool/bump_version.dart` を実行し、次を適用します：
 
-- **Patch、オドメーター方式（10 進法）：** 毎回のビルドで +1；9 を超えるとリセットされて 0 になり、代わりに minor が +1 されます——例：`0.0.9` -> `0.1.0`。Major は自動的には決して変更されません。
-- **ビルド番号**（`+` の後の部分）：単純な単調カウンター、毎回のビルドで +1、繰り上がりなし。
+- **Patch、オドメーター方式（10 進法）：** bump のたびに +1；9 を超えるとリセットされて 0 になり、代わりに minor が +1 されます——例：`0.0.9` -> `0.1.0`。Major は自動的には決して変更されません。
+- **ビルド番号**（`+` の後の部分）：単純な単調カウンター、bump のたびに +1、繰り上がりなし。
 
 同じスクリプトが `lib/app_version.dart`（生成物であり、手作業で編集されるものではありません——単純な `const` ファイルであり、`package_info_plus` のような新しいランタイム依存関係ではありません）を再生成し、アプリは実行時にこれを読み取って **Settings** 画面に自身のバージョンを表示します。バージョン履歴は [CHANGELOG.md](CHANGELOG.md) を参照してください。
 
@@ -103,7 +103,7 @@ flutter run -d windows   # または Mac 上で -d <ios-device-id>
 HYDRA-UMC-IOS-CONTROL/
 ├── build.bat, build.sh              # flutter pub get + バージョン加算 + flutter build windows
 ├── tool/
-│   └── bump_version.dart            # build.bat/build.sh が毎回のビルド前に実行するバージョン加算スクリプト（上記バージョン管理を参照）
+│   └── bump_version.dart            # オドメーター式バージョンインクリメント（明示的な `bump` コマンドのみが実行）
 ├── lib/
 │   ├── main.dart                    # アプリのエントリポイント、ChangeNotifierProvider + ログインゲート
 │   ├── app_version.dart             # 生成物——tool/bump_version.dart によって再生成される、手動編集禁止

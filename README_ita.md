@@ -69,11 +69,11 @@ Richiede il [Flutter SDK](https://docs.flutter.dev/get-started/install) (canale 
 ### Script di build
 
 ```bash
-./build.sh     # Git Bash / WSL - flutter pub get + bump versione + flutter build windows
-build.bat      # cmd.exe / PowerShell - flutter pub get + bump versione + flutter build windows
+./build.sh     # Git Bash / WSL - flutter pub get + flutter build windows
+build.bat      # cmd.exe / PowerShell - flutter pub get + flutter build windows
 ```
 
-Entrambi producono `build/windows/x64/runner/Release/hydra_umc_control.exe`, ed entrambi incrementano prima la versione dell'app - vedi [Versioning](#-versioning) più sotto.
+Entrambi producono `build/windows/x64/runner/Release/hydra_umc_control.exe`, ed entrambi non cambiano la versione dell'app - vedi [Versioning](#-versioning) più sotto.
 
 ### Build manuale
 
@@ -90,17 +90,13 @@ flutter run -d windows   # oppure -d <ios-device-id> da un Mac
 
 ## 🔢 Versioning
 
-Questo repository segue una politica ecosistema-wide: la versione viene
-incrementata automaticamente a **ogni build reale**, senza modificare a
-mano la riga `version:` di `pubspec.yaml`. `build.sh`/`build.bat`
-eseguono `tool/bump_version.dart` prima di invocare `flutter build`,
-applicando:
+Questo repository segue una politica a livello di ecosistema: compilare non cambia mai la versione. Il comando `bump` esplicito (`python tools/hydra_project_tool.py bump`) esegue `tool/bump_version.dart`, che applica:
 
-- **Patch, stile contachilometri (base 10):** +1 a ogni build; una
+- **Patch, stile contachilometri (base 10):** +1 a ogni bump; una
   volta superato 9 si resetta a 0 e minor sale di +1 - es. `0.0.9` ->
   `0.1.0`. Major non viene mai toccato automaticamente.
 - **Build number** (la parte dopo `+`): un contatore monotono semplice,
-  +1 a ogni build, senza riporto.
+  +1 a ogni bump, senza riporto.
 
 Lo stesso script rigenera `lib/app_version.dart` (generato, non
 modificato a mano - un semplice file `const`, non una nuova dipendenza
@@ -114,7 +110,7 @@ mostrare la propria versione nella schermata **Impostazioni**. Vedi
 HYDRA-UMC-IOS-CONTROL/
 ├── build.bat, build.sh              # flutter pub get + bump versione + flutter build windows
 ├── tool/
-│   └── bump_version.dart            # Script di bump versione, eseguito da build.bat/build.sh prima di ogni build (vedi Versioning sopra)
+│   └── bump_version.dart            # Incremento di versione stile contachilometri (eseguito solo dal comando `bump` esplicito)
 ├── lib/
 │   ├── main.dart                    # Punto di ingresso dell'app, ChangeNotifierProvider + gate di login
 │   ├── app_version.dart             # GENERATO - rigenerato da tool/bump_version.dart, non modificare a mano

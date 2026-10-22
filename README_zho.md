@@ -69,11 +69,11 @@
 ### 构建脚本
 
 ```bash
-./build.sh     # Git Bash / WSL —— flutter pub get + 版本递增 + flutter build windows
-build.bat      # cmd.exe / PowerShell —— flutter pub get + 版本递增 + flutter build windows
+./build.sh     # Git Bash / WSL —— flutter pub get + flutter build windows
+build.bat      # cmd.exe / PowerShell —— flutter pub get + flutter build windows
 ```
 
-两者都会生成 `build/windows/x64/runner/Release/hydra_umc_control.exe`,并且都会先递增应用的版本号——见下文[版本管理](#-版本管理)。
+两者都会生成 `build/windows/x64/runner/Release/hydra_umc_control.exe`,并且都不会更改应用的版本号——见下文[版本管理](#-版本管理)。
 
 ### 手动构建
 
@@ -90,10 +90,10 @@ flutter run -d windows   # 或在 Mac 上使用 -d <ios-device-id>
 
 ## 🔢 版本管理
 
-本仓库遵循一项全生态系统统一的策略：版本号在**每次真正的构建**时自动递增,无需手动编辑 `pubspec.yaml` 的 `version:` 行。`build.sh`/`build.bat` 会在调用 `flutter build` 之前运行 `tool/bump_version.dart`,应用以下规则：
+本仓库遵循生态系统统一的策略：构建绝不会更改版本号。显式的 `bump` 命令（`python tools/hydra_project_tool.py bump`）会运行 `tool/bump_version.dart`，并应用：
 
-- **Patch,里程表方式（十进制）：** 每次构建 +1;一旦超过 9 就重置为 0,并将 minor 加 1——例如 `0.0.9` -> `0.1.0`。Major 从不被自动修改。
-- **构建号**（`+` 之后的部分）：一个纯粹的单调计数器,每次构建 +1,不进位。
+- **Patch,里程表方式（十进制）：** 每次 bump +1;一旦超过 9 就重置为 0,并将 minor 加 1——例如 `0.0.9` -> `0.1.0`。Major 从不被自动修改。
+- **构建号**（`+` 之后的部分）：一个纯粹的单调计数器,每次 bump +1,不进位。
 
 同一个脚本会重新生成 `lib/app_version.dart`（这是生成的文件,不是手工编辑的——一个普通的 `const` 文件,而非像 `package_info_plus` 那样引入新的运行时依赖）,应用在运行时读取它,以在 **Settings** 界面显示自身版本。完整版本历史见 [CHANGELOG.md](CHANGELOG.md)。
 
@@ -103,7 +103,7 @@ flutter run -d windows   # 或在 Mac 上使用 -d <ios-device-id>
 HYDRA-UMC-IOS-CONTROL/
 ├── build.bat, build.sh              # flutter pub get + 版本递增 + flutter build windows
 ├── tool/
-│   └── bump_version.dart            # build.bat/build.sh 在每次构建前运行的版本递增脚本（见上文版本管理）
+│   └── bump_version.dart            # 里程表式版本递增（仅由显式 `bump` 命令运行）
 ├── lib/
 │   ├── main.dart                    # 应用入口点，ChangeNotifierProvider + 登录门禁
 │   ├── app_version.dart             # 生成文件——由 tool/bump_version.dart 重新生成，请勿手动编辑
