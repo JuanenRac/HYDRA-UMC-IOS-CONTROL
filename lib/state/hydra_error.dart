@@ -56,6 +56,8 @@ enum HydraErrorKind {
   // A command was held back because the screen shows saved data and the
   // operator turned on the block for that case.
   savedDataBlocked,
+  // A conditional write was refused (412): the robot changed since this app read it.
+  revisionChanged,
 }
 
 class HydraError {
@@ -109,6 +111,8 @@ class HydraError {
         return l10n.errJogOverLimit(params['limit'] ?? '');
       case HydraErrorKind.savedDataBlocked:
         return l10n.errSavedDataBlocked;
+      case HydraErrorKind.revisionChanged:
+        return l10n.errRevisionChanged(params['command'] ?? '');
     }
   }
 }
