@@ -10,6 +10,8 @@
 // emergency control.
 // =============================================================================
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -17,6 +19,7 @@ import 'package:provider/provider.dart';
 import '../l10n/app_localizations.dart';
 import '../models/hydra_state.dart';
 import '../state/robot_view_model.dart';
+import 'widgets/access_panel.dart';
 import 'widgets/digital_readout.dart';
 import 'widgets/joystick_pad.dart';
 import 'widgets/stop_all.dart';
@@ -32,12 +35,48 @@ class _ControlScreenState extends State<ControlScreen> {
   String _jogTarget = 'robot';
   double _jogStep = 10.0;
 
+  // Reservations and the safety limits of the selected robot's model are read
+  // from the server when this screen opens, when the robot changes and every
+  // 15 s while it stays open; a 1 s clock drives the countdown of the jog arming.
+  Timer? _accessTimer;
+  Timer? _clockTimer;
+  DateTime _now = DateTime.now();
+  dynamic _accessRobotId;
+
+  @override
+  void initState() {
+    super.initState();
+    _clockTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() => _now = DateTime.now());
+    });
+    _accessTimer = Timer.periodic(const Duration(seconds: 15), (_) {
+      if (mounted) context.read<RobotViewModel>().refreshAccess();
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) context.read<RobotViewModel>().refreshAccess();
+    });
+  }
+
+  @override
+  void dispose() {
+    _accessTimer?.cancel();
+    _clockTimer?.cancel();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<RobotViewModel>();
     final l10n = AppLocalizations.of(context)!;
     final robots = vm.robots;
     final robot = vm.selectedRobot;
+
+    if (robot != null && _accessRobotId != robot.id) {
+      _accessRobotId = robot.id;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) vm.refreshAccess();
+      });
+    }
 
     if (robots.isEmpty) {
       return Center(child: Text(l10n.controlNoRobots, style: const TextStyle(color: Colors.grey)));
@@ -60,6 +99,8 @@ class _ControlScreenState extends State<ControlScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Column(
                 children: [
+                  AccessPanel(vm: vm, robotId: robot.id, now: _now),
+                  const SizedBox(height: 12),
                   _telemetryRow(robot),
                   const SizedBox(height: 12),
                   if (robot.hasXYTable) _targetSelector(l10n),
@@ -69,7 +110,9 @@ class _ControlScreenState extends State<ControlScreen> {
                   JoystickPad(
                     // Not while a trajectory is running: the server's playback
                     // and a jog would both write the same setpoint.
-                    enabled: robot.online && !(robot.isPlaying && !robot.isPaused),
+                    // When the administrator requires it, the jog also waits for
+                    // the explicit arming (AccessPanel).
+                    enabled: robot.online && !(robot.isPlaying && !robot.isPaused) && !vm.jogNeedsArming(robot.id, _now),
                     onJog: (dx, dy, dz) {
                       HapticFeedback.selectionClick();
                       vm.jogXYZ(_jogTarget, dx, dy, dz, _jogStep);

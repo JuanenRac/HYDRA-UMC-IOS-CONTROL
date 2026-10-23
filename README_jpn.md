@@ -53,6 +53,7 @@ Wi-Fi 経由で [HYDRA-UMC](https://github.com/JuanenRac/HYDRA-UMC) プラット
 - **リアルタイム WebSocket 同期**（`lib/network/hydra_websocket.dart`）—— トークンは `hydra.bearer` サブプロトコルで送り、接続 URL には含めません（`server.ts` は既定で `/ws?token=` を拒否します）。`"settings"` と `"delta"` の両方のブロードキャストタイプを処理し、切断時には自動的に再接続します。
 - **ダッシュボード**（`lib/ui/dashboard_screen.dart`）—— ロボットごとのカード、`Provider` 自身の `ChangeNotifier` によるリアルタイムの反応、LED の慣例（緑の点滅=アクティブ、赤の点灯=非アクティブ）、そして統合ロボット表示（フォロワー側でのみ表示され、id で解決されます）——HYDRA-UMC-STUDIO 自身のダッシュボード概要と一致しています。
 - **手動制御**（`lib/ui/control_screen.dart`、`lib/ui/widgets/joystick_pad.dart`）—— ジョグ方向パッド（XY テーブルターゲットあり/なし）、速度/加速度スライダー、バルブ/ポンプのトグル、そしてグローバル **STOP**（`lib/ui/widgets/stop_all.dart`）—— 1 回のタップのみで、長押しも確認もなく、全ロボットを停止し（`POST /api/stop-all`）、制御タブを含むすべてのタブの上部バーに常時表示されます。結果はロボットごとに表示され（ロボットが失敗した場合や停止が保存されなかった場合は警告、他のアカウントが予約中のロボットには印）、ネットワークエラーは 1 回再試行され、リクエスト上限を超えたサーバーやそのルートがないサーバーにはロボットごとの停止で対応し、応答がない場合は後の STOP が応答を得るまで「STOP 未確認」の表示が残ります。丸いロボット単位の停止ボタンは長押し保護を維持します。
+- **予約と安全上限**（`lib/ui/widgets/access_panel.dart`、`lib/models/access.dart`、`lib/network/hydra_api_client.dart`、`lib/state/robot_view_model.dart`）- Control 画面は、選択したロボットを誰が保持しているか（誰も、この端末、別の端末の同じアカウント、別のアカウント）を表示し、**予約**と**解放**を提供し、サーバーのすべての予約の一覧（`GET /api/claims`）も表示します。端末はインストールごとにコントローラーIDを1つ保持し、予約・解放・ジョグのアーム・コマンドのたびにそれを送ります（本文と `X-Controller-Id` ヘッダー）。このため予約はアカウント全体ではなく、アカウントとこの端末に属します。サーバーの拒否は区別されます：別のアカウントが予約、あなたのアカウントが別の端末またはウィンドウで予約、コントローラーID必須、ジョグ未アーム。ロボットのモデルの上限は `GET /api/safety-limits` から読み取ります：上限を超えるジョグのステップは送信されず、サーバーの警告が表示されます。管理者が要求した場合は、ジョグでロボットを動かす前に**ジョグをアームする**（カウントダウン付き）を押す必要があり、アームは自動で、STOP で、または解放時に終了します。予約は任意です：誰も予約していないロボットはこれまでどおり操作できます。
 - **オプションのスイッチ** - 既定ではどちらもオフの2つのスイッチ：*保存済みデータでは操作を送らない*（設定）は、画面がロボットの実際の状態ではなく保存済みコピーを表示している間、STOP以外のすべての操作を保留します。*モバイルデータ回線とVPNはスキャンしない*（ログイン画面）は、それらのインターフェースをサブネットのスキャンから除外します。ジョグD-padのボタンは44pt以上で、VoiceOverが軸と方向を読み上げます。アプリがバックグラウンドにある間、カメラ映像は閉じられます。
 - **カメラ**（`lib/ui/camera_screen.dart`、`lib/ui/widgets/mjpeg_view.dart`）—— 小さな手作りの MJPEG ストリームパーサー（サードパーティパッケージなし）、（サイレントに空白のフィードを表示するのではなく）明確な「カメラ無効」状態、そしてサーバーから直接ロボットのビジョンシステムをオン/オフする切り替えスイッチ（`server.ts` の `"vision"` 原子指令）。
 - **3D ビュー**（`lib/ui/three_d_screen.dart`）—— HYDRA-UMC-STUDIO 自身のリアルタイム 3D ビューポートを WebView に埋め込みます（`?hideUI=true&robotId=&token=`）。Android アプリと同じアプローチで、同じ理由からです（実際の、現在提供されている 3D シーンを無料で得られます）。`webview_flutter` がサポートしていないプラットフォーム（本リポジトリのビルド検証に使用される Windows デスクトップターゲット）では、正直なプレースホルダーにフォールバックします。
@@ -111,6 +112,7 @@ HYDRA-UMC-IOS-CONTROL/
 │   │   ├── server_info.dart         # 発見/接続エントリ——他の 2 つのクライアントの ServerInfo をミラーリング
 │   │   ├── hydra_state.dart         # RobotView/ControllerView/HydraState——生の settings.json ツリーに対する薄い可変ビュー
 │   │   ├── assistant_reply.dart    # アプリ内音声アシスタントの返信モデル
+│   │   ├── access.dart            # コントローラーID・予約・安全上限・ジョグ確認（純粋なルール）
 │   │   └── stop_all_result.dart    # グローバル STOP の応答（ロボットごと）
 │   ├── network/
 │   │   ├── hydra_api_client.dart    # REST：ログイン、設定、原子的ロボット指令、システム指標
@@ -138,6 +140,7 @@ HYDRA-UMC-IOS-CONTROL/
 │       ├── voice_assistant_dialog.dart # HYDRA-UMC-VOICE-UI へのアプリ内マイク/テキストボタン
 │       ├── settings_screen.dart     # 接続情報 + サインアウト
 │       └── widgets/
+│           ├── access_panel.dart      # Control 画面の予約・ジョグアームのパネル
 │           ├── joystick_pad.dart     # ジョグ方向パッド（意図的にアナログスティックではない、ファイルヘッダー参照）
 │           ├── stop_all.dart            # グローバル STOP ボタンと、その結果／「未確認」バナー
 │           ├── digital_readout.dart, status_led.dart
