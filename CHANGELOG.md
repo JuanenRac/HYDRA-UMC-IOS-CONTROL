@@ -20,6 +20,7 @@ All notable changes to this project are documented here.
 - Removed the unused `postSettings` and `HydraState.merge`; the notes in the API client no longer say that every server seeds an `admin/admin` account (a production server has none).
 - Fixed stale comments and metadata: the project manifest build and notes, the icon-source comment in `pubspec.yaml`, and the test list in the eight READMEs.
 - Tests: 4 new files (saved-data block, interface filter, jog pad accessibility and size, camera lifecycle). The block, the label and the size tests fail with the previous code.
+- **Take control (administrators only).** On a robot someone else holds, an administrator's session shows a **Take control** button that asks for confirmation and then reserves the robot with `force: true`. The role comes from the session token (the server checks it again); an operator never sees the button and nothing is sent if it is asked for anyway. Texts in the eight languages and unit tests for the role, the rule and the request.
 
 ## [0.2.6]
 
