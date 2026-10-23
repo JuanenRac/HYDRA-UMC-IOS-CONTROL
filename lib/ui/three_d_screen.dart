@@ -4,7 +4,7 @@
 // GPL-3.0-or-later - see LICENSE
 //
 // Embeds HYDRA-UMC-STUDIO's own real-time 3D viewport in a WebView
-// (?hideUI=true&robotId=&token=) - same approach
+// (?hideUI=true&robotId=#token=) - same approach
 // HYDRA-UMC-ANDROID-CONTROL's own ui/ThreeDScreen.kt uses, for the same
 // reason: gets the real, currently-shipping STUDIO 3D scene (every real
 // robot mesh/kinematics) for free instead of reimplementing it natively.
@@ -26,6 +26,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 
 import '../l10n/app_localizations.dart';
 import '../state/robot_view_model.dart';
+import '../util/viewer_url.dart';
 
 class ThreeDScreen extends StatefulWidget {
   /// False until the tab is first shown: the viewer is a whole web page
@@ -78,13 +79,10 @@ class _ThreeDScreenState extends State<ThreeDScreen> {
       );
     }
 
-    // The scheme the client learned (https for a TLS server), and the query
-    // built as a query: the token and the id are encoded, not pasted.
+    // The scheme the client learned (https for a TLS server).
     final base = Uri.parse(vm.serverBaseUrl ?? server.baseUrl);
-    final url = base.replace(
-      path: '/',
-      queryParameters: {'hideUI': 'true', 'robotId': '$robotId', 'token': token ?? ''},
-    ).toString();
+    // The token goes in the fragment (see ViewerUrl): it is never sent to the server.
+    final url = ViewerUrl.build(base, robotId, token).toString();
     // The controller is created once and reused, and loadRequest() only
     // fires when the URL actually changes (a different robot/server/token) -
     // build() itself runs on every RobotViewModel.notifyListeners() call

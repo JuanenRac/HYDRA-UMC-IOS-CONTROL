@@ -4,6 +4,7 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **The 3D viewer no longer gets the token in its query**: the embedded viewer is opened with `?hideUI=true&robotId=N#token=...`, a fragment that is never sent to the server, so no access log, proxy or referrer sees it (same as the Android app; the web viewer reads it from there). The address is built by `lib/util/viewer_url.dart` and covered by tests.
 - CI builds the iOS app on a macOS runner (`flutter build ios --release --no-codesign`), so a change that breaks the Xcode project or a plugin is caught before a release instead of on the owner's Mac.
 - **Reservations.** The Control screen shows who holds the selected robot (nobody, this device, your account on another device, another account), reserves and releases it, and lists every reservation of the server. Reservations stay optional.
 - **Controller id.** The app keeps one controller id for the installation and sends it with every reserve, release, jog-arm and command (body and `X-Controller-Id` header), so a reservation belongs to the account and to this device. The refusals of the server read differently: another account, your account on another device or window, controller id required, and jog not armed.
