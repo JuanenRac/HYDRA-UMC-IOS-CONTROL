@@ -73,6 +73,9 @@ class RobotViewModel extends ChangeNotifier {
   /// screen shows the saved copy, not the live state). STOP is never blocked.
   bool blockCommandsOnSavedData = false;
 
+  /// When on (it is, until the person turns it off), PLAY shows what it is about to start and asks first.
+  bool confirmPlay = true;
+
   HydraState state = HydraState();
   HydraApiClient? apiClient;
   HydraWebSocket? _ws;
@@ -235,6 +238,7 @@ class RobotViewModel extends ChangeNotifier {
     // back into WiFi range. Superseded by the real fetch the moment
     // connect() succeeds; see network/state_cache.dart's own header comment.
     blockCommandsOnSavedData = await _clientPrefs.loadBlockCommandsOnSavedData();
+    confirmPlay = await _clientPrefs.loadConfirmPlay();
     // The controller id of this installation: made once, kept, and adopted here.
     conditionalMode = ConditionalMode.fromKey(await _clientPrefs.loadConditionalMode());
     final storedControllerId = await _clientPrefs.loadControllerId();
@@ -321,6 +325,12 @@ class RobotViewModel extends ChangeNotifier {
   Future<void> setBlockCommandsOnSavedData(bool value) async {
     blockCommandsOnSavedData = value;
     await _clientPrefs.saveBlockCommandsOnSavedData(value);
+    notifyListeners();
+  }
+
+  Future<void> setConfirmPlay(bool value) async {
+    confirmPlay = value;
+    await _clientPrefs.saveConfirmPlay(value);
     notifyListeners();
   }
 

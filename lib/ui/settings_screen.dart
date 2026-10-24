@@ -63,6 +63,13 @@ class SettingsScreen extends StatelessWidget {
           value: vm.blockCommandsOnSavedData,
           onChanged: (value) => vm.setBlockCommandsOnSavedData(value),
         ),
+        SwitchListTile(
+          secondary: const Icon(Icons.play_circle_outline),
+          title: Text(l10n.settingsConfirmPlay),
+          subtitle: Text(l10n.settingsConfirmPlaySubtitle),
+          value: vm.confirmPlay,
+          onChanged: (value) => vm.setConfirmPlay(value),
+        ),
         const Divider(),
         ListTile(
           leading: const Icon(Icons.language),
