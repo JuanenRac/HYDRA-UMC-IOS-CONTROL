@@ -225,5 +225,8 @@
   "playConfirmOther": "Réservé par {owner} : le serveur refuse la commande si elle n'est pas la vôtre.",
   "@playConfirmOther": {"placeholders": {"owner": {"type": "String"}}},
   "playConfirmStart": "Lancer",
-  "playConfirmCancel": "Annuler"
+  "playConfirmCancel": "Annuler",
+  "startupTagline": "Contrôle de robots industriels",
+  "loginShowPassword": "Afficher le mot de passe",
+  "loginHidePassword": "Masquer le mot de passe"
 }

@@ -225,5 +225,8 @@
   "playConfirmOther": "Prenotato da {owner}: il server rifiuta il comando se non è tuo.",
   "@playConfirmOther": {"placeholders": {"owner": {"type": "String"}}},
   "playConfirmStart": "Avvia",
-  "playConfirmCancel": "Annulla"
+  "playConfirmCancel": "Annulla",
+  "startupTagline": "Controllo di robot industriali",
+  "loginShowPassword": "Mostra la password",
+  "loginHidePassword": "Nascondi la password"
 }

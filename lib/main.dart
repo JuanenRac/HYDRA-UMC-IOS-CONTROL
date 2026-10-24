@@ -17,6 +17,7 @@ import 'state/robot_view_model.dart';
 import 'ui/biometric_gate_screen.dart';
 import 'ui/login_screen.dart';
 import 'ui/main_screen.dart';
+import 'ui/startup_screen.dart';
 
 /// Attached to MaterialApp's own `scaffoldMessengerKey` below - the only way
 /// _surfaceAsyncError() (errors caught outside Flutter's build/layout/paint
@@ -221,6 +222,9 @@ class _RootGate extends StatefulWidget {
 }
 
 class _RootGateState extends State<_RootGate> with WidgetsBindingObserver {
+  /// The quiet start-up screen (ui/startup_screen.dart) shows once per launch, then the app.
+  bool _introDone = false;
+
   @override
   void initState() {
     super.initState();
@@ -245,6 +249,9 @@ class _RootGateState extends State<_RootGate> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<RobotViewModel>();
+    if (!_introDone) {
+      return StartupScreen(onDone: () => setState(() => _introDone = true));
+    }
     if (vm.needsBiometricUnlock) return const BiometricGateScreen();
     return vm.isLoggedIn ? const MainScreen() : const LoginScreen();
   }

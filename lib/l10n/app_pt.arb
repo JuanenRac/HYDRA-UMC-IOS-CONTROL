@@ -224,5 +224,8 @@
   "playConfirmOther": "Reservado por {owner}: o servidor recusa o comando se não for seu.",
   "@playConfirmOther": {"placeholders": {"owner": {"type": "String"}}},
   "playConfirmStart": "Iniciar",
-  "playConfirmCancel": "Cancelar"
+  "playConfirmCancel": "Cancelar",
+  "startupTagline": "Controlo de robôs industriais",
+  "loginShowPassword": "Mostrar a palavra-passe",
+  "loginHidePassword": "Ocultar a palavra-passe"
 }

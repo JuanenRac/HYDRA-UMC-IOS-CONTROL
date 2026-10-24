@@ -225,5 +225,8 @@
   "playConfirmOther": "由 {owner} 预留:如果不是你的,服务器将拒绝该命令。",
   "@playConfirmOther": {"placeholders": {"owner": {"type": "String"}}},
   "playConfirmStart": "开始",
-  "playConfirmCancel": "取消"
+  "playConfirmCancel": "取消",
+  "startupTagline": "工业机器人控制",
+  "loginShowPassword": "显示密码",
+  "loginHidePassword": "隐藏密码"
 }

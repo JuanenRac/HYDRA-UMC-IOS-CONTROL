@@ -225,5 +225,8 @@
   "playConfirmOther": "{owner} が予約しています。自分のものでない場合、サーバーはコマンドを拒否します。",
   "@playConfirmOther": {"placeholders": {"owner": {"type": "String"}}},
   "playConfirmStart": "開始",
-  "playConfirmCancel": "キャンセル"
+  "playConfirmCancel": "キャンセル",
+  "startupTagline": "産業用ロボットの制御",
+  "loginShowPassword": "パスワードを表示",
+  "loginHidePassword": "パスワードを隠す"
 }

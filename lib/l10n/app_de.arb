@@ -225,5 +225,8 @@
   "playConfirmOther": "Reserviert von {owner}: Der Server lehnt den Befehl ab, wenn er nicht von Ihnen ist.",
   "@playConfirmOther": {"placeholders": {"owner": {"type": "String"}}},
   "playConfirmStart": "Starten",
-  "playConfirmCancel": "Abbrechen"
+  "playConfirmCancel": "Abbrechen",
+  "startupTagline": "Steuerung für Industrieroboter",
+  "loginShowPassword": "Passwort anzeigen",
+  "loginHidePassword": "Passwort verbergen"
 }
