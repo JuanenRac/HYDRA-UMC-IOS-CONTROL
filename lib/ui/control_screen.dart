@@ -35,7 +35,8 @@ class ControlScreen extends StatefulWidget {
 
 class _ControlScreenState extends State<ControlScreen> {
   String _jogTarget = 'robot';
-  double _jogStep = 10.0;
+  static const List<double> _jogSteps = [0.1, 1.0, 5.0, 10.0, 25.0, 50.0, 90.0, 100.0];
+  static const double _defaultJogStep = 10.0;
 
   // Reservations and the safety limits of the selected robot's model are read
   // from the server when this screen opens, when the robot changes and every
@@ -108,7 +109,7 @@ class _ControlScreenState extends State<ControlScreen> {
                   const SizedBox(height: 12),
                   if (robot.hasXYTable) _targetSelector(l10n),
                   const SizedBox(height: 8),
-                  _jogStepSelector(l10n),
+                  _jogStepSelector(vm, robot, l10n),
                   const SizedBox(height: 12),
                   JoystickPad(
                     // Not while a trajectory is running: the server's playback
@@ -118,7 +119,7 @@ class _ControlScreenState extends State<ControlScreen> {
                     enabled: robot.online && !(robot.isPlaying && !robot.isPaused) && !vm.jogNeedsArming(robot.id, _now),
                     onJog: (dx, dy, dz) {
                       HapticFeedback.selectionClick();
-                      vm.jogXYZ(_jogTarget, dx, dy, dz, _jogStep);
+                      vm.jogXYZ(_jogTarget, dx, dy, dz, robot.jogStepOr(_defaultJogStep, _jogSteps));
                     },
                   ),
                   const SizedBox(height: 16),
@@ -164,16 +165,18 @@ class _ControlScreenState extends State<ControlScreen> {
     );
   }
 
-  Widget _jogStepSelector(AppLocalizations l10n) {
-    const steps = [0.1, 1.0, 5.0, 10.0, 25.0, 50.0, 90.0, 100.0];
+  Widget _jogStepSelector(RobotViewModel vm, RobotView robot, AppLocalizations l10n) {
+    const steps = _jogSteps;
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(l10n.controlStepLabel, style: const TextStyle(color: Colors.grey)),
         DropdownButton<double>(
-          value: _jogStep,
+          value: robot.jogStepOr(_defaultJogStep, steps),
           items: steps.map((s) => DropdownMenuItem(value: s, child: Text(s.toString()))).toList(),
-          onChanged: (v) => setState(() => _jogStep = v ?? _jogStep),
+          onChanged: (v) {
+            if (v != null) vm.setJogStep(v);
+          },
         ),
       ],
     );

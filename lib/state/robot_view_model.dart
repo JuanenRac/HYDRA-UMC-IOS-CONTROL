@@ -1562,6 +1562,17 @@ class RobotViewModel extends ChangeNotifier {
   /// Debounced (300ms, matching HYDRA-UMC-ANDROID-CONTROL's own setSpeed) -
   /// a dragged Slider's onChanged (ui/control_screen.dart) fires this many
   /// times a second.
+  /// Sets the jog step of the robot on the server, so every client that shows it uses the same one (the `jogStep` command).
+  void setJogStep(double step) {
+    if (!step.isFinite || step <= 0 || step > 1000) return;
+    _sendAtomicCommand(
+      'jogStep',
+      params: {'value': step},
+      debounce: const Duration(milliseconds: 300),
+      localMutate: (r) => r.raw['jogStep'] = step,
+    );
+  }
+
   void setSpeed(double speed, double acceleration) {
     _sendAtomicCommand(
       'speed',
