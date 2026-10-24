@@ -38,6 +38,19 @@ Une application Flutter (Dart) multiplateforme qui contrôle un robot de la plat
 | Cible | Un iPhone ou un iPad |
 | Sur matériel réel | Pas encore : aucune exécution sur du matériel réel n'est consignée pour cette version |
 
+## 🚦 État du projet
+
+Chaque ligne est une partie de ce dépôt et le feu dit où elle en est aujourd'hui. Elle est écrite d'après ce que le dépôt peut montrer (tests, compilations, exécutions), pas d'après ce qui est prévu.
+
+🟢 Fait et vérifié · 🟡 Fonctionne, avec des limites connues · 🟠 À moitié fait ou pas encore vérifié · 🔴 Pas fait ou ne fonctionne pas
+
+| Domaine | État | Ce que cela veut dire ici |
+|---|---|---|
+| Logiciel | 🟡 | Fonctionne pour son usage principal ; la vérification d'honnêteté ci-dessus liste ce qui manque encore |
+| Tests | 🟠 | Aucun nombre de tests n'est encore consigné pour ce dépôt |
+| Matériel réel | 🔴 | Pas encore : aucune exécution sur du matériel réel n'est consignée pour cette version |
+| Documentation | 🟢 | README en huit langues, vérifié par rapport au manifeste à chaque modification |
+
 ## 🔀 Pourquoi Flutter, et non Swift natif
 
 Cette application cible iOS/iPadOS, mais elle est construite en **Flutter** plutôt qu'en Swift/SwiftUI : l'environnement de travail de ce dépôt est exclusivement Windows, et un projet Swift natif peut être *écrit* sous Windows mais jamais *compilé ou exécuté* là (Xcode et le SDK iOS sont exclusifs à macOS). La propre cible de bureau Windows de Flutter permet de construire, exécuter et tester réellement cette application sur cette machine - `flutter analyze` sans erreur, `flutter build windows` réussi, `flutter test` qui passe, et l'`.exe` compilé qui se lance et s'affiche sans erreur d'exécution - au lieu d'écrire des milliers de lignes de Swift à l'aveugle, sans aucun moyen d'en vérifier quoi que ce soit avant qu'un Mac ne soit disponible.
