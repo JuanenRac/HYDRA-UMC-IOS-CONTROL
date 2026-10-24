@@ -127,24 +127,32 @@ HYDRA-UMC-IOS-CONTROL/
 │   │   ├── hydra_state.dart         # RobotView/ControllerView/HydraState——原始 settings.json 树的薄型可变视图
 │   │   ├── assistant_reply.dart    # 应用内语音助手的回复模型
 │   │   ├── access.dart            # 控制器 ID、预留、安全限值与点动检查（纯规则）
-│   │   └── stop_all_result.dart    # 全局 STOP 的应答（按机器人）
+│   │   ├── stop_all_result.dart    # 全局 STOP 的应答（按机器人）
+│   │   ├── contract_v2.dart        # 服务器的第二份契约,以纯规则表达: 按机器人修订号的条件写入、工作台的原子移动和审计记录
+│   │   └── sha256.dart             # 纯 Dart 实现的 SHA-256,用于校验服务器审计记录的哈希链
 │   ├── network/
 │   │   ├── hydra_api_client.dart    # REST：登录、设置、原子化机器人指令、系统指标
 │   │   ├── hydra_websocket.dart     # /ws 实时同步客户端
 │   │   ├── discovery.dart           # 针对本设备自身真实本地子网的并发扫描 GET /api/hydra-info
 │   │   ├── auth_prefs.dart          # 持久化的连接信息（shared_preferences）+ 令牌（钥匙串）
 │   │   ├── biometric_helper.dart    # package:local_auth 的轻量封装（Face ID/Touch ID 门禁）
-│   │   └── state_cache.dart         # 移植自 Android 自身的 StateCache.kt——跨启动持久化的最后已知良好状态
+│   │   ├── state_cache.dart         # 移植自 Android 自身的 StateCache.kt——跨启动持久化的最后已知良好状态
+│   │   └── client_prefs.dart        # 不属于机密的小型客户端偏好 (目前: 此安装的控制器 ID)
 │   ├── state/
 │   │   ├── robot_view_model.dart    # 每个界面都监听的单一 ChangeNotifier
 │   │   └── hydra_error.dart         # 面向 RobotViewModel 的类型化错误接口（自身无 BuildContext）
 │   ├── l10n/                        # 真实生成的本地化文件（8 种语言）——见仓库根目录的 l10n.yaml
+│   │   ├── app_*.arb                    # app_en.arb、app_es.arb、app_it.arb、app_fr.arb、app_de.arb、app_ja.arb、app_zh.arb、app_pt.arb: 各语言的文案 (下面生成的类由它们产生)
 │   │   ├── app_localizations.dart   # 生成的基类
 │   │   ├── app_localizations_en.dart, _es.dart, _it.dart, _fr.dart, _de.dart, _ja.dart, _zh.dart, _pt.dart
 │   │   └── language_prefs.dart      # 持久化的语言覆盖设置（shared_preferences）
+│   ├── util/                    # 没有独立界面的辅助模块
+│   │   ├── play_confirmation.dart   # PLAY 何时先询问: 轨迹开始前确认的规则
+│   │   └── viewer_url.dart          # 内嵌 3D 查看器的地址: 访问令牌放在从不发送给服务器的片段中
 │   └── ui/
 │       ├── login_screen.dart        # 主机/端口/用户/密码字段 + “扫描本地网络”
 │       ├── biometric_gate_screen.dart # Face ID/Touch ID 待处理时由 main.dart 的 _RootGate 显示
+│       ├── startup_screen.dart        # 带有 HYDRA-UMC 标志的启动界面
 │       ├── main_screen.dart         # 底部导航外壳（仪表盘/控制/摄像头/3D/遥测/设置）
 │       ├── dashboard_screen.dart    # 每机器人卡片 + 系统指标栏
 │       ├── control_screen.dart      # 点动/速度/阀门/泵/回放控制
@@ -159,12 +167,20 @@ HYDRA-UMC-IOS-CONTROL/
 │           ├── joystick_pad.dart     # 点动方向键（刻意不采用模拟摇杆，见文件头部说明）
 │           ├── stop_all.dart            # 全局 STOP 按钮及其结果/“未确认”横幅
 │           ├── digital_readout.dart, status_led.dart
-│           └── mjpeg_view.dart       # 手写的 MJPEG 流解析器
+│           ├── mjpeg_view.dart       # 手写的 MJPEG 流解析器
+│           └── hydra_mark.dart       # 用代码绘制的 HYDRA-UMC 标志 (带 H 和杆的六边形)
 ├── ios/                              # Xcode 项目（仅可在 macOS 上构建）
 ├── windows/                          # Windows 桌面目标——无需 Mac 即可进行构建验证
+├── tools/
+│   ├── build_test.py                     # 不递增版本号的构建检查
+│   ├── ci_validate.py                    # CI 使用的清单/CHANGELOG/文档校验
+│   ├── _doc_policy.py                    # 家族共享的文档规则 (HYDRA-UMC-SDK 的副本,保持同步)
+│   ├── _readme_parity.py                 # 检查八个 README 结构一致 (HYDRA-UMC-SDK 的副本,保持同步)
+│   └── hydra_project_tool.py             # 每个仓库相同的命令: validate、test、ci、version、status、bump
 ├── docs/ARCHITECTURE.md
 ├── test/                             # widget_test, auth_prefs_test, discovery_interfaces_test, format_uptime_test, hostile_answers_test, hydra_error_test, hydra_websocket_reconnect_test, hydra_websocket_token_test, joystick_pad_test, localization_test, main_screen_cached_state_banner_test, mjpeg_lifecycle_test, play_confirmation_test, robot_view_model_background_pause_test, robot_view_model_cached_state_test, robot_view_model_server_errors_test, robot_view_model_silent_refresh_test, robot_view_model_stop_all_test, saved_data_block_test, session_storage_test, state_cache_test, telemetry_log_test, voice_turn_test, websocket_uri_test
 ├── images/
+├── pubspec.yaml / pubspec.lock / l10n.yaml / analysis_options.yaml # Flutter 包的定义及其锁定版本、l10n 生成器设置和 lint 规则
 ├── README.md                         # 本文件
 └── README_spa.md / README_ita.md / README_fra.md / README_deu.md / README_zho.md / README_jpn.md / README_por.md  # 翻译
 ```

@@ -134,24 +134,32 @@ HYDRA-UMC-IOS-CONTROL/
 │   │   ├── hydra_state.dart         # RobotView/ControllerView/HydraState - vistas finas e mutáveis sobre a árvore bruta do settings.json
 │   │   ├── assistant_reply.dart    # modelo da resposta do assistente de voz na aplicação
 │   │   ├── access.dart            # Identificador de controlador, reservas, limites de segurança e verificação do jog (regras puras)
-│   │   └── stop_all_result.dart    # resposta do STOP global, robô a robô
+│   │   ├── stop_all_result.dart    # resposta do STOP global, robô a robô
+│   │   ├── contract_v2.dart        # O segundo contrato do servidor como regras puras: escritas condicionais por revisão do robô, o movimento atómico da mesa e o registo de auditoria
+│   │   └── sha256.dart             # SHA-256 em Dart puro, para a verificação da cadeia do registo de auditoria do servidor
 │   ├── network/
 │   │   ├── hydra_api_client.dart    # REST: login, definições, comando atómico de robô, métricas do sistema
 │   │   ├── hydra_websocket.dart     # Cliente de sincronização em direto /ws
 │   │   ├── discovery.dart           # Análise concorrente da(s) sub-rede(s) local(is) real(is) do próprio dispositivo contra GET /api/hydra-info
 │   │   ├── auth_prefs.dart          # Ligação (shared_preferences) + token (porta-chaves) persistidos
 │   │   ├── biometric_helper.dart    # Invólucro fino sobre o package:local_auth (porta Face ID/Touch ID)
-│   │   └── state_cache.dart         # Portado do StateCache.kt do Android - último estado bom conhecido, persistido entre arranques
+│   │   ├── state_cache.dart         # Portado do StateCache.kt do Android - último estado bom conhecido, persistido entre arranques
+│   │   └── client_prefs.dart        # Pequenas preferências do cliente que não são segredos (hoje: o id de controlador desta instalação)
 │   ├── state/
 │   │   ├── robot_view_model.dart    # Único ChangeNotifier a que todos os ecrãs escutam
 │   │   └── hydra_error.dart         # Superfície de erros tipada do RobotViewModel (sem BuildContext próprio)
 │   ├── l10n/                        # Localizações geradas reais (8 idiomas) - ver o l10n.yaml na raiz do repositório
+│   │   ├── app_*.arb                    # app_en.arb, app_es.arb, app_it.arb, app_fr.arb, app_de.arb, app_ja.arb, app_zh.arb, app_pt.arb: as frases de cada idioma (as classes geradas abaixo vêm deles)
 │   │   ├── app_localizations.dart   # Classe base gerada
 │   │   ├── app_localizations_en.dart, _es.dart, _it.dart, _fr.dart, _de.dart, _ja.dart, _zh.dart, _pt.dart
 │   │   └── language_prefs.dart      # Substituição de idioma persistida (shared_preferences)
+│   ├── util/                    # Utilitários sem ecrã próprio
+│   │   ├── play_confirmation.dart   # Quando o PLAY pergunta primeiro: as regras da confirmação antes de iniciar uma trajetória
+│   │   └── viewer_url.dart          # O endereço do visualizador 3D incorporado: o token de acesso vai no fragmento, que nunca é enviado ao servidor
 │   └── ui/
 │       ├── login_screen.dart        # Campos anfitrião/porta/utilizador/palavra-passe + «Procurar na rede local»
 │       ├── biometric_gate_screen.dart # Mostrado pelo _RootGate do main.dart enquanto o Face ID/Touch ID está pendente
+│       ├── startup_screen.dart        # O ecrã de arranque com a marca HYDRA-UMC
 │       ├── main_screen.dart         # Esqueleto de navegação inferior (Painel/Controlo/Câmara/3D/Telemetria/Definições)
 │       ├── dashboard_screen.dart    # Cartões por robô + barra de métricas do sistema
 │       ├── control_screen.dart      # Controlos de jog/velocidade/válvula/bomba/reprodução
@@ -166,12 +174,20 @@ HYDRA-UMC-IOS-CONTROL/
 │           ├── joystick_pad.dart     # D-pad de jog (deliberadamente não um manípulo analógico, ver o cabeçalho do ficheiro)
 │           ├── stop_all.dart            # botão STOP global e o seu aviso de resultado / «não confirmado»
 │           ├── digital_readout.dart, status_led.dart
-│           └── mjpeg_view.dart       # Analisador de fluxo MJPEG feito à mão
+│           ├── mjpeg_view.dart       # Analisador de fluxo MJPEG feito à mão
+│           └── hydra_mark.dart       # A marca HYDRA-UMC (um hexágono com um H e uma haste) desenhada em código
 ├── ios/                              # Projeto Xcode (compilar apenas a partir do macOS)
 ├── windows/                          # Alvo de desktop Windows - verificação de compilação sem um Mac
+├── tools/
+│   ├── build_test.py                     # Verificação de compilação sem alterar versões
+│   ├── ci_validate.py                    # Validação de manifesto/CHANGELOG/docs usada pelo CI
+│   ├── _doc_policy.py                    # Regras de documentação partilhadas pela família (cópia da de HYDRA-UMC-SDK, mantida em sincronia)
+│   ├── _readme_parity.py                 # Verificação de que os oito README partilham a mesma estrutura (cópia da de HYDRA-UMC-SDK, mantida em sincronia)
+│   └── hydra_project_tool.py             # Os mesmos comandos em todos os repositórios: validate, test, ci, version, status, bump
 ├── docs/ARCHITECTURE.md
 ├── test/                             # widget_test, auth_prefs_test, discovery_interfaces_test, format_uptime_test, hostile_answers_test, hydra_error_test, hydra_websocket_reconnect_test, hydra_websocket_token_test, joystick_pad_test, localization_test, main_screen_cached_state_banner_test, mjpeg_lifecycle_test, play_confirmation_test, robot_view_model_background_pause_test, robot_view_model_cached_state_test, robot_view_model_server_errors_test, robot_view_model_silent_refresh_test, robot_view_model_stop_all_test, saved_data_block_test, session_storage_test, state_cache_test, telemetry_log_test, voice_turn_test, websocket_uri_test
 ├── images/
+├── pubspec.yaml / pubspec.lock / l10n.yaml / analysis_options.yaml # A definição do pacote Flutter e as suas versões fixadas, as definições do gerador de l10n e as regras de lint
 ├── README.md                         # este ficheiro
 └── README_spa.md / README_ita.md / README_fra.md / README_deu.md / README_zho.md / README_jpn.md / README_por.md  # traduções
 ```

@@ -134,24 +134,32 @@ HYDRA-UMC-IOS-CONTROL/
 │   │   ├── hydra_state.dart         # RobotView/ControllerView/HydraState - viste mutabili sottili sull'albero grezzo di settings.json
 │   │   ├── assistant_reply.dart    # modello di risposta dell'assistente vocale integrato
 │   │   ├── access.dart            # Identificativo di controller, prenotazioni, limiti di sicurezza e controllo del jog (regole pure)
-│   │   └── stop_all_result.dart    # risposta dello STOP globale, robot per robot
+│   │   ├── stop_all_result.dart    # risposta dello STOP globale, robot per robot
+│   │   ├── contract_v2.dart        # Il secondo contratto del server come regole pure: scritture condizionali per revisione del robot, spostamento atomico del tavolo e record di audit
+│   │   └── sha256.dart             # SHA-256 in Dart puro, per il controllo della catena del record di audit del server
 │   ├── network/
 │   │   ├── hydra_api_client.dart    # REST: login, settings, comando atomico robot, metriche di sistema
 │   │   ├── hydra_websocket.dart     # Client di sincronizzazione live via /ws
 │   │   ├── discovery.dart           # Scansione concorrente della/e sottorete/i locale/i reale/i propria/e di questo dispositivo contro GET /api/hydra-info
 │   │   ├── auth_prefs.dart          # Connessione (shared_preferences) e token (portachiavi) persistiti
 │   │   ├── biometric_helper.dart    # Wrapper sottile su package:local_auth (gate Face ID/Touch ID)
-│   │   └── state_cache.dart         # Portato dallo StateCache.kt di Android - ultimo stato valido noto, persistito tra gli avvii
+│   │   ├── state_cache.dart         # Portato dallo StateCache.kt di Android - ultimo stato valido noto, persistito tra gli avvii
+│   │   └── client_prefs.dart        # Piccole preferenze lato client che non sono segreti (oggi: l'id del controller di questa installazione)
 │   ├── state/
 │   │   ├── robot_view_model.dart    # Unico ChangeNotifier ascoltato da ogni schermata
 │   │   └── hydra_error.dart         # Superficie di errore tipizzata per RobotViewModel (senza un proprio BuildContext)
 │   ├── l10n/                        # Localizzazioni reali generate (8 lingue) - vedi l10n.yaml nella radice del repo
+│   │   ├── app_*.arb                    # app_en.arb, app_es.arb, app_it.arb, app_fr.arb, app_de.arb, app_ja.arb, app_zh.arb, app_pt.arb: le frasi di ogni lingua (le classi generate qui sotto derivano da questi)
 │   │   ├── app_localizations.dart   # Classe base generata
 │   │   ├── app_localizations_en.dart, _es.dart, _it.dart, _fr.dart, _de.dart, _ja.dart, _zh.dart, _pt.dart
 │   │   └── language_prefs.dart      # Override della lingua persistito (shared_preferences)
+│   ├── util/                    # Utilità senza schermata propria
+│   │   ├── play_confirmation.dart   # Quando PLAY chiede prima: le regole della conferma prima di avviare una traiettoria
+│   │   └── viewer_url.dart          # L'indirizzo del visualizzatore 3D incorporato: il token di accesso sta nel frammento, che non viene mai inviato al server
 │   └── ui/
 │       ├── login_screen.dart        # Campi host/porta/utente/password + "Scan local network"
 │       ├── biometric_gate_screen.dart # Mostrata da _RootGate di main.dart mentre Face ID/Touch ID è in sospeso
+│       ├── startup_screen.dart        # La schermata di avvio con il marchio HYDRA-UMC
 │       ├── main_screen.dart         # Shell di navigazione inferiore (Dashboard/Control/Camera/3D/Telemetry/Settings)
 │       ├── dashboard_screen.dart    # Schede per robot + barra metriche di sistema
 │       ├── control_screen.dart      # Controlli jog/velocità/valvola/pompa/riproduzione
@@ -166,12 +174,20 @@ HYDRA-UMC-IOS-CONTROL/
 │           ├── joystick_pad.dart     # D-pad di jog (deliberatamente non uno stick analogico, vedi intestazione del file)
 │           ├── stop_all.dart            # pulsante STOP globale e il suo avviso di risultato / «non confermato»
 │           ├── digital_readout.dart, status_led.dart
-│           └── mjpeg_view.dart       # Parser dello stream MJPEG scritto a mano
+│           ├── mjpeg_view.dart       # Parser dello stream MJPEG scritto a mano
+│           └── hydra_mark.dart       # Il marchio HYDRA-UMC (un esagono con una H e un gambo) disegnato nel codice
 ├── ios/                              # Progetto Xcode (compilare solo da macOS)
 ├── windows/                          # Target desktop Windows - verifica della build senza un Mac
+├── tools/
+│   ├── build_test.py                     # Controllo build senza versionamento
+│   ├── ci_validate.py                    # Validazione manifest/CHANGELOG/docs usata dalla CI
+│   ├── _doc_policy.py                    # Regole di documentazione condivise dalla famiglia (copia di quella di HYDRA-UMC-SDK, mantenuta sincronizzata)
+│   ├── _readme_parity.py                 # Verifica che gli otto README abbiano la stessa struttura (copia di quella di HYDRA-UMC-SDK, mantenuta sincronizzata)
+│   └── hydra_project_tool.py             # Gli stessi comandi in ogni repository: validate, test, ci, version, status, bump
 ├── docs/ARCHITECTURE.md
 ├── test/                             # widget_test, auth_prefs_test, discovery_interfaces_test, format_uptime_test, hostile_answers_test, hydra_error_test, hydra_websocket_reconnect_test, hydra_websocket_token_test, joystick_pad_test, localization_test, main_screen_cached_state_banner_test, mjpeg_lifecycle_test, play_confirmation_test, robot_view_model_background_pause_test, robot_view_model_cached_state_test, robot_view_model_server_errors_test, robot_view_model_silent_refresh_test, robot_view_model_stop_all_test, saved_data_block_test, session_storage_test, state_cache_test, telemetry_log_test, voice_turn_test, websocket_uri_test
 ├── images/
+├── pubspec.yaml / pubspec.lock / l10n.yaml / analysis_options.yaml # La definizione del pacchetto Flutter e le sue versioni bloccate, le impostazioni del generatore l10n e le regole di lint
 ├── README.md                         # questo file (inglese)
 └── README_spa.md / README_ita.md / README_fra.md / README_deu.md / README_zho.md / README_jpn.md / README_por.md  # traduzioni
 ```

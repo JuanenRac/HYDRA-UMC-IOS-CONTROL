@@ -127,24 +127,32 @@ HYDRA-UMC-IOS-CONTROL/
 │   │   ├── hydra_state.dart         # RobotView/ControllerView/HydraState——生の settings.json ツリーに対する薄い可変ビュー
 │   │   ├── assistant_reply.dart    # アプリ内音声アシスタントの返信モデル
 │   │   ├── access.dart            # コントローラーID・予約・安全上限・ジョグ確認（純粋なルール）
-│   │   └── stop_all_result.dart    # グローバル STOP の応答（ロボットごと）
+│   │   ├── stop_all_result.dart    # グローバル STOP の応答（ロボットごと）
+│   │   ├── contract_v2.dart        # サーバーの第2の契約を純粋な規則として: ロボットのリビジョンによる条件付き書き込み、テーブルのアトミックな移動、監査記録
+│   │   └── sha256.dart             # 純粋な Dart による SHA-256 (サーバーの監査記録のチェーン検証用)
 │   ├── network/
 │   │   ├── hydra_api_client.dart    # REST：ログイン、設定、原子的ロボット指令、システム指標
 │   │   ├── hydra_websocket.dart     # /ws リアルタイム同期クライアント
 │   │   ├── discovery.dart           # このデバイス自身の実際のローカルサブネットに対する GET /api/hydra-info の並行スキャン
 │   │   ├── auth_prefs.dart          # 永続化された接続情報（shared_preferences）+ トークン（キーチェーン）
 │   │   ├── biometric_helper.dart    # package:local_auth の薄いラッパー（Face ID/Touch ID ゲート）
-│   │   └── state_cache.dart         # AndroidのStateCache.ktから移植——起動をまたいで永続化される最後の正常状態
+│   │   ├── state_cache.dart         # AndroidのStateCache.ktから移植——起動をまたいで永続化される最後の正常状態
+│   │   └── client_prefs.dart        # 秘密ではない小さなクライアント側設定 (現在: このインストールのコントローラー ID)
 │   ├── state/
 │   │   ├── robot_view_model.dart    # すべての画面がリッスンする単一の ChangeNotifier
 │   │   └── hydra_error.dart         # RobotViewModel向けの型付きエラーサーフェス(独自のBuildContextを持たない)
 │   ├── l10n/                        # 実際に生成されたローカライゼーション(8言語) - リポジトリルートのl10n.yamlを参照
+│   │   ├── app_*.arb                    # app_en.arb, app_es.arb, app_it.arb, app_fr.arb, app_de.arb, app_ja.arb, app_zh.arb, app_pt.arb: 各言語の文言 (下の生成クラスはこれらから作られる)
 │   │   ├── app_localizations.dart   # 生成されたベースクラス
 │   │   ├── app_localizations_en.dart, _es.dart, _it.dart, _fr.dart, _de.dart, _ja.dart, _zh.dart, _pt.dart
 │   │   └── language_prefs.dart      # 永続化された言語上書き設定(shared_preferences)
+│   ├── util/                    # 専用画面を持たない補助機能
+│   │   ├── play_confirmation.dart   # PLAY が先に確認する場合: 軌道を始める前の確認のルール
+│   │   └── viewer_url.dart          # 埋め込み 3D ビューアーのアドレス: アクセストークンはサーバーに送られないフラグメントに入れる
 │   └── ui/
 │       ├── login_screen.dart        # ホスト/ポート/ユーザー/パスワードフィールド + 「ローカルネットワークをスキャン」
 │       ├── biometric_gate_screen.dart # Face ID/Touch ID保留中にmain.dartの_RootGateが表示
+│       ├── startup_screen.dart        # HYDRA-UMC のマークを表示する起動画面
 │       ├── main_screen.dart         # ボトムナビゲーションシェル（ダッシュボード/制御/カメラ/3D/テレメトリ/設定）
 │       ├── dashboard_screen.dart    # ロボットごとのカード + システム指標バー
 │       ├── control_screen.dart      # ジョグ/速度/バルブ/ポンプ/再生制御
@@ -159,12 +167,20 @@ HYDRA-UMC-IOS-CONTROL/
 │           ├── joystick_pad.dart     # ジョグ方向パッド（意図的にアナログスティックではない、ファイルヘッダー参照）
 │           ├── stop_all.dart            # グローバル STOP ボタンと、その結果／「未確認」バナー
 │           ├── digital_readout.dart, status_led.dart
-│           └── mjpeg_view.dart       # 手作りの MJPEG ストリームパーサー
+│           ├── mjpeg_view.dart       # 手作りの MJPEG ストリームパーサー
+│           └── hydra_mark.dart       # コードで描いた HYDRA-UMC のマーク (H と軸を持つ六角形)
 ├── ios/                              # Xcode プロジェクト（macOS からのみビルド可能）
 ├── windows/                          # Windows デスクトップターゲット——Mac なしでのビルド検証
+├── tools/
+│   ├── build_test.py                     # バージョンを増やさないビルドチェック
+│   ├── ci_validate.py                    # CI が使用するマニフェスト/CHANGELOG/ドキュメント検証
+│   ├── _doc_policy.py                    # ファミリー共通のドキュメント規則 (HYDRA-UMC-SDK のコピーで、同期を維持)
+│   ├── _readme_parity.py                 # 8つの README が同じ構造であることの検査 (HYDRA-UMC-SDK のコピーで、同期を維持)
+│   └── hydra_project_tool.py             # すべてのリポジトリで共通のコマンド: validate、test、ci、version、status、bump
 ├── docs/ARCHITECTURE.md
 ├── test/                             # widget_test, auth_prefs_test, discovery_interfaces_test, format_uptime_test, hostile_answers_test, hydra_error_test, hydra_websocket_reconnect_test, hydra_websocket_token_test, joystick_pad_test, localization_test, main_screen_cached_state_banner_test, mjpeg_lifecycle_test, play_confirmation_test, robot_view_model_background_pause_test, robot_view_model_cached_state_test, robot_view_model_server_errors_test, robot_view_model_silent_refresh_test, robot_view_model_stop_all_test, saved_data_block_test, session_storage_test, state_cache_test, telemetry_log_test, voice_turn_test, websocket_uri_test
 ├── images/
+├── pubspec.yaml / pubspec.lock / l10n.yaml / analysis_options.yaml # Flutter パッケージの定義とロックされたバージョン、l10n ジェネレーターの設定、lint ルール
 ├── README.md                         # 本ファイル
 └── README_spa.md / README_ita.md / README_fra.md / README_deu.md / README_zho.md / README_jpn.md / README_por.md  # 翻訳
 ```

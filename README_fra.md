@@ -134,24 +134,32 @@ HYDRA-UMC-IOS-CONTROL/
 │   │   ├── hydra_state.dart         # RobotView/ControllerView/HydraState - vues mutables legeres sur l'arbre brut de settings.json
 │   │   ├── assistant_reply.dart    # modele de reponse de l'assistant vocal integre
 │   │   ├── access.dart            # Identifiant de contrôleur, réservations, limites de sécurité et contrôle du jog (règles pures)
-│   │   └── stop_all_result.dart    # réponse du STOP global, robot par robot
+│   │   ├── stop_all_result.dart    # réponse du STOP global, robot par robot
+│   │   ├── contract_v2.dart        # Le second contrat du serveur en règles pures : écritures conditionnelles par révision du robot, déplacement atomique de la table et enregistrement d'audit
+│   │   └── sha256.dart             # SHA-256 en Dart pur, pour la vérification de la chaîne de l'enregistrement d'audit du serveur
 │   ├── network/
 │   │   ├── hydra_api_client.dart    # REST : connexion, settings, commande atomique de robot, metriques systeme
 │   │   ├── hydra_websocket.dart     # Client de synchronisation en direct via /ws
 │   │   ├── discovery.dart           # Scan concurrent du/des sous-reseau(x) local(aux) reel(s) propre(s) de cet appareil contre GET /api/hydra-info
 │   │   ├── auth_prefs.dart          # Connexion (shared_preferences) et jeton (trousseau) persistes
 │   │   ├── biometric_helper.dart    # Fine enveloppe autour de package:local_auth (porte Face ID/Touch ID)
-│   │   └── state_cache.dart         # Porte depuis le StateCache.kt d'Android - dernier état valide connu, persisté entre les lancements
+│   │   ├── state_cache.dart         # Porte depuis le StateCache.kt d'Android - dernier état valide connu, persisté entre les lancements
+│   │   └── client_prefs.dart        # Petites préférences côté client qui ne sont pas des secrets (aujourd'hui : l'id de contrôleur de cette installation)
 │   ├── state/
 │   │   ├── robot_view_model.dart    # Unique ChangeNotifier ecoute par chaque ecran
 │   │   └── hydra_error.dart         # Surface d'erreur typée pour RobotViewModel (sans BuildContext propre)
 │   ├── l10n/                        # Vraies localisations générées (8 langues) - voir l10n.yaml à la racine du dépôt
+│   │   ├── app_*.arb                    # app_en.arb, app_es.arb, app_it.arb, app_fr.arb, app_de.arb, app_ja.arb, app_zh.arb, app_pt.arb : les phrases de chaque langue (les classes générées ci-dessous en sont issues)
 │   │   ├── app_localizations.dart   # Classe de base générée
 │   │   ├── app_localizations_en.dart, _es.dart, _it.dart, _fr.dart, _de.dart, _ja.dart, _zh.dart, _pt.dart
 │   │   └── language_prefs.dart      # Préférence de langue persistée (shared_preferences)
+│   ├── util/                    # Utilitaires sans écran propre
+│   │   ├── play_confirmation.dart   # Quand PLAY demande d'abord : les règles de la confirmation avant le départ d'une trajectoire
+│   │   └── viewer_url.dart          # L'adresse de la visionneuse 3D intégrée : le jeton d'accès est dans le fragment, qui n'est jamais envoyé au serveur
 │   └── ui/
 │       ├── login_screen.dart        # Champs hote/port/utilisateur/mot de passe + "Scan local network"
 │       ├── biometric_gate_screen.dart # Affiché par le _RootGate de main.dart pendant que Face ID/Touch ID est en attente
+│       ├── startup_screen.dart        # L'écran de démarrage avec la marque HYDRA-UMC
 │       ├── main_screen.dart         # Coquille de navigation inferieure (Dashboard/Control/Camera/3D/Telemetry/Settings)
 │       ├── dashboard_screen.dart    # Cartes par robot + barre de metriques systeme
 │       ├── control_screen.dart      # Controles jog/vitesse/vanne/pompe/lecture
@@ -166,12 +174,20 @@ HYDRA-UMC-IOS-CONTROL/
 │           ├── joystick_pad.dart     # D-pad de jog (deliberement pas un stick analogique, voir l'en-tete du fichier)
 │           ├── stop_all.dart            # bouton STOP global et son bandeau de résultat / « non confirmé »
 │           ├── digital_readout.dart, status_led.dart
-│           └── mjpeg_view.dart       # Analyseur de flux MJPEG ecrit a la main
+│           ├── mjpeg_view.dart       # Analyseur de flux MJPEG ecrit a la main
+│           └── hydra_mark.dart       # La marque HYDRA-UMC (un hexagone avec un H et une tige) dessinée en code
 ├── ios/                              # Projet Xcode (compiler uniquement depuis macOS)
 ├── windows/                          # Cible de bureau Windows - verification de build sans un Mac
+├── tools/
+│   ├── build_test.py                     # Vérification de build sans versionnage
+│   ├── ci_validate.py                    # Validation manifeste/CHANGELOG/docs utilisée par CI
+│   ├── _doc_policy.py                    # Règles de documentation partagées par la famille (copie de celle de HYDRA-UMC-SDK, tenue synchronisée)
+│   ├── _readme_parity.py                 # Contrôle que les huit README partagent la même structure (copie de celui de HYDRA-UMC-SDK, tenue synchronisée)
+│   └── hydra_project_tool.py             # Les mêmes commandes dans chaque dépôt : validate, test, ci, version, status, bump
 ├── docs/ARCHITECTURE.md
 ├── test/                             # widget_test, auth_prefs_test, discovery_interfaces_test, format_uptime_test, hostile_answers_test, hydra_error_test, hydra_websocket_reconnect_test, hydra_websocket_token_test, joystick_pad_test, localization_test, main_screen_cached_state_banner_test, mjpeg_lifecycle_test, play_confirmation_test, robot_view_model_background_pause_test, robot_view_model_cached_state_test, robot_view_model_server_errors_test, robot_view_model_silent_refresh_test, robot_view_model_stop_all_test, saved_data_block_test, session_storage_test, state_cache_test, telemetry_log_test, voice_turn_test, websocket_uri_test
 ├── images/
+├── pubspec.yaml / pubspec.lock / l10n.yaml / analysis_options.yaml # La définition du paquet Flutter et ses versions figées, les réglages du générateur l10n et les règles de lint
 ├── README.md                         # ce fichier (anglais)
 └── README_spa.md / README_ita.md / README_fra.md / README_deu.md / README_zho.md / README_jpn.md / README_por.md  # traductions
 ```
