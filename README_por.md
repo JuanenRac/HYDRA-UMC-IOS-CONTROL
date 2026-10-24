@@ -32,7 +32,7 @@ Uma aplicação Flutter multiplataforma (Dart) que controla um robô da platafor
 
 | | |
 |---|---|
-| Versão | `0.2.6` |
+| Versão | `0.2.7` |
 | Maturidade | Funcional |
 | Tecnologia | Flutter 3.x / Dart |
 | Destino | Um iPhone ou iPad |

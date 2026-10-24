@@ -32,7 +32,7 @@ Eine plattformübergreifende Flutter-App (Dart), die einen Roboter der [HYDRA-UM
 
 | | |
 |---|---|
-| Version | `0.2.6` |
+| Version | `0.2.7` |
 | Reifegrad | Funktionsfähig |
 | Technik | Flutter 3.x / Dart |
 | Ziel | Ein iPhone oder iPad |

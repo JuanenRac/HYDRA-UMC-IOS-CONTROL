@@ -32,7 +32,7 @@ A cross-platform Flutter app (Dart) that controls a robot on the [HYDRA-UMC](htt
 
 | | |
 |---|---|
-| Version | `0.2.6` |
+| Version | `0.2.7` |
 | Maturity | Functional |
 | Stack | Flutter 3.x / Dart |
 | Target | An iPhone or iPad |

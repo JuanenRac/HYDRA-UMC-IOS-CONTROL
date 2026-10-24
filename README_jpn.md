@@ -32,7 +32,7 @@ Wi-Fi 経由で [HYDRA-UMC](https://github.com/JuanenRac/HYDRA-UMC) プラット
 
 | | |
 |---|---|
-| バージョン | `0.2.6` |
+| バージョン | `0.2.7` |
 | 成熟度 | 機能する |
 | 技術 | Flutter 3.x / Dart |
 | 対象 | iPhone または iPad |
