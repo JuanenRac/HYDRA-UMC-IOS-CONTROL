@@ -1,0 +1,3 @@
+/* Texts of the permission prompts, in the language of the device. */
+"NSLocalNetworkUsageDescription" = "HYDRA-UMC Control は、実際のロボットを制御するため、ローカルネットワーク上の HYDRA-UMC STUDIO サーバーに接続します。";
+"NSFaceIDUsageDescription" = "HYDRA-UMC Control は、保存済みのサーバーセッションに再接続する前に、Face ID で本人確認を行うことがあります。";

@@ -43,7 +43,7 @@
 			<string>it</string>
 			<string>ja</string>
 			<string>zh-Hans</string>
-			<string>pt</string>
+			<string>pt-PT</string>
 		</array>
 		<key>NSLocalNetworkUsageDescription</key>
 		<string>HYDRA-UMC Control connects to a HYDRA-UMC STUDIO server on your local network to control real robots.</string>
