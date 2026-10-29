@@ -2,6 +2,10 @@
 
 All notable changes to this project are documented here.
 
+## [Unreleased]
+
+- **The layout of the README is checked in the CI:** the validator runs `tools/universal_readme_check.py` and lists, as a warning, what differs from the universal layout of the README.
+
 ## [0.2.7] - The jog step is the one the server keeps for the robot and the permission prompts are in the language of the device
 
 ### Firmware and protocol
