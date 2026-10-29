@@ -1,0 +1,192 @@
+{
+  "repo": "HYDRA-UMC-IOS-CONTROL",
+  "ecosystem": "hydra",
+  "tagline": "One Flutter codebase: the logic is tried on Windows today, the iOS build waits for a Mac.",
+  "description": "HYDRA-UMC-IOS-CONTROL keeps every screen listening to one RobotViewModel, which talks to a HYDRA-UMC-SERVER through a REST client and a WebSocket, finds it by mDNS and a subnet scan, keeps the token in the Keychain and a copy of the last state on disk.",
+  "columns": [
+    "WHO USES IT",
+    "THIS REPOSITORY",
+    "WHAT IT TALKS TO"
+  ],
+  "nodes": [
+    {
+      "id": "op",
+      "column": 0,
+      "level": "tested",
+      "title": "The operator",
+      "lines": [
+        "login, dashboard, control,",
+        "cameras, 3D, telemetry"
+      ],
+      "code": [
+        "lib/ui/main_screen.dart",
+        "lib/ui/control_screen.dart"
+      ]
+    },
+    {
+      "id": "stp",
+      "column": 0,
+      "level": "tested",
+      "title": "The STOP button",
+      "lines": [
+        "in the app bar of every",
+        "tab, one tap"
+      ],
+      "code": [
+        "lib/ui/widgets/stop_all.dart"
+      ]
+    },
+    {
+      "id": "srv",
+      "column": 2,
+      "level": "contract",
+      "title": "HYDRA-UMC-SERVER",
+      "lines": [
+        "REST and WebSocket; the",
+        "STUDIO 3D view in a WebView"
+      ]
+    },
+    {
+      "id": "bon",
+      "column": 2,
+      "level": "untested",
+      "title": "Bonjour on a real iPhone",
+      "lines": [
+        "needs Apple's multicast",
+        "entitlement; not tried"
+      ]
+    },
+    {
+      "id": "dis",
+      "column": 1,
+      "level": "tested",
+      "title": "discovery",
+      "lines": [
+        "mDNS plus a scan of the",
+        "device's own subnets"
+      ],
+      "code": [
+        "lib/network/discovery.dart"
+      ]
+    },
+    {
+      "id": "api",
+      "column": 1,
+      "level": "tested",
+      "title": "REST client",
+      "lines": [
+        "login, atomic commands,",
+        "reservations, STOP"
+      ],
+      "code": [
+        "lib/network/hydra_api_client.dart"
+      ]
+    },
+    {
+      "id": "sto",
+      "column": 1,
+      "level": "tested",
+      "title": "stored state",
+      "lines": [
+        "Keychain token, preferences,",
+        "last-known-state cache"
+      ],
+      "code": [
+        "lib/network/auth_prefs.dart",
+        "lib/network/state_cache.dart"
+      ]
+    },
+    {
+      "id": "vm",
+      "column": 1,
+      "level": "tested",
+      "title": "RobotViewModel",
+      "lines": [
+        "the single state every",
+        "screen listens to"
+      ],
+      "code": [
+        "lib/state/robot_view_model.dart"
+      ]
+    },
+    {
+      "id": "rul",
+      "column": 1,
+      "level": "tested",
+      "title": "pure rules",
+      "lines": [
+        "reservations, contract v2,",
+        "PLAY confirmation, errors"
+      ],
+      "code": [
+        "lib/models/access.dart",
+        "lib/models/contract_v2.dart",
+        "lib/util/play_confirmation.dart"
+      ]
+    },
+    {
+      "id": "ws",
+      "column": 1,
+      "level": "tested",
+      "title": "WebSocket",
+      "lines": [
+        "live state; token in the",
+        "sub-protocol, reconnects"
+      ],
+      "code": [
+        "lib/network/hydra_websocket.dart"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from": "op",
+      "to": "vm",
+      "level": "tested"
+    },
+    {
+      "from": "stp",
+      "to": "vm",
+      "level": "tested"
+    },
+    {
+      "from": "vm",
+      "to": "api",
+      "level": "tested"
+    },
+    {
+      "from": "vm",
+      "to": "ws",
+      "level": "tested"
+    },
+    {
+      "from": "dis",
+      "to": "api",
+      "level": "tested"
+    },
+    {
+      "from": "vm",
+      "to": "sto",
+      "level": "tested"
+    },
+    {
+      "from": "api",
+      "to": "srv",
+      "level": "contract",
+      "label": "REST"
+    },
+    {
+      "from": "ws",
+      "to": "srv",
+      "level": "contract",
+      "label": "WS"
+    },
+    {
+      "from": "dis",
+      "to": "bon",
+      "level": "untested",
+      "label": "mDNS"
+    }
+  ],
+  "footer": "Unit-tested with flutter test on Windows; no iPhone, no iPad and no Mac were used."
+}

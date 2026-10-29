@@ -1,32 +1,36 @@
+<!-- =============================================================================
+HYDRA-UMC-IOS-CONTROL - iOS and iPadOS operator console for a HYDRA-UMC server, written in Flutter
+Copyright (C) JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
+GPL-3.0-or-later - see LICENSE
+============================================================================= -->
+
 <p align="center">
   <img src="images/HYDRA_UMC_BANNER.svg" alt="HYDRA-UMC-IOS-CONTROL banner" width="100%">
 </p>
 
-# 📱 HYDRA-UMC CONTROL (iOS)
+# 🍎 HYDRA-UMC-IOS-CONTROL
 
-<p align="center">
-  <a href="README.md">🇺🇸 English</a> |
-  <a href="README_spa.md">🇪🇸 Español</a> |
-  <a href="README_fra.md">🇫🇷 Français</a> |
-  <a href="README_ita.md">🇮🇹 Italiano</a> |
-  <a href="README_deu.md">🇩🇪 Deutsch</a> |
-  <a href="README_zho.md">🇨🇳 简体中文</a> |
-  <a href="README_jpn.md">🇯🇵 日本語</a> |
-  🇵🇹 <b>Português</b>
-</p>
+<p align="center"><a href="README.md">🇺🇸 English</a> | <a href="README_spa.md">🇪🇸 Español</a> | <a href="README_fra.md">🇫🇷 Français</a> | <a href="README_ita.md">🇮🇹 Italiano</a> | <a href="README_deu.md">🇩🇪 Deutsch</a> | <a href="README_zho.md">🇨🇳 简体中文</a> | <a href="README_jpn.md">🇯🇵 日本語</a> | 🇵🇹 <b>Português</b></p>
 
+### Os seus robôs HYDRA-UMC num iPhone ou iPad: encontre o servidor, mova e vigie os robôs e pare tudo com um botão vermelho.
 
 <p align="center">
   <img src="https://img.shields.io/badge/License-GPL%203.0--or--later-blue.svg" alt="GPL 3.0 or later">
-  <img src="https://img.shields.io/badge/Framework-Flutter-02569B.svg" alt="Flutter">
-  <img src="https://img.shields.io/badge/Language-Dart-0175C2.svg" alt="Dart">
-  <img src="https://img.shields.io/badge/Platform-iOS-000000.svg" alt="iOS">
+  <img src="https://img.shields.io/badge/Framework-Flutter-02569B.svg" alt="Framework">
+  <img src="https://img.shields.io/badge/Language-Dart-0175C2.svg" alt="Language">
+  <img src="https://img.shields.io/badge/Platform-iOS-000000.svg" alt="Platform">
+  <img src="https://img.shields.io/badge/Tests-220%20passing-2ea44f.svg" alt="Tests">
+  <img src="https://img.shields.io/badge/Version-0.2.7-0f6cbd.svg" alt="Version">
+  <img src="https://img.shields.io/badge/Maturity-functional-0F6CBD.svg" alt="Maturity">
 </p>
 
+---
 
 Uma aplicação Flutter multiplataforma (Dart) que controla um robô da plataforma [HYDRA-UMC](https://github.com/JuanenRac/HYDRA-UMC) por Wi-Fi, falando exatamente o mesmo contrato [`REMOTE_API.md`](https://github.com/JuanenRac/HYDRA-UMC-SERVER/blob/main/docs/REMOTE_API.md) que o [HYDRA-UMC SUITE](https://github.com/JuanenRac/HYDRA-UMC-SUITE) e o [HYDRA-UMC-ANDROID-CONTROL](https://github.com/JuanenRac/HYDRA-UMC-ANDROID-CONTROL) usam - descoberta, início de sessão, comandos atómicos por robô e sincronização WebSocket em direto contra uma instância [HYDRA-UMC-SERVER](https://github.com/JuanenRac/HYDRA-UMC-SERVER) em execução (o back-end headless separado do processo do próprio HYDRA-UMC STUDIO - o STUDIO é agora um cliente de frontend puro dele, tal como esta aplicação).
 
 > **Estado de segurança (safety e security):** este ecossistema não é um sistema de segurança certificado. Ainda não existe um caminho de E-STOP por hardware, nem limites ou interlocks impostos pelo firmware, nem um comando de movimento verificado; as imagens de firmware são verificadas com CRC32 e um HMAC-SHA256 de chave partilhada, não com uma assinatura assimétrica; TLS e TLS mútuo são opcionais e estão desativados por defeito; nenhuma placa própria foi ainda montada ou testada. Leia a [base de segurança](https://github.com/JuanenRac/HYDRA-UMC-DOCS/blob/main/docs/SECURITY_BASELINE.md) e o [modelo de ameaças](https://github.com/JuanenRac/HYDRA-UMC-DOCS/blob/main/docs/THREAT_MODEL.md) antes de confiar em qualquer afirmação aqui para a segurança de uma pessoa.
+
+---
 
 ## 📋 Num relance
 
@@ -34,9 +38,12 @@ Uma aplicação Flutter multiplataforma (Dart) que controla um robô da platafor
 |---|---|
 | Versão | `0.2.7` |
 | Maturidade | Funcional |
+| Testes | 220 (`flutter test`) |
 | Tecnologia | Flutter 3.x / Dart |
 | Destino | Um iPhone ou iPad |
 | Em hardware real | Ainda não: não há registo de execução em hardware real para esta versão |
+
+**Ir para:** [Visão geral](#-visão-geral) · [Arquitetura](#-arquitetura) · [Funcionalidades](#-funcionalidades) · [Segurança e proteção](#-segurança-e-proteção) · [Interfaces](#-interfaces) · [Configuração](#-configuração) · [Início rápido](#-início-rápido) · [Testes](#-testes) · [Resolução de problemas](#-resolução-de-problemas) · [Estrutura do repositório](#-estrutura-do-repositório) · [Projetos relacionados](#-projetos-relacionados)
 
 ## 🚦 Estado do projeto
 
@@ -47,17 +54,31 @@ Cada linha é uma parte deste repositório e a luz diz até onde chega hoje. É 
 | Área | Estado | O que significa aqui |
 |---|---|---|
 | Software | 🟡 | Funciona para o seu propósito principal; a verificação de honestidade acima lista o que ainda falta |
-| Testes | 🟠 | Ainda não há registo do número de testes deste repositório |
+| Testes | 🟢 | 220 testes automáticos, executados a cada alteração |
 | Hardware real | 🔴 | Ainda não: não há registo de execução em hardware real para esta versão |
 | Documentação | 🟢 | README em oito idiomas, verificado contra o manifesto a cada alteração |
 
-## 🔀 Porquê Flutter e não Swift nativo
+## 🎯 Visão geral
+
+Ecrãs da aplicação: **início de sessão** (endereço do servidor, conta, uma pesquisa da rede local), **painel** (um cartão por robô com o seu LED em direto e a saúde do módulo de cálculo), **controlo** (cruz de movimento, velocidade, válvulas e bombas, reserva do robô, PLAY com uma pergunta opcional antes), **câmara** (MJPEG em direto), **vista 3D** (a cena real do STUDIO), **telemetria** (um registo ao estilo de terminal) e **definições** (idioma, bloqueio biométrico, interruptores). Um botão vermelho **PARAGEM** está na barra de cada separador.
+
+## 🧩 Papel no HYDRA-UMC
+
+A **HYDRA-UMC-IOS-CONTROL** é a consola de operador do HYDRA-UMC para iPhone e iPad. Está escrita em Flutter para que a sua lógica possa ser compilada, executada e testada no Windows; a compilação iOS em si continua a precisar do Xcode num Mac. Encontra um HYDRA-UMC-SERVER na rede local, inicia sessão, mostra e move os robôs, vigia as suas câmaras e uma vista 3D, e pára tudo com um toque, com o mesmo contrato remoto da SUITE e da aplicação Android. Não é um dispositivo de segurança.
+
+## 🏛️ Arquitetura
+
+<p align="center">
+  <img src="images/architecture.svg" alt="HYDRA-UMC-IOS-CONTROL architecture" width="100%">
+</p>
+
+### Porquê Flutter e não Swift nativo
 
 Esta aplicação destina-se a iOS/iPadOS, mas é construída em **Flutter** em vez de Swift/SwiftUI: o ambiente de trabalho deste repositório é só Windows, e um projeto Swift nativo pode ser *escrito* no Windows mas nunca *compilado nem executado* aí (o Xcode e o SDK do iOS são só para macOS). O alvo de desktop Windows do próprio Flutter permite que esta aplicação seja realmente compilada, executada e testada nesta máquina - `flutter analyze` limpo, `flutter build windows` com êxito, `flutter test` a passar, e o `.exe` compilado arranca e renderiza sem erros de execução - em vez de escrever milhares de linhas de Swift às cegas, sem forma de verificar nada até haver um Mac disponível.
 
 **Isto não retira a própria restrição da Apple** - um `.ipa` real continua a exigir o Xcode num Mac (ou num executor de CI macOS) para compilar e assinar; nada na escolha da framework muda isso. O que o Flutter compra é a capacidade de verificar hoje, nesta máquina, todas as outras linhas da lógica desta aplicação (rede, estado, interface) e de distribuir mais tarde uma base de código idêntica para iOS sem reescrita.
 
-## 🏗️ O que está implementado
+## ✨ Funcionalidades
 
 - **Início de sessão** (`lib/ui/login_screen.dart`, `lib/state/robot_view_model.dart`) - IP/porta do servidor e campos de credenciais do operador editáveis, mais `POST /api/login`; nenhuma conta nem palavra-passe vem preenchida. Um servidor de produção exige credenciais de arranque configuradas explicitamente para o seu primeiro administrador, e contas adicionais de «operador», com menos privilégios, podem ser criadas em Config > Users na interface do navegador. O token de sessão persiste entre arranques no porta-chaves do iOS (`flutter_secure_storage`); o anfitrião e a porta ficam em `shared_preferences`. Um botão «Procurar na rede local» (`lib/network/discovery.dart`) encontra servidores sem que o utilizador precise de já saber o IP.
 - **Descoberta de rede** (`lib/network/discovery.dart`) - dois caminhos independentes correm ao mesmo tempo a partir da folha «Procurar na rede local»: mDNS/Bonjour real (`discoverMdns()`, consulta o serviço `_hydra._tcp.local` que o `server.ts` publica através do pacote `multicast_dns` - esta aplicação é a primeira dos 3 clientes remotos do ecossistema a tê-lo) mais uma análise concorrente por força bruta de `GET /api/hydra-info` pela(s) sub-rede(s) locais reais do próprio dispositivo (`scanSubnets()`, derivada do `NetworkInterface.list()` do `dart:io` em vez de um único palpite codificado, já que a LAN de um telemóvel é tão provavelmente `192.168.0.x` ou `10.x.x.x` como `192.168.1.x`, recorrendo a `192.168.1.x` apenas se a própria enumeração de interfaces vier vazia). O mDNS falhar em silêncio numa compilação iOS sem autorização é esperado (o direito Multicast Networking da própria Apple não é concedido por um simples `flutter build ios`) - a análise de sub-rede continua a funcionar de forma independente em qualquer dos casos.
@@ -77,7 +98,60 @@ Esta aplicação destina-se a iOS/iPadOS, mas é construída em **Flutter** em v
 - **Telemetria** (`lib/ui/telemetry_screen.dart`) - um registo ao estilo de terminal, do mais recente para o mais antigo, de eventos reais do ciclo de vida de ligação/início de sessão/comando, limitado a 50 entradas, com uma ação de limpar o registo - a mesma convenção «Matrix Green» do separador Telemetria do próprio HYDRA-UMC-ANDROID-CONTROL.
 - **Assistente de voz na aplicação** (`lib/ui/voice_assistant_dialog.dart`) - um ícone de microfone na barra da aplicação abre uma caixa de diálogo para escrever uma pergunta ou uma ordem, enviada ao `HYDRA-UMC-VOICE-UI` pela mesma rota real `POST /api/voice/turn` do Server que o botão de voz na aplicação e o relé do Watch emparelhado do próprio HYDRA-UMC-ANDROID-CONTROL usam. Nunca envia áudio - por agora só entrada de texto, já que o reconhecimento de fala no dispositivo precisa da framework Speech nativa do iOS, que este ambiente de desenvolvimento só para Windows não consegue compilar nem verificar contra um dispositivo real/Xcode. Uma resposta nunca invoca diretamente um comando de robô.
 
-## 🚀 Compilação
+## 🔒 Segurança e proteção
+
+| Ameaça | Defesa | Onde |
+|---|---|---|
+| Um token roubado do telemóvel | O token, o nome de utilizador e o token de renovação guardam-se com `flutter_secure_storage` (o porta-chaves do iOS); só o servidor, a porta e as preferências vão para `shared_preferences`; a aplicação nunca guarda uma palavra-passe em claro | `network/auth_prefs.dart` |
+| Credenciais na cópia guardada do estado | A cópia do último estado escrita em disco perde as chaves `ipUsername` e `ipPassword` a qualquer profundidade, e é apagada ao terminar a sessão | `network/state_cache.dart` |
+| O token num registo ou no endereço do WebSocket | O token vai no subprotocolo `hydra.bearer` do WebSocket e nunca no seu endereço; a vista 3D incorporada recebe-o no fragmento do endereço (`#token=`), que não é enviado ao servidor; um teste verifica ambas as coisas | `network/hydra_websocket.dart`, `util/viewer_url.dart` |
+| Alguém com o telemóvel desbloqueado | Um bloqueio biométrico opcional (Face ID, Touch ID) condiciona o restauro de uma sessão guardada ao arrancar; a imagem da câmara fecha-se enquanto a aplicação está em segundo plano | `network/biometric_helper.dart`, `ui/biometric_gate_screen.dart` |
+| Um robô movido por duas pessoas, um PLAY premido por engano ou uma paragem que não chega | O robô é reservado antes de ser movido e o ecrã diz quem o detém; o PLAY pergunta primeiro por predefinição e mostra o robô, os seus pontos, a velocidade e quem o reservou; a paragem global é repetida uma vez, recorre a uma paragem por robô e mantém um aviso persistente «PARAGEM não confirmada» se ninguém respondeu | `models/access.dart`, `util/play_confirmation.dart`, `ui/widgets/stop_all.dart` |
+
+**O que nunca faz:** substituir uma paragem de emergência física, nem cifrar o tráfego por si só: a aplicação tenta HTTPS uma vez quando uma sonda HTTP simples não obtém resposta, e não tem fixação de certificados nem proteção contra tráfego sem cifra fora da rede local. A PARAGEM é a paragem por software do servidor.
+
+## 🔌 Interfaces
+
+| Tópico ou rota | O que leva |
+|---|---|
+| `POST /api/login`, `/api/logout`, `/api/refresh` | iniciar e terminar sessão e renová-la |
+| `GET /api/hydra-info` | reconhece um servidor real; usado pela pesquisa da sub-rede e pelo endereço manual, com uma nova tentativa por HTTPS |
+| `GET /api/settings`, `/api/system/metrics`, `/api/safety-limits`, `/api/claims` | o estado dos robôs, o módulo de cálculo (a cada 5 s), os limites de segurança de cada modelo e as reservas |
+| `POST /api/robot/{id}/command`, `/claim`, `/release`, jog arming | um pequeno comando para um robô, a sua reserva e o armar de um movimento manual, com escritas condicionais por revisão do robô |
+| `POST /api/stop-all` | a PARAGEM global: todos os robôs, com resposta robô a robô |
+| `GET /api/audit`, `POST /api/voice/turn`, `GET /api/camera/{id}/stream` | o registo de auditoria (administradores, com a sua própria verificação de cadeia SHA-256), um turno de voz escrito e o fluxo MJPEG de uma câmara |
+| WebSocket `hydra.bearer`, mDNS `_hydra._tcp.local` | alterações de estado em direto (mensagens `settings` e `delta`, religação após 3 s até 30 s, um ping a cada 20 s) e o anúncio Bonjour do servidor |
+
+## ⚙️ Configuração
+
+A aplicação não tem ficheiro de configuração: tudo se define no ecrã e fica guardado no dispositivo. Os valores predefinidos vêm do código.
+
+| Variável | Predefinição | O que define |
+|---|---|---|
+| Definições > Perguntar antes de PLAY | ligado | mostra o robô, os seus pontos, a velocidade e quem o reservou antes de começar uma trajetória |
+| Definições > Bloquear comandos com dados guardados | desligado | retém todos os comandos exceto a PARAGEM enquanto o ecrã mostra a cópia guardada do estado e não o estado em direto |
+| Início de sessão > Não pesquisar redes de dados móveis nem VPN | desligado | deixa essas interfaces fora da pesquisa da sub-rede (32 equipamentos de cada vez, porta 3000 salvo se escrever outra) |
+| Definições > Bloqueio biométrico | desligado | pede Face ID ou Touch ID antes de restaurar uma sessão guardada ao arrancar |
+| Definições > Idioma | o idioma do sistema | um dos oito idiomas da aplicação (`lib/l10n/`), mantido entre arranques |
+
+## 🚀 Início rápido
+
+Requer o SDK Flutter estável (Dart 3.13 ou superior). O Windows executa a lógica e os testes; uma compilação real para iPhone precisa do Xcode num Mac.
+
+```bash
+flutter pub get                  # downloads the packages
+flutter test                     # runs the unit tests on this machine
+./build-test.sh                  # non-mutating build check (build-test.bat on Windows)
+flutter build ios --no-codesign  # a real iOS build; only on a Mac with Xcode
+```
+
+## 🧪 Testes
+
+220 testes automáticos correm com `flutter test`. Não precisam de hardware nem de nada fora desta máquina.
+
+A CI executa `HYDRA_UMC_CI=1 python tools/ci_validate.py`, que verifica o manifesto, os documentos, os oito README e as imagens.
+
+## 🏗️ Compilação e publicação
 
 Requer o [Flutter SDK](https://docs.flutter.dev/get-started/install) (canal estável). Este repositório é compilado/verificado com o Flutter 3.47.0. Só `windows/` e `ios/` estão configuradas como plataformas neste repositório (sem pastas `android/`, `linux/`, `web/` nem `macos/`) - o Windows existe para que a lógica desta aplicação possa ser compilada e executada sem um Mac; o iOS é o alvo real.
 
@@ -103,13 +177,10 @@ flutter run -d windows   # ou -d <id-do-dispositivo-ios> a partir de um Mac
 
 **Compilar o `.ipa` real de iOS** exige o Xcode no macOS - a partir dessa máquina: `flutter build ipa` (ou abra o `ios/Runner.xcworkspace` diretamente no Xcode). Isto não pode ser feito a partir do Windows; ver «Porquê Flutter e não Swift nativo» acima.
 
-## 🔢 Versionamento
+### Versionamento
 
 Este repositório segue uma política de todo o ecossistema: compilar nunca altera a versão. O comando `bump` explícito (`python tools/hydra_project_tool.py bump`) executa o `tool/bump_version.dart`, que aplica:
 
-- **Patch, estilo odómetro (base 10):** +1 em cada bump; quando passaria
-  de 9 volta a 0 e é o minor que ganha +1 - p. ex. `0.0.9` -> `0.1.0`. O major
-  nunca é tocado automaticamente.
 - **Número de compilação** (a parte depois do `+`): um contador monótono
   simples, +1 em cada bump, sem transporte.
 
@@ -119,80 +190,63 @@ um ficheiro `const` simples, não uma nova dependência de execução como o
 versão no ecrã **Definições**. Consulte o [CHANGELOG.md](CHANGELOG.md) para o
 histórico de versões.
 
+## 🩺 Resolução de problemas
+
+| Vê | Porque | Faça |
+|---|---|---|
+| «Sessão não autorizada: inicie sessão de novo» | O servidor recusou o token (o WebSocket fechou com o código 1008) ou este expirou | Inicie sessão de novo |
+| «PARAGEM não confirmada pelo servidor» | Nada respondeu à PARAGEM global dentro do seu curto limite de tempo, ou o servidor não conseguiu guardar o estado de paragem | Prima de novo; se o aviso se mantiver, use a paragem de emergência física |
+| O robô está reservado por outra conta, ou pela sua conta noutro dispositivo | Uma reserva pertence à conta e ao dispositivo (um identificador de controlador por instalação) | Use esse dispositivo, ou liberte lá a reserva |
+| «A mostrar dados guardados das HH:mm» | O servidor está fora de alcance e o ecrã mostra a cópia guardada do último estado; com Bloquear comandos com dados guardados ligado, todos os comandos exceto a PARAGEM ficam retidos | Verifique o servidor e o Wi-Fi; o ecrã volta sozinho ao direto quando a ligação regressa |
+| «Movimento recusado: o passo excede o limite» | O passo excede o limite que o servidor define para este modelo de robô (`GET /api/safety-limits`) | Use um passo menor; nada foi enviado |
+| «Pesquisar rede local» não encontra nenhum servidor | Num iPhone real, o Bonjour precisa de uma autorização que uma compilação simples não tem, e a pesquisa pode deixar de fora as redes de dados móveis e VPN | Ligue-se ao mesmo Wi-Fi do servidor, ou escreva à mão o endereço e a porta |
+
 ## 📂 Estrutura do repositório
+
+<p align="center">
+  <img src="images/repository-structure.svg" alt="Repository structure of HYDRA-UMC-IOS-CONTROL" width="100%">
+</p>
+
+<details>
+<summary>Versão em texto da árvore</summary>
 
 ```text
 HYDRA-UMC-IOS-CONTROL/
-├── build.bat, build.sh              # flutter pub get + subida de versão + flutter build windows
-├── tool/
-│   └── bump_version.dart            # Subida de versão ao estilo conta-quilómetros (executada só pelo comando `bump` explícito)
-├── lib/
-│   ├── main.dart                    # Ponto de entrada da aplicação, ChangeNotifierProvider + porta de login
-│   ├── app_version.dart             # GERADO - regenerado pelo tool/bump_version.dart, não editar à mão
-│   ├── models/
-│   │   ├── server_info.dart         # Entrada de descoberta/ligação - espelha o ServerInfo dos outros 2 clientes
-│   │   ├── hydra_state.dart         # RobotView/ControllerView/HydraState - vistas finas e mutáveis sobre a árvore bruta do settings.json
-│   │   ├── assistant_reply.dart    # modelo da resposta do assistente de voz na aplicação
-│   │   ├── access.dart            # Identificador de controlador, reservas, limites de segurança e verificação do jog (regras puras)
-│   │   ├── stop_all_result.dart    # resposta do STOP global, robô a robô
-│   │   ├── contract_v2.dart        # O segundo contrato do servidor como regras puras: escritas condicionais por revisão do robô, o movimento atómico da mesa e o registo de auditoria
-│   │   └── sha256.dart             # SHA-256 em Dart puro, para a verificação da cadeia do registo de auditoria do servidor
-│   ├── network/
-│   │   ├── hydra_api_client.dart    # REST: login, definições, comando atómico de robô, métricas do sistema
-│   │   ├── hydra_websocket.dart     # Cliente de sincronização em direto /ws
-│   │   ├── discovery.dart           # Análise concorrente da(s) sub-rede(s) local(is) real(is) do próprio dispositivo contra GET /api/hydra-info
-│   │   ├── auth_prefs.dart          # Ligação (shared_preferences) + token (porta-chaves) persistidos
-│   │   ├── biometric_helper.dart    # Invólucro fino sobre o package:local_auth (porta Face ID/Touch ID)
-│   │   ├── state_cache.dart         # Portado do StateCache.kt do Android - último estado bom conhecido, persistido entre arranques
-│   │   └── client_prefs.dart        # Pequenas preferências do cliente que não são segredos (hoje: o id de controlador desta instalação)
-│   ├── state/
-│   │   ├── robot_view_model.dart    # Único ChangeNotifier a que todos os ecrãs escutam
-│   │   └── hydra_error.dart         # Superfície de erros tipada do RobotViewModel (sem BuildContext próprio)
-│   ├── l10n/                        # Localizações geradas reais (8 idiomas) - ver o l10n.yaml na raiz do repositório
-│   │   ├── app_*.arb                    # app_en.arb, app_es.arb, app_it.arb, app_fr.arb, app_de.arb, app_ja.arb, app_zh.arb, app_pt.arb: as frases de cada idioma (as classes geradas abaixo vêm deles)
-│   │   ├── app_localizations.dart   # Classe base gerada
-│   │   ├── app_localizations_en.dart, _es.dart, _it.dart, _fr.dart, _de.dart, _ja.dart, _zh.dart, _pt.dart
-│   │   └── language_prefs.dart      # Substituição de idioma persistida (shared_preferences)
-│   ├── util/                    # Utilitários sem ecrã próprio
-│   │   ├── play_confirmation.dart   # Quando o PLAY pergunta primeiro: as regras da confirmação antes de iniciar uma trajetória
-│   │   └── viewer_url.dart          # O endereço do visualizador 3D incorporado: o token de acesso vai no fragmento, que nunca é enviado ao servidor
-│   └── ui/
-│       ├── login_screen.dart        # Campos anfitrião/porta/utilizador/palavra-passe + «Procurar na rede local»
-│       ├── biometric_gate_screen.dart # Mostrado pelo _RootGate do main.dart enquanto o Face ID/Touch ID está pendente
-│       ├── startup_screen.dart        # O ecrã de arranque com a marca HYDRA-UMC
-│       ├── main_screen.dart         # Esqueleto de navegação inferior (Painel/Controlo/Câmara/3D/Telemetria/Definições)
-│       ├── dashboard_screen.dart    # Cartões por robô + barra de métricas do sistema
-│       ├── control_screen.dart      # Controlos de jog/velocidade/válvula/bomba/reprodução
-│       ├── camera_screen.dart       # Visualizador MJPEG + interruptor de visão ligada/desligada
-│       ├── three_d_screen.dart      # Embebe a vista 3D do próprio STUDIO através de uma WebView
-│       ├── telemetry_screen.dart    # Portado do TelemetryScreen.kt do Android
-│       ├── voice_assistant_dialog.dart # Botão de microfone/texto na aplicação para o HYDRA-UMC-VOICE-UI
-│       ├── settings_screen.dart     # Informação da ligação + terminar sessão
-│       └── widgets/
-│           ├── access_panel.dart      # Painel de reserva e armamento do jog do ecrã Control
-│           ├── audit_dialog.dart      # Registo de auditoria do servidor (administradores), com a verificação da cadeia
-│           ├── joystick_pad.dart     # D-pad de jog (deliberadamente não um manípulo analógico, ver o cabeçalho do ficheiro)
-│           ├── stop_all.dart            # botão STOP global e o seu aviso de resultado / «não confirmado»
-│           ├── digital_readout.dart, status_led.dart
-│           ├── mjpeg_view.dart       # Analisador de fluxo MJPEG feito à mão
-│           └── hydra_mark.dart       # A marca HYDRA-UMC (um hexágono com um H e uma haste) desenhada em código
-├── ios/                              # Projeto Xcode (compilar apenas a partir do macOS)
-├── windows/                          # Alvo de desktop Windows - verificação de compilação sem um Mac
-├── tools/
-│   ├── build_test.py                     # Verificação de compilação sem alterar versões
-│   ├── ci_validate.py                    # Validação de manifesto/CHANGELOG/docs usada pelo CI
-│   ├── _doc_policy.py                    # Regras de documentação partilhadas pela família (cópia da de HYDRA-UMC-SDK, mantida em sincronia)
-│   ├── _readme_parity.py                 # Verificação de que os oito README partilham a mesma estrutura (cópia da de HYDRA-UMC-SDK, mantida em sincronia)
-│   └── hydra_project_tool.py             # Os mesmos comandos em todos os repositórios: validate, test, ci, version, status, bump
-├── docs/ARCHITECTURE.md
-├── test/                             # widget_test, auth_prefs_test, discovery_interfaces_test, format_uptime_test, hostile_answers_test, hydra_error_test, hydra_websocket_reconnect_test, hydra_websocket_token_test, joystick_pad_test, localization_test, main_screen_cached_state_banner_test, mjpeg_lifecycle_test, play_confirmation_test, robot_view_model_background_pause_test, robot_view_model_cached_state_test, robot_view_model_server_errors_test, robot_view_model_silent_refresh_test, robot_view_model_stop_all_test, saved_data_block_test, session_storage_test, state_cache_test, telemetry_log_test, voice_turn_test, websocket_uri_test
-├── images/
-├── pubspec.yaml / pubspec.lock / l10n.yaml / analysis_options.yaml # A definição do pacote Flutter e as suas versões fixadas, as definições do gerador de l10n e as regras de lint
-├── README.md                         # este ficheiro
-└── README_spa.md / README_ita.md / README_fra.md / README_deu.md / README_zho.md / README_jpn.md / README_por.md  # traduções
+├── lib/                                                              código-fonte
+│   ├── main.dart                                                     Ponto de entrada da aplicação, ChangeNotifierProvider + porta de login
+│   ├── app_version.dart                                              GERADO - regenerado pelo tool/bump_version.dart, não editar à mão
+│   ├── models/                                                       modelos de dados e regras puras
+│   ├── network/                                                      cliente REST, WebSocket e descoberta
+│   ├── state/                                                        o estado que cada ecrã escuta
+│   ├── l10n/                                                         Localizações geradas reais (8 idiomas) - ver o l10n.yaml na raiz do repositório
+│   ├── util/                                                         Utilitários sem ecrã próprio
+│   └── ui/                                                           ecrãs e widgets
+├── tool/                                                             ferramenta de versões
+├── ios/                                                              Projeto Xcode (compilar apenas a partir do macOS)
+├── windows/                                                          Alvo de desktop Windows - verificação de compilação sem um Mac
+├── tools/                                                            ferramentas do projeto e verificações da CI
+├── test/                                                             os testes unitários da lógica
+├── images/                                                           faixa e imagens do README
+├── .github/                                                          fluxo de CI e modelos de problemas
+├── build.bat / build.sh                                              flutter pub get e depois flutter build windows; nunca muda a versão
+├── docs/ARCHITECTURE.md                                              arquitetura do projeto
+├── pubspec.yaml / pubspec.lock / l10n.yaml / analysis_options.yaml   A definição do pacote Flutter e as suas versões fixadas, as definições do gerador de l10n e as regras de lint
+├── CHANGELOG.md                                                      o que mudou em cada versão
+├── build-test.sh                                                     verificação de compilação sem alterações
+├── bump_manifest_version.py                                          sincroniza a versão do manifesto
+├── hydra-umc.project.json                                            manifesto: versão, maturidade, família
+└── test.sh                                                           verificação de compilação sem alterações (flutter test executa os testes unitários)
 ```
 
----
+</details>
+
+## 🗺️ Roteiro e limites conhecidos
+
+Não há compilação para iPhone ou iPad na CI: `flutter build ios` precisa do Xcode num Mac, por isso a aplicação só foi executada e testada no Windows. A descoberta por Bonjour precisa de uma autorização que uma compilação simples não tem, pelo que num iPhone real é a pesquisa da sub-rede que encontra o servidor. Ainda não há reconhecimento de voz no dispositivo (o assistente de voz aceita texto escrito), nem definições de TLS nem Bluetooth.
+
+## 🌍 Idiomas
+
+Este README e os documentos do repositório existem em oito idiomas: inglês, espanhol, alemão, francês, italiano, japonês, chinês e português (Portugal). São escritos em conjunto e a CI verifica que os oito ficheiros têm as mesmas secções e as mesmas ligações.
 
 ## 🔗 Projetos relacionados
 
@@ -287,25 +341,28 @@ Este projeto faz parte do ecossistema de robótica HYDRA-UMC do mesmo autor (Jua
 - **[HYDRA-UMC-OPS-AGENT](https://github.com/JuanenRac/HYDRA-UMC-OPS-AGENT)** — coordenador de incidentes de manutenção: um papel de borda de poucos privilégios recolhe um inventário/estado higienizado, um papel de plano de controlo mostra-o só de leitura e pede a um fornecedor de IA que sugira um diagnóstico; nunca aplica um patch nem implanta nada.
 - **[HYDRA-UMC-DEV-SERVER](https://github.com/JuanenRac/HYDRA-UMC-DEV-SERVER)** — anfitrião de desenvolvimento reproduzível (Raspberry Pi 5 / CM5) que guarda o código-fonte do ecossistema e executa tarefas limitadas de compilação/teste numa fila durável; um papel de desenvolvimento dedicado, explicitamente não um CM5 operacional.
 
----
+## 📚 Documentação
 
-## 📚 Documentação e comunidade
+Onde ler mais:
 
-- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** — o contrato de transporte Wi-Fi que esta aplicação fala contra o `server.ts` (endpoint a endpoint), porque é que ainda não há caminho por Bluetooth, o mecanismo real de descoberta por dois caminhos e a relação desta aplicação com o resto do ecossistema.
-- **[CONTRIBUTING.md](CONTRIBUTING.md)** — pilha tecnológica e diretrizes de código para um pull request.
-- **[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)** — as normas de comportamento esperadas nesta comunidade.
-- **[SECURITY.md](SECURITY.md)** — como comunicar uma vulnerabilidade e as áreas de segurança em que este projeto se concentra.
-- **[SUPPORT.md](SUPPORT.md)** — onde fazer perguntas e comunicar erros.
-- **[LICENSE.md](LICENSE.md)** — a licença deste projeto.
+* [docs/SOURCE_MAP.md](docs/SOURCE_MAP.md) - cada ficheiro fonte da aplicação com uma linha sobre o que faz
+* **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** — o contrato de transporte Wi-Fi que esta aplicação fala contra o `server.ts` (endpoint a endpoint), porque é que ainda não há caminho por Bluetooth, o mecanismo real de descoberta por dois caminhos e a relação desta aplicação com o resto do ecossistema.
+* [Base de segurança do ecossistema](https://github.com/JuanenRac/HYDRA-UMC-DOCS/blob/main/docs/SECURITY_BASELINE.md)
+* [Modelo de ameaças do ecossistema](https://github.com/JuanenRac/HYDRA-UMC-DOCS/blob/main/docs/THREAT_MODEL.md)
+* [Registo de alterações deste repositório](CHANGELOG.md)
+* [Licença deste repositório](LICENSE.md)
+
+## 🤝 Contribuir e comunidade
+
+* Antes de um pull request execute `HYDRA_UMC_CI=1 py -3 tools/ci_validate.py` (ou `HYDRA_UMC_CI=1 python3 tools/ci_validate.py`): tem de imprimir `CI_VALIDATION=PASS`. Não execute `build.sh` nem `build.bat` para esta verificação; compilar não é verificar.
+* Os oito README são escritos a partir de uma única fonte em HYDRA-UMC-DOCS; não os edite à mão. Altere a fonte e escreva-os de novo com `tools/make_readmes.py`.
+* Não afirme num README o que não foi executado: diga «simulado» ou «não testado em hardware» quando for a verdade.
+* Consulte [CONTRIBUTING.md](CONTRIBUTING.md), o [código de conduta](CODE_OF_CONDUCT.md), [SECURITY.md](SECURITY.md) e [SUPPORT.md](SUPPORT.md).
 
 ## 👤 AUTOR
-**JuanenRac** (Electro Hobby 3D)
-📧 electrohobby3d@gmail.com
-📺 [youtube.com/@electrohobby3d](https://youtube.com/@electrohobby3d)
+
+**JuanenRac (Electro Hobby 3D)** · electrohobby3d@gmail.com
 
 ## 📜 LICENÇA
 
-GNU General Public License v3.0 or later (GPL-3.0-or-later) para o código-fonte - veja [`LICENSE`](LICENSE).
-
-A documentação (este README e as suas próprias traduções - `README_spa.md`, `README_ita.md`, `README_fra.md`, `README_deu.md`, `README_zho.md`, `README_jpn.md`, `README_por.md`) está disponível sob a **Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)**. Texto completo em https://creativecommons.org/licenses/by-sa/4.0/.
-
+GPL-3.0-or-later - [LICENSE](LICENSE).

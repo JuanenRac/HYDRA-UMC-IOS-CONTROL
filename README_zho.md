@@ -1,32 +1,36 @@
+<!-- =============================================================================
+HYDRA-UMC-IOS-CONTROL - iOS and iPadOS operator console for a HYDRA-UMC server, written in Flutter
+Copyright (C) JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
+GPL-3.0-or-later - see LICENSE
+============================================================================= -->
+
 <p align="center">
   <img src="images/HYDRA_UMC_BANNER.svg" alt="HYDRA-UMC-IOS-CONTROL banner" width="100%">
 </p>
 
-# 📱 HYDRA-UMC CONTROL（iOS）
+# 🍎 HYDRA-UMC-IOS-CONTROL
 
-<p align="center">
-  <a href="README.md">🇺🇸 English</a> |
-  <a href="README_spa.md">🇪🇸 Español</a> |
-  <a href="README_fra.md">🇫🇷 Français</a> |
-  <a href="README_ita.md">🇮🇹 Italiano</a> |
-  <a href="README_deu.md">🇩🇪 Deutsch</a> |
-  🇨🇳 <b>简体中文</b> |
-  <a href="README_jpn.md">🇯🇵 日本語</a> |
-  <a href="README_por.md">🇵🇹 Português</a>
-</p>
+<p align="center"><a href="README.md">🇺🇸 English</a> | <a href="README_spa.md">🇪🇸 Español</a> | <a href="README_fra.md">🇫🇷 Français</a> | <a href="README_ita.md">🇮🇹 Italiano</a> | <a href="README_deu.md">🇩🇪 Deutsch</a> | 🇨🇳 <b>简体中文</b> | <a href="README_jpn.md">🇯🇵 日本語</a> | <a href="README_por.md">🇵🇹 Português</a></p>
 
+### 在 iPhone 或 iPad 上操作 HYDRA-UMC 机器人：找到服务器，移动并监看机器人，用一个红色按钮全部停止。
 
 <p align="center">
   <img src="https://img.shields.io/badge/License-GPL%203.0--or--later-blue.svg" alt="GPL 3.0 or later">
-  <img src="https://img.shields.io/badge/Framework-Flutter-02569B.svg" alt="Flutter">
-  <img src="https://img.shields.io/badge/Language-Dart-0175C2.svg" alt="Dart">
-  <img src="https://img.shields.io/badge/Platform-iOS-000000.svg" alt="iOS">
+  <img src="https://img.shields.io/badge/Framework-Flutter-02569B.svg" alt="Framework">
+  <img src="https://img.shields.io/badge/Language-Dart-0175C2.svg" alt="Language">
+  <img src="https://img.shields.io/badge/Platform-iOS-000000.svg" alt="Platform">
+  <img src="https://img.shields.io/badge/Tests-220%20passing-2ea44f.svg" alt="Tests">
+  <img src="https://img.shields.io/badge/Version-0.2.7-0f6cbd.svg" alt="Version">
+  <img src="https://img.shields.io/badge/Maturity-functional-0F6CBD.svg" alt="Maturity">
 </p>
 
+---
 
 一款跨平台的 Flutter 应用（Dart），通过 Wi-Fi 控制 [HYDRA-UMC](https://github.com/JuanenRac/HYDRA-UMC) 平台上的机器人，使用与 [HYDRA-UMC SUITE](https://github.com/JuanenRac/HYDRA-UMC-SUITE) 和 [HYDRA-UMC-ANDROID-CONTROL](https://github.com/JuanenRac/HYDRA-UMC-ANDROID-CONTROL) 完全相同的 [`REMOTE_API.md`](https://github.com/JuanenRac/HYDRA-UMC-SERVER/blob/main/docs/REMOTE_API.md) 契约——针对运行中的 [HYDRA-UMC-SERVER](https://github.com/JuanenRac/HYDRA-UMC-SERVER) 实例（从 HYDRA-UMC STUDIO 自身进程中拆分出来的无头式后端——STUDIO 现在是它的一个纯前端客户端，与本应用一样）进行发现、登录、原子化的逐机器人指令,以及实时 WebSocket 同步。
 
 > **安全与安防现状:**本生态系统不是经认证的安全系统。目前尚无硬件 E-STOP 通路,没有由固件强制执行的限位或联锁,也没有经过验证的运动指令;固件映像使用 CRC32 和共享密钥的 HMAC-SHA256 校验,而非非对称签名;TLS 与双向 TLS 均为可选项,默认关闭;自制电路板尚未组装或测试。在依赖此处任何说法来保障人身安全之前,请先阅读[安全基线](https://github.com/JuanenRac/HYDRA-UMC-DOCS/blob/main/docs/SECURITY_BASELINE.md)和[威胁模型](https://github.com/JuanenRac/HYDRA-UMC-DOCS/blob/main/docs/THREAT_MODEL.md)。
+
+---
 
 ## 📋 速览
 
@@ -34,9 +38,12 @@
 |---|---|
 | 版本 | `0.2.7` |
 | 成熟度 | 可用 |
+| 测试 | 220 (`flutter test`) |
 | 技术栈 | Flutter 3.x / Dart |
 | 目标 | iPhone 或 iPad |
 | 真实硬件 | 尚未：此版本没有在真实硬件上运行的记录 |
+
+**跳转：** [概述](#-概述) · [架构](#-架构) · [功能](#-功能) · [安全与防护](#-安全与防护) · [接口](#-接口) · [配置](#-配置) · [快速开始](#-快速开始) · [测试](#-测试) · [故障排除](#-故障排除) · [仓库结构](#-仓库结构) · [相关项目](#-相关项目)
 
 ## 🚦 项目状态
 
@@ -47,17 +54,31 @@
 | 领域 | 状态 | 在这里的含义 |
 |---|---|---|
 | 软件 | 🟡 | 主要用途可用；上面的诚实性检查列出了仍然缺少的内容 |
-| 测试 | 🟠 | 此仓库尚未记录测试数量 |
+| 测试 | 🟢 | 220 项自动测试，每次变更都会运行 |
 | 真实硬件 | 🔴 | 尚未：此版本没有在真实硬件上运行的记录 |
 | 文档 | 🟢 | 八种语言的 README，每次变更都会与清单核对 |
 
-## 🔀 为何选择 Flutter，而非原生 Swift
+## 🎯 概述
+
+应用的界面：**登录**（服务器地址、账户、扫描本地网络）、**仪表盘**（每个机器人一张卡片，附实时 LED 和计算模块的健康状态）、**控制**（点动面板、速度、阀门和泵、机器人预约、可先询问确认的 PLAY）、**摄像头**（实时 MJPEG）、**3D 视图**（STUDIO 的真实场景）、**遥测**（终端风格的日志）和**设置**（语言、生物识别锁、开关）。红色的**停止**按钮位于每个标签页的栏中。
+
+## 🧩 在 HYDRA-UMC 中的角色
+
+**HYDRA-UMC-IOS-CONTROL** 是 HYDRA-UMC 面向 iPhone 和 iPad 的操作员控制台。它用 Flutter 编写，因此其逻辑可以在 Windows 上构建、运行和测试；iOS 构建本身仍需要 Mac 上的 Xcode。它在本地网络中找到 HYDRA-UMC-SERVER，登录后显示并移动机器人、查看摄像头和 3D 视图，并可一键全部停止，使用与 SUITE 和 Android 应用相同的远程契约。它不是安全设备。
+
+## 🏛️ 架构
+
+<p align="center">
+  <img src="images/architecture.svg" alt="HYDRA-UMC-IOS-CONTROL architecture" width="100%">
+</p>
+
+### 为何选择 Flutter，而非原生 Swift
 
 本应用面向 iOS/iPadOS,但它是用 **Flutter** 而非 Swift/SwiftUI 构建的:本仓库的工作环境仅限 Windows,而一个原生 Swift 项目虽然可以在 Windows 上*编写*,但永远无法在其上*编译或运行*（Xcode 和 iOS SDK 仅限 macOS）。Flutter 自身的 Windows 桌面目标让本应用可以在这台机器上真正地构建、运行和测试——`flutter analyze` 干净通过,`flutter build windows` 成功,`flutter test` 通过,构建出的 `.exe` 能够启动并渲染,没有任何运行时错误——而不是盲目地编写数千行 Swift 代码,在拿到 Mac 之前完全无法验证任何一行。
 
 **这并不能消除苹果自身的限制**——一个真正的 `.ipa` 仍然需要在 Mac 上（或 macOS CI 运行器上）使用 Xcode 来构建和签名;框架的选择并不会改变这一点。Flutter 带来的好处是,能够在这台机器上今天就验证本应用自身逻辑（网络、状态、界面）的每一行代码,并在日后无需重写就能将完全相同的代码库发布到 iOS。
 
-## 🏗️ 已实现的功能
+## ✨ 功能
 
 - **登录**（`lib/ui/login_screen.dart`、`lib/state/robot_view_model.dart`）—— 可编辑的服务器 IP/端口和操作员凭据字段，加上 `POST /api/login`；不会预填账户或密码。生产服务器必须为首个管理员显式配置引导凭据；可在浏览器界面的 Config > Users 中创建额外的低权限“操作员”账户。会话令牌保存在 iOS 钥匙串（`flutter_secure_storage`）中并在多次启动之间保持；主机和端口则保存在 `shared_preferences`。“扫描本地网络”按钮（`lib/network/discovery.dart`）无需用户预先知道 IP 即可找到服务器。
 - **网络发现**（`lib/network/discovery.dart`）—— 从同一个“扫描本地网络”面板同时运行两条独立路径：真实的 mDNS/Bonjour（`discoverMdns()`，通过 `multicast_dns` 包查询 `server.ts` 发布的 `_hydra._tcp.local` 服务——本应用是本生态系统 3 个远程客户端中第一个加入该能力的）,以及针对本设备自身真实本地子网的并发暴力扫描 `GET /api/hydra-info`（`scanSubnets()`，该子网通过 `dart:io` 的 `NetworkInterface.list()` 推导,而非单一的硬编码猜测,因为手机的局域网同样可能是 `192.168.0.x` 或 `10.x.x.x`,而不一定是 `192.168.1.x`,仅当接口枚举本身返回为空时才回退到 `192.168.1.x`）。在未获得相应权限的 iOS 构建上，mDNS 静默失败是预期行为（Apple 的 Multicast Networking 权限并非普通 `flutter build ios` 就能获得）——无论如何，子网扫描都会独立继续工作。
@@ -77,7 +98,60 @@
 - **遥测**（`lib/ui/telemetry_screen.dart`）—— 一个终端风格、最新在前的日志，记录真实的连接/登录/指令生命周期事件，最多保留 50 条，并提供清除日志的操作——与 HYDRA-UMC-ANDROID-CONTROL 自身的遥测标签页相同的"Matrix 绿"配色约定。
 - **应用内语音助手**（`lib/ui/voice_assistant_dialog.dart`）—— 应用栏中的麦克风图标会打开一个对话框，可输入问题或指令,通过与 HYDRA-UMC-ANDROID-CONTROL 自身应用内语音按钮及其手表中继相同的真实 `POST /api/voice/turn` 路由发送给 `HYDRA-UMC-VOICE-UI`。绝不上传音频——目前仅支持文本输入,因为 iOS 原生语音识别需要 Speech 框架,而这个仅限 Windows 的开发环境无法针对真实设备/Xcode 进行编译或验证。回复绝不会直接发出机器人指令。
 
-## 🚀 构建
+## 🔒 安全与防护
+
+| 威胁 | 防御 | 位置 |
+|---|---|---|
+| 从手机窃取的令牌 | 令牌、用户名和刷新令牌用 `flutter_secure_storage`（iOS 钥匙串）保存；只有主机、端口和偏好设置进入 `shared_preferences`；应用从不保存明文密码 | `network/auth_prefs.dart` |
+| 保存的状态副本中的凭据 | 写入磁盘的最后状态副本会在任何层级去掉 `ipUsername` 和 `ipPassword` 键，并在登出时清除 | `network/state_cache.dart` |
+| 日志或 WebSocket 地址中的令牌 | 令牌放在 WebSocket 的 `hydra.bearer` 子协议中，从不放在地址里；内嵌的 3D 视图通过地址片段（`#token=`）获得它，该片段不会发送给服务器；有测试检查这两点 | `network/hydra_websocket.dart`, `util/viewer_url.dart` |
+| 拿着已解锁手机的人 | 可选的生物识别锁（Face ID、Touch ID）控制启动时恢复已保存的会话；应用在后台时会关闭摄像头画面 | `network/biometric_helper.dart`, `ui/biometric_gate_screen.dart` |
+| 被两个人同时移动的机器人、误按的 PLAY，或没有送达的停止 | 机器人在点动前先预约，屏幕会说明谁持有它；PLAY 默认先询问，并显示机器人、其点位、速度和预约者；全局停止重试一次，回退为逐个机器人停止，若无人应答则保持“停止未确认”横幅 | `models/access.dart`, `util/play_confirmation.dart`, `ui/widgets/stop_all.dart` |
+
+**它绝不做的事：** 替代物理紧急停止，或自行加密流量：当明文 HTTP 探测没有应答时，应用会尝试一次 HTTPS，但没有证书固定，也没有针对本地网络之外明文流量的防护。停止是服务器的软件停止。
+
+## 🔌 接口
+
+| 主题或路由 | 内容 |
+|---|---|
+| `POST /api/login`, `/api/logout`, `/api/refresh` | 登录、登出并续期会话 |
+| `GET /api/hydra-info` | 识别真正的服务器；子网扫描和手动地址都使用它，并会通过 HTTPS 重试一次 |
+| `GET /api/settings`, `/api/system/metrics`, `/api/safety-limits`, `/api/claims` | 机器人状态、计算模块（每 5 秒）、每种型号的安全限制和预约 |
+| `POST /api/robot/{id}/command`, `/claim`, `/release`, jog arming | 针对单个机器人的小命令、它的预约和点动的武装，并按机器人修订版进行条件写入 |
+| `POST /api/stop-all` | 全局停止：所有机器人，逐个机器人应答 |
+| `GET /api/audit`, `POST /api/voice/turn`, `GET /api/camera/{id}/stream` | 审计记录（管理员，带自己的 SHA-256 链校验）、键入的语音回合，以及摄像头的 MJPEG 流 |
+| WebSocket `hydra.bearer`, mDNS `_hydra._tcp.local` | 实时状态变化（`settings` 和 `delta` 消息，3 秒起至最多 30 秒的重连，每 20 秒一次 ping）以及服务器的 Bonjour 通告 |
+
+## ⚙️ 配置
+
+应用没有配置文件：一切都在屏幕上设置并保存在设备上。默认值来自代码。
+
+| 变量 | 默认值 | 设置内容 |
+|---|---|---|
+| 设置 > PLAY 前询问 | 开启 | 在轨迹开始前显示机器人、点位、速度和预约者 |
+| 设置 > 在使用已保存数据时阻止命令 | 关闭 | 当屏幕显示的是已保存的状态副本而不是实时状态时，阻止除停止之外的所有命令 |
+| 登录 > 不扫描移动数据或 VPN 网络 | 关闭 | 将这些接口排除在子网扫描之外（每次 32 台主机，除非输入其他端口，否则为 3000 端口） |
+| 设置 > 生物识别锁 | 关闭 | 启动时恢复已保存的会话之前要求 Face ID 或 Touch ID |
+| 设置 > 语言 | 系统语言 | 应用的八种语言之一（`lib/l10n/`），跨启动保留 |
+
+## 🚀 快速开始
+
+需要稳定版 Flutter SDK（Dart 3.13 或更高版本）。Windows 可运行逻辑和测试；真正的 iPhone 构建需要 Mac 上的 Xcode。
+
+```bash
+flutter pub get                  # downloads the packages
+flutter test                     # runs the unit tests on this machine
+./build-test.sh                  # non-mutating build check (build-test.bat on Windows)
+flutter build ios --no-codesign  # a real iOS build; only on a Mac with Xcode
+```
+
+## 🧪 测试
+
+运行 `flutter test` 会执行 220 个自动测试。 不需要硬件，也不需要这台机器以外的任何东西。
+
+CI 运行 `HYDRA_UMC_CI=1 python tools/ci_validate.py`，检查清单、文档、八个 README 和图片。
+
+## 🏗️ 构建与发布
 
 需要 [Flutter SDK](https://docs.flutter.dev/get-started/install)（stable 渠道）。本仓库基于 Flutter 3.47.0 构建/验证。本仓库中只配置了 `windows/` 和 `ios/` 两个平台（没有 `android/`、`linux/`、`web/` 或 `macos/` 文件夹）——Windows 的存在是为了让本应用自身的逻辑能够在没有 Mac 的情况下构建和运行;iOS 才是真正的目标平台。
 
@@ -103,87 +177,71 @@ flutter run -d windows   # 或在 Mac 上使用 -d <ios-device-id>
 
 **构建真正的 iOS `.ipa`** 需要在 macOS 上使用 Xcode——在该机器上运行：`flutter build ipa`（或直接在 Xcode 中打开 `ios/Runner.xcworkspace`）。这无法在 Windows 上完成；见上文“为何选择 Flutter，而非原生 Swift”。
 
-## 🔢 版本管理
+### 版本管理
 
 本仓库遵循生态系统统一的策略：构建绝不会更改版本号。显式的 `bump` 命令（`python tools/hydra_project_tool.py bump`）会运行 `tool/bump_version.dart`，并应用：
 
-- **Patch,里程表方式（十进制）：** 每次 bump +1;一旦超过 9 就重置为 0,并将 minor 加 1——例如 `0.0.9` -> `0.1.0`。Major 从不被自动修改。
 - **构建号**（`+` 之后的部分）：一个纯粹的单调计数器,每次 bump +1,不进位。
 
 同一个脚本会重新生成 `lib/app_version.dart`（这是生成的文件,不是手工编辑的——一个普通的 `const` 文件,而非像 `package_info_plus` 那样引入新的运行时依赖）,应用在运行时读取它,以在 **Settings** 界面显示自身版本。完整版本历史见 [CHANGELOG.md](CHANGELOG.md)。
 
+## 🩺 故障排除
+
+| 你看到 | 原因 | 处理 |
+|---|---|---|
+| “会话未获授权，请重新登录” | 服务器拒绝了令牌（WebSocket 以代码 1008 关闭）或令牌已过期 | 重新登录 |
+| “服务器未确认停止” | 全局停止在其较短的时限内没有任何应答，或服务器无法保存停止状态 | 再按一次；若横幅仍在，请使用物理紧急停止 |
+| 机器人被其他账户或你在另一台设备上的账户预约了 | 预约属于账户和设备（每次安装一个控制器 ID） | 使用那台设备，或在那里释放预约 |
+| “正在显示 HH:mm 保存的数据” | 服务器不可达，屏幕显示的是最后状态的已保存副本；开启“在使用已保存数据时阻止命令”后，除停止外的所有命令都会被阻止 | 检查服务器和 Wi-Fi；连接恢复后屏幕会自动恢复实时 |
+| “点动被拒绝：步长超过限制” | 步长超过服务器为该机器人型号设置的限制（`GET /api/safety-limits`） | 使用较小的步长；没有发送任何内容 |
+| “扫描本地网络”找不到服务器 | 在真实 iPhone 上，Bonjour 需要普通构建不具备的授权，而且扫描可能会跳过移动数据和 VPN 网络 | 连接到与服务器相同的 Wi-Fi，或手动输入其地址和端口 |
+
 ## 📂 仓库结构
+
+<p align="center">
+  <img src="images/repository-structure.svg" alt="Repository structure of HYDRA-UMC-IOS-CONTROL" width="100%">
+</p>
+
+<details>
+<summary>目录树的文本版本</summary>
 
 ```text
 HYDRA-UMC-IOS-CONTROL/
-├── build.bat, build.sh              # flutter pub get + 版本递增 + flutter build windows
-├── tool/
-│   └── bump_version.dart            # 里程表式版本递增（仅由显式 `bump` 命令运行）
-├── lib/
-│   ├── main.dart                    # 应用入口点，ChangeNotifierProvider + 登录门禁
-│   ├── app_version.dart             # 生成文件——由 tool/bump_version.dart 重新生成，请勿手动编辑
-│   ├── models/
-│   │   ├── server_info.dart         # 发现/连接条目——与其他 2 个客户端中的 ServerInfo 镜像一致
-│   │   ├── hydra_state.dart         # RobotView/ControllerView/HydraState——原始 settings.json 树的薄型可变视图
-│   │   ├── assistant_reply.dart    # 应用内语音助手的回复模型
-│   │   ├── access.dart            # 控制器 ID、预留、安全限值与点动检查（纯规则）
-│   │   ├── stop_all_result.dart    # 全局 STOP 的应答（按机器人）
-│   │   ├── contract_v2.dart        # 服务器的第二份契约,以纯规则表达: 按机器人修订号的条件写入、工作台的原子移动和审计记录
-│   │   └── sha256.dart             # 纯 Dart 实现的 SHA-256,用于校验服务器审计记录的哈希链
-│   ├── network/
-│   │   ├── hydra_api_client.dart    # REST：登录、设置、原子化机器人指令、系统指标
-│   │   ├── hydra_websocket.dart     # /ws 实时同步客户端
-│   │   ├── discovery.dart           # 针对本设备自身真实本地子网的并发扫描 GET /api/hydra-info
-│   │   ├── auth_prefs.dart          # 持久化的连接信息（shared_preferences）+ 令牌（钥匙串）
-│   │   ├── biometric_helper.dart    # package:local_auth 的轻量封装（Face ID/Touch ID 门禁）
-│   │   ├── state_cache.dart         # 移植自 Android 自身的 StateCache.kt——跨启动持久化的最后已知良好状态
-│   │   └── client_prefs.dart        # 不属于机密的小型客户端偏好 (目前: 此安装的控制器 ID)
-│   ├── state/
-│   │   ├── robot_view_model.dart    # 每个界面都监听的单一 ChangeNotifier
-│   │   └── hydra_error.dart         # 面向 RobotViewModel 的类型化错误接口（自身无 BuildContext）
-│   ├── l10n/                        # 真实生成的本地化文件（8 种语言）——见仓库根目录的 l10n.yaml
-│   │   ├── app_*.arb                    # app_en.arb、app_es.arb、app_it.arb、app_fr.arb、app_de.arb、app_ja.arb、app_zh.arb、app_pt.arb: 各语言的文案 (下面生成的类由它们产生)
-│   │   ├── app_localizations.dart   # 生成的基类
-│   │   ├── app_localizations_en.dart, _es.dart, _it.dart, _fr.dart, _de.dart, _ja.dart, _zh.dart, _pt.dart
-│   │   └── language_prefs.dart      # 持久化的语言覆盖设置（shared_preferences）
-│   ├── util/                    # 没有独立界面的辅助模块
-│   │   ├── play_confirmation.dart   # PLAY 何时先询问: 轨迹开始前确认的规则
-│   │   └── viewer_url.dart          # 内嵌 3D 查看器的地址: 访问令牌放在从不发送给服务器的片段中
-│   └── ui/
-│       ├── login_screen.dart        # 主机/端口/用户/密码字段 + “扫描本地网络”
-│       ├── biometric_gate_screen.dart # Face ID/Touch ID 待处理时由 main.dart 的 _RootGate 显示
-│       ├── startup_screen.dart        # 带有 HYDRA-UMC 标志的启动界面
-│       ├── main_screen.dart         # 底部导航外壳（仪表盘/控制/摄像头/3D/遥测/设置）
-│       ├── dashboard_screen.dart    # 每机器人卡片 + 系统指标栏
-│       ├── control_screen.dart      # 点动/速度/阀门/泵/回放控制
-│       ├── camera_screen.dart       # MJPEG 查看器 + 视觉开关
-│       ├── three_d_screen.dart      # 通过 WebView 嵌入 STUDIO 自身的 3D 视口
-│       ├── telemetry_screen.dart    # 移植自 Android 自身的 TelemetryScreen.kt
-│       ├── voice_assistant_dialog.dart # 应用内麦克风/文本按钮,连接 HYDRA-UMC-VOICE-UI
-│       ├── settings_screen.dart     # 连接信息 + 退出登录
-│       └── widgets/
-│           ├── access_panel.dart      # Control 屏幕的预留与点动解锁面板
-│           ├── audit_dialog.dart      # 服务器的审计记录(管理员)及链校验
-│           ├── joystick_pad.dart     # 点动方向键（刻意不采用模拟摇杆，见文件头部说明）
-│           ├── stop_all.dart            # 全局 STOP 按钮及其结果/“未确认”横幅
-│           ├── digital_readout.dart, status_led.dart
-│           ├── mjpeg_view.dart       # 手写的 MJPEG 流解析器
-│           └── hydra_mark.dart       # 用代码绘制的 HYDRA-UMC 标志 (带 H 和杆的六边形)
-├── ios/                              # Xcode 项目（仅可在 macOS 上构建）
-├── windows/                          # Windows 桌面目标——无需 Mac 即可进行构建验证
-├── tools/
-│   ├── build_test.py                     # 不递增版本号的构建检查
-│   ├── ci_validate.py                    # CI 使用的清单/CHANGELOG/文档校验
-│   ├── _doc_policy.py                    # 家族共享的文档规则 (HYDRA-UMC-SDK 的副本,保持同步)
-│   ├── _readme_parity.py                 # 检查八个 README 结构一致 (HYDRA-UMC-SDK 的副本,保持同步)
-│   └── hydra_project_tool.py             # 每个仓库相同的命令: validate、test、ci、version、status、bump
-├── docs/ARCHITECTURE.md
-├── test/                             # widget_test, auth_prefs_test, discovery_interfaces_test, format_uptime_test, hostile_answers_test, hydra_error_test, hydra_websocket_reconnect_test, hydra_websocket_token_test, joystick_pad_test, localization_test, main_screen_cached_state_banner_test, mjpeg_lifecycle_test, play_confirmation_test, robot_view_model_background_pause_test, robot_view_model_cached_state_test, robot_view_model_server_errors_test, robot_view_model_silent_refresh_test, robot_view_model_stop_all_test, saved_data_block_test, session_storage_test, state_cache_test, telemetry_log_test, voice_turn_test, websocket_uri_test
-├── images/
-├── pubspec.yaml / pubspec.lock / l10n.yaml / analysis_options.yaml # Flutter 包的定义及其锁定版本、l10n 生成器设置和 lint 规则
-├── README.md                         # 本文件
-└── README_spa.md / README_ita.md / README_fra.md / README_deu.md / README_zho.md / README_jpn.md / README_por.md  # 翻译
+├── lib/                                                              源代码
+│   ├── main.dart                                                     应用入口点，ChangeNotifierProvider + 登录门禁
+│   ├── app_version.dart                                              生成文件——由 tool/bump_version.dart 重新生成，请勿手动编辑
+│   ├── models/                                                       数据模型和纯规则
+│   ├── network/                                                      REST 客户端、WebSocket 和发现
+│   ├── state/                                                        每个界面监听的状态
+│   ├── l10n/                                                         真实生成的本地化文件（8 种语言）——见仓库根目录的 l10n.yaml
+│   ├── util/                                                         没有独立界面的辅助模块
+│   └── ui/                                                           界面和控件
+├── tool/                                                             版本工具
+├── ios/                                                              Xcode 项目（仅可在 macOS 上构建）
+├── windows/                                                          Windows 桌面目标——无需 Mac 即可进行构建验证
+├── tools/                                                            项目工具和 CI 检查
+├── test/                                                             逻辑的单元测试
+├── images/                                                           横幅和 README 的图片
+├── .github/                                                          CI 工作流和 Issue 模板
+├── build.bat / build.sh                                              先 flutter pub get，再 flutter build windows；从不改变版本
+├── docs/ARCHITECTURE.md                                              项目架构
+├── pubspec.yaml / pubspec.lock / l10n.yaml / analysis_options.yaml   Flutter 包的定义及其锁定版本、l10n 生成器设置和 lint 规则
+├── CHANGELOG.md                                                      每个版本的变更
+├── build-test.sh                                                     不修改内容的构建检查
+├── bump_manifest_version.py                                          同步清单版本
+├── hydra-umc.project.json                                            清单：版本、成熟度、系列
+└── test.sh                                                           不修改内容的构建检查（flutter test 运行单元测试）
 ```
+
+</details>
+
+## 🗺️ 路线图与已知限制
+
+CI 中没有 iPhone 或 iPad 的构建：`flutter build ios` 需要 Mac 上的 Xcode，所以该应用只在 Windows 上运行和测试过。Bonjour 发现需要普通构建不具备的授权，因此在真实 iPhone 上由子网扫描找到服务器。目前还没有设备端语音识别（语音助手接受键入的文本），也没有 TLS 设置和蓝牙。
+
+## 🌍 语言
+
+本 README 和仓库文档提供八种语言：英语、西班牙语、德语、法语、意大利语、日语、中文和葡萄牙语（葡萄牙）。它们同时编写，并由 CI 检查八个文件拥有相同的章节和相同的链接。
 
 ## 🔗 相关项目
 
@@ -278,24 +336,28 @@ HYDRA-UMC-IOS-CONTROL/
 - **[HYDRA-UMC-OPS-AGENT](https://github.com/JuanenRac/HYDRA-UMC-OPS-AGENT)** — 维护事件协调器：一个低权限的边缘角色采集经过脱敏的库存/健康快照，一个控制面角色以只读方式渲染它，并请求某个 AI 提供方给出诊断建议——从不应用补丁，也从不部署任何内容。
 - **[HYDRA-UMC-DEV-SERVER](https://github.com/JuanenRac/HYDRA-UMC-DEV-SERVER)** — 可复现的开发主机（Raspberry Pi 5 / CM5），保存整个生态系统的源代码，并在持久队列下运行有界的构建/测试任务；这是专用的开发角色，明确区别于运行中的 CM5。
 
----
+## 📚 文档
 
-## 📚 文档与社区
+更多阅读：
 
-- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** —— 本应用与 `server.ts` 之间的 Wi-Fi 传输契约（逐个端点说明）、为何目前仍没有蓝牙路径、真实的双路径发现机制，以及本应用与生态系统其余部分的关系。
-- **[CONTRIBUTING.md](CONTRIBUTING.md)** —— 提交 Pull Request 所需的技术栈和编码规范。
-- **[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)** —— 本社区所期望的行为准则。
-- **[SECURITY.md](SECURITY.md)** —— 如何报告漏洞，以及本项目真实的安全关注重点。
-- **[SUPPORT.md](SUPPORT.md)** —— 在哪里提问和报告缺陷。
-- **[LICENSE.md](LICENSE.md)** —— 本项目自身的许可证。
+* [docs/SOURCE_MAP.md](docs/SOURCE_MAP.md) - 应用的每个源文件及一行说明
+* **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** —— 本应用与 `server.ts` 之间的 Wi-Fi 传输契约（逐个端点说明）、为何目前仍没有蓝牙路径、真实的双路径发现机制，以及本应用与生态系统其余部分的关系。
+* [生态系统的安全基线](https://github.com/JuanenRac/HYDRA-UMC-DOCS/blob/main/docs/SECURITY_BASELINE.md)
+* [生态系统的威胁模型](https://github.com/JuanenRac/HYDRA-UMC-DOCS/blob/main/docs/THREAT_MODEL.md)
+* [本仓库的更新日志](CHANGELOG.md)
+* [本仓库的许可证](LICENSE.md)
+
+## 🤝 参与贡献与社区
+
+* 提交 pull request 之前，请运行 `HYDRA_UMC_CI=1 py -3 tools/ci_validate.py`（或 `HYDRA_UMC_CI=1 python3 tools/ci_validate.py`）：它必须输出 `CI_VALIDATION=PASS`。此检查不要运行 `build.sh` 或 `build.bat`；构建不是检查。
+* 八个 README 由 HYDRA-UMC-DOCS 中的同一个源生成；请勿手工编辑。修改源文件，再用 `tools/make_readmes.py` 重新生成。
+* 不要在 README 中声称尚未运行过的内容：属实时请写“仅模拟”或“尚未在硬件上试过”。
+* 请参阅 [CONTRIBUTING.md](CONTRIBUTING.md)、[行为准则](CODE_OF_CONDUCT.md)、[SECURITY.md](SECURITY.md) 和 [SUPPORT.md](SUPPORT.md)。
 
 ## 👤 作者
-**JuanenRac** (Electro Hobby 3D)
-📧 electrohobby3d@gmail.com
-📺 [youtube.com/@electrohobby3d](https://youtube.com/@electrohobby3d)
+
+**JuanenRac (Electro Hobby 3D)** · electrohobby3d@gmail.com
 
 ## 📜 许可证
 
-源代码采用 **GNU 通用公共许可证 v3.0（GPL-3.0-or-later）**——见 [`LICENSE`](LICENSE)。
-
-文档（本 README 及其自身的翻译版本——`README_spa.md`、`README_ita.md`、`README_fra.md`、`README_deu.md`、`README_zho.md`、`README_jpn.md`、`README_por.md`）依据 **知识共享 署名-相同方式共享 4.0 国际许可协议（CC BY-SA 4.0）** 提供。完整文本见 https://creativecommons.org/licenses/by-sa/4.0/。
+GPL-3.0-or-later - [LICENSE](LICENSE).
