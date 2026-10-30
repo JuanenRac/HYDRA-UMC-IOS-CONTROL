@@ -39,6 +39,7 @@ import 'package:http/http.dart' as http;
 import '../models/access.dart';
 import '../models/contract_v2.dart';
 import '../models/assistant_reply.dart';
+import 'tls_settings.dart';
 
 class HydraApiException implements Exception {
   final String message;
@@ -109,6 +110,9 @@ class HydraApiClient {
   String? authToken;
   final http.Client _client;
 
+  /// True once this server was seen answering over TLS (or was saved so).
+  bool _tlsSeen;
+
   /// The controller id of this installation (see models/access.dart), sent in
   /// the body and in the `X-Controller-Id` header of every reserve, release,
   /// jog-arm and command. It is made once and kept (see ClientPrefs), so a
@@ -120,8 +124,9 @@ class HydraApiClient {
   /// that once spoke TLS and now answers over http is not trusted with a
   /// password or a token in the clear.
   HydraApiClient(String host, int port, {http.Client? client, bool useTls = false})
-      : baseUrl = '${useTls ? 'https' : 'http'}://$host:$port',
-        _client = client ?? http.Client();
+      : baseUrl = '${useTls || !TlsPolicy.isLoopback(host) ? 'https' : 'http'}://$host:$port',
+        _tlsSeen = useTls,
+        _client = client ?? createClient();
 
   Map<String, String> get _authHeaders =>
       authToken != null ? {'Authorization': 'Bearer $authToken'} : const {};
@@ -206,18 +211,21 @@ class HydraApiClient {
 
   Future<Map<String, dynamic>?> getHydraInfo() async {
     final direct = await _probeHydraInfo(baseUrl);
-    if (direct != null) return direct;
-    // A server with TLS_CERT_PATH/TLS_KEY_PATH set answers nothing
-    // sensible to plain HTTP - retry once over HTTPS before giving up,
-    // and remember it via baseUrl for every later call through this same
-    // client. Never the other way around: a plain-HTTP server that fails
-    // is just offline, not a reason to guess at HTTPS.
-    if (baseUrl.startsWith('http://')) {
-      final httpsUrl = baseUrl.replaceFirst('http://', 'https://');
-      final viaHttps = await _probeHydraInfo(httpsUrl);
-      if (viaHttps != null) {
-        baseUrl = httpsUrl;
-        return viaHttps;
+    if (direct != null) {
+      _noteSchemeWorks();
+      return direct;
+    }
+    // HTTPS is tried first. Plain HTTP is only a second try, and only when
+    // the person allowed it in the security settings (and the server is on
+    // the local network unless they allowed remote plain traffic too). A
+    // server that once spoke TLS is never retried over plain HTTP.
+    final other = _otherSchemeUrl();
+    if (other != null) {
+      final viaOther = await _probeHydraInfo(other);
+      if (viaOther != null) {
+        baseUrl = other;
+        _noteSchemeWorks();
+        return viaOther;
       }
     }
     return null;
@@ -228,10 +236,39 @@ class HydraApiClient {
   /// to learn which scheme this host actually answers on, discarding the
   /// payload itself since the caller here only cares about baseUrl.
   Future<void> _resolveScheme() async {
-    if (baseUrl.startsWith('https://')) return;
-    if (await _probeHydraInfo(baseUrl) != null) return;
-    final httpsUrl = baseUrl.replaceFirst('http://', 'https://');
-    if (await _probeHydraInfo(httpsUrl) != null) baseUrl = httpsUrl;
+    if (usesTls && _tlsSeen) return;
+    _httpsProbeError = null;
+    if (await _probeHydraInfo(baseUrl) != null) {
+      _noteSchemeWorks();
+      return;
+    }
+    final other = _otherSchemeUrl();
+    if (other == null) return;
+    if (await _probeHydraInfo(other) != null) {
+      baseUrl = other;
+      _noteSchemeWorks();
+    } else if (usesTls && _httpsProbeError != null && isTlsFailure(_httpsProbeError!) && !isCertificateRejection(_httpsProbeError!)) {
+      // The server does not speak TLS at all (it ended the handshake, it did not refuse a certificate) and plain HTTP
+      // is allowed for this host: the server just does not answer GET /api/hydra-info, so go by the failed handshake.
+      baseUrl = other;
+    }
+  }
+
+  Object? _httpsProbeError;
+
+  /// A server that answered over HTTPS is not trusted over plain HTTP later.
+  void _noteSchemeWorks() {
+    if (usesTls) _tlsSeen = true;
+  }
+
+  /// The other scheme to try for this host, or null when it must not be tried:
+  /// plain HTTP only if allowed for this host and TLS was never seen to work.
+  String? _otherSchemeUrl() {
+    if (baseUrl.startsWith('http://')) return baseUrl.replaceFirst('http://', 'https://');
+    if (_tlsSeen) return null;
+    final host = Uri.parse(baseUrl).host;
+    if (!TlsSettingsStore.current.plainAllowedFor(host)) return null;
+    return baseUrl.replaceFirst('https://', 'http://');
   }
 
   /// One real probe of GET {base}/api/hydra-info, never throwing - see
@@ -245,7 +282,8 @@ class HydraApiClient {
       final json = jsonDecode(resp.body) as Map<String, dynamic>;
       if (!json.containsKey('remoteApiVersion')) return null;
       return json;
-    } catch (_) {
+    } catch (e) {
+      if (base.startsWith('https://')) _httpsProbeError = e;
       return null;
     }
   }

@@ -19,7 +19,7 @@ GPL-3.0-or-later - see LICENSE
   <img src="https://img.shields.io/badge/Framework-Flutter-02569B.svg" alt="Framework">
   <img src="https://img.shields.io/badge/Language-Dart-0175C2.svg" alt="Language">
   <img src="https://img.shields.io/badge/Platform-iOS-000000.svg" alt="Platform">
-  <img src="https://img.shields.io/badge/Tests-220%20passing-2ea44f.svg" alt="Tests">
+  <img src="https://img.shields.io/badge/Tests-249%20passing-2ea44f.svg" alt="Tests">
   <img src="https://img.shields.io/badge/Version-0.2.7-0f6cbd.svg" alt="Version">
   <img src="https://img.shields.io/badge/Maturity-functional-0F6CBD.svg" alt="Maturity">
 </p>
@@ -38,7 +38,7 @@ Un'app Flutter (Dart) multipiattaforma che controlla un robot sulla piattaforma 
 |---|---|
 | Versione | `0.2.7` |
 | Maturità | Funzionale |
-| Test | 220 (`flutter test`) |
+| Test | 249 (`flutter test`) |
 | Tecnologia | Flutter 3.x / Dart |
 | Destinazione | Un iPhone o iPad |
 | Su hardware reale | Non ancora: per questa versione non risulta alcuna esecuzione su hardware reale |
@@ -54,7 +54,7 @@ Ogni riga è una parte di questo repository e il semaforo dice a che punto è og
 | Area | Stato | Cosa significa qui |
 |---|---|---|
 | Software | 🟡 | Funziona per il suo scopo principale; la verifica di onestà qui sopra elenca ciò che manca ancora |
-| Test | 🟢 | 220 test automatici, eseguiti a ogni modifica |
+| Test | 🟢 | 249 test automatici, eseguiti a ogni modifica |
 | Hardware reale | 🔴 | Non ancora: per questa versione non risulta alcuna esecuzione su hardware reale |
 | Documentazione | 🟢 | README in otto lingue, verificato rispetto al manifesto a ogni modifica |
 
@@ -108,14 +108,14 @@ Questa app punta a iOS/iPadOS, ma è costruita in **Flutter** anziché Swift/Swi
 | Qualcuno con il telefono sbloccato | Un blocco biometrico facoltativo (Face ID, Touch ID) condiziona il ripristino di una sessione salvata all'avvio; l'immagine della telecamera si chiude mentre l'app è in background | `network/biometric_helper.dart`, `ui/biometric_gate_screen.dart` |
 | Un robot mosso da due persone, un PLAY premuto per errore o uno stop che non arriva | Il robot viene prenotato prima di muoverlo e lo schermo dice chi lo detiene; PLAY chiede prima per impostazione predefinita e mostra il robot, i suoi punti, la velocità e chi lo ha prenotato; lo STOP globale è ritentato una volta, ricade su uno stop per robot e mantiene un banner persistente «STOP non confermato» se nessuno ha risposto | `models/access.dart`, `util/play_confirmation.dart`, `ui/widgets/stop_all.dart` |
 
-**Cosa non fa mai:** sostituire un arresto di emergenza fisico, né cifrare da sola il traffico: l'app prova HTTPS una volta quando una sonda HTTP in chiaro non riceve risposta, e non ha il pinning dei certificati né una protezione dal traffico in chiaro fuori dalla rete locale. Lo STOP è lo stop software del server.
+**Cosa non fa mai:** sostituire un arresto di emergenza fisico, o cifrare un collegamento che hai lasciato in chiaro. L'app si connette prima in HTTPS e usa l'HTTP in chiaro solo se lo consenti in Sicurezza (fuori dalla rete locale, solo se consenti anche questo); un server con certificato autofirmato è considerato attendibile tramite l'impronta SHA-256 che leggi da esso e confermi, o tramite una CA che fornisci. La vista 3D (una vista web) segue ancora i certificati di sistema. Lo STOP è l'arresto software del server.
 
 ## 🔌 Interfacce
 
 | Topic o rotta | Cosa porta |
 |---|---|
 | `POST /api/login`, `/api/logout`, `/api/refresh` | accedere, uscire e rinnovare la sessione |
-| `GET /api/hydra-info` | riconosce un vero server; usato dalla scansione della sottorete e dall'indirizzo manuale, con un nuovo tentativo in HTTPS |
+| `GET /api/hydra-info` | distingue un vero server; usato dalla scansione della sottorete e dall'indirizzo manuale, prima in HTTPS (HTTP in chiaro solo se consentito in Sicurezza) |
 | `GET /api/settings`, `/api/system/metrics`, `/api/safety-limits`, `/api/claims` | lo stato dei robot, il modulo di calcolo (ogni 5 s), i limiti di sicurezza di ogni modello e le prenotazioni |
 | `POST /api/robot/{id}/command`, `/claim`, `/release`, jog arming | un piccolo comando per un robot, la sua prenotazione e l'armamento di un movimento manuale, con scritture condizionali per revisione del robot |
 | `POST /api/stop-all` | lo STOP globale: tutti i robot, con risposta robot per robot |
@@ -147,7 +147,7 @@ flutter build ios --no-codesign  # a real iOS build; only on a Mac with Xcode
 
 ## 🧪 Test
 
-220 test automatici si eseguono con `flutter test`. Non richiedono hardware né nulla al di fuori di questa macchina.
+249 test automatici si eseguono con `flutter test`. Non richiedono hardware né nulla al di fuori di questa macchina.
 
 La CI esegue `HYDRA_UMC_CI=1 python tools/ci_validate.py`, che controlla il manifesto, i documenti, gli otto README e le immagini.
 

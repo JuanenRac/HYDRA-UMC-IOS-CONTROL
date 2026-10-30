@@ -15,6 +15,7 @@ import '../network/client_prefs.dart';
 import '../network/discovery.dart';
 import '../state/robot_view_model.dart';
 import 'widgets/hydra_mark.dart';
+import 'widgets/security_dialog.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -390,6 +391,20 @@ class _LoginScreenState extends State<LoginScreen> {
                                     fontSize: 16,
                                   ),
                                 ),
+                              ),
+                            ),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: TextButton.icon(
+                                key: const Key('login-security'),
+                                onPressed: () => showSecurityDialog(
+                                  context,
+                                  vm,
+                                  host: _hostCtrl.text.trim(),
+                                  port: int.tryParse(_portCtrl.text.trim()) ?? 3000,
+                                ),
+                                icon: const Icon(Icons.shield_outlined, size: 18),
+                                label: Text(l10n.securityOpen),
                               ),
                             ),
                             if (vm.lastError != null)

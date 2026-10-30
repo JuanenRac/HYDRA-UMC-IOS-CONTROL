@@ -19,7 +19,7 @@ GPL-3.0-or-later - see LICENSE
   <img src="https://img.shields.io/badge/Framework-Flutter-02569B.svg" alt="Framework">
   <img src="https://img.shields.io/badge/Language-Dart-0175C2.svg" alt="Language">
   <img src="https://img.shields.io/badge/Platform-iOS-000000.svg" alt="Platform">
-  <img src="https://img.shields.io/badge/Tests-220%20passing-2ea44f.svg" alt="Tests">
+  <img src="https://img.shields.io/badge/Tests-249%20passing-2ea44f.svg" alt="Tests">
   <img src="https://img.shields.io/badge/Version-0.2.7-0f6cbd.svg" alt="Version">
   <img src="https://img.shields.io/badge/Maturity-functional-0F6CBD.svg" alt="Maturity">
 </p>
@@ -38,7 +38,7 @@ GPL-3.0-or-later - see LICENSE
 |---|---|
 | 版本 | `0.2.7` |
 | 成熟度 | 可用 |
-| 测试 | 220 (`flutter test`) |
+| 测试 | 249 (`flutter test`) |
 | 技术栈 | Flutter 3.x / Dart |
 | 目标 | iPhone 或 iPad |
 | 真实硬件 | 尚未：此版本没有在真实硬件上运行的记录 |
@@ -54,7 +54,7 @@ GPL-3.0-or-later - see LICENSE
 | 领域 | 状态 | 在这里的含义 |
 |---|---|---|
 | 软件 | 🟡 | 主要用途可用；上面的诚实性检查列出了仍然缺少的内容 |
-| 测试 | 🟢 | 220 项自动测试，每次变更都会运行 |
+| 测试 | 🟢 | 249 项自动测试，每次变更都会运行 |
 | 真实硬件 | 🔴 | 尚未：此版本没有在真实硬件上运行的记录 |
 | 文档 | 🟢 | 八种语言的 README，每次变更都会与清单核对 |
 
@@ -108,14 +108,14 @@ GPL-3.0-or-later - see LICENSE
 | 拿着已解锁手机的人 | 可选的生物识别锁（Face ID、Touch ID）控制启动时恢复已保存的会话；应用在后台时会关闭摄像头画面 | `network/biometric_helper.dart`, `ui/biometric_gate_screen.dart` |
 | 被两个人同时移动的机器人、误按的 PLAY，或没有送达的停止 | 机器人在点动前先预约，屏幕会说明谁持有它；PLAY 默认先询问，并显示机器人、其点位、速度和预约者；全局停止重试一次，回退为逐个机器人停止，若无人应答则保持“停止未确认”横幅 | `models/access.dart`, `util/play_confirmation.dart`, `ui/widgets/stop_all.dart` |
 
-**它绝不做的事：** 替代物理紧急停止，或自行加密流量：当明文 HTTP 探测没有应答时，应用会尝试一次 HTTPS，但没有证书固定，也没有针对本地网络之外明文流量的防护。停止是服务器的软件停止。
+**它绝不做的事：** 取代物理急停，或为你保留为明文的链路加密。应用先通过 HTTPS 连接，只有在“安全”中允许时才使用明文 HTTP（在本地网络之外，还需另外允许）；使用自签名证书的服务器，通过你从它读取并确认的 SHA-256 指纹，或你提供的 CA 来信任。3D 视图（网页视图）仍遵循系统证书。STOP 是服务器的软件停止。
 
 ## 🔌 接口
 
 | 主题或路由 | 内容 |
 |---|---|
 | `POST /api/login`, `/api/logout`, `/api/refresh` | 登录、登出并续期会话 |
-| `GET /api/hydra-info` | 识别真正的服务器；子网扫描和手动地址都使用它，并会通过 HTTPS 重试一次 |
+| `GET /api/hydra-info` | 识别真正的服务器；由子网扫描和手动地址使用，先走 HTTPS（只有在“安全”中允许时才用明文 HTTP） |
 | `GET /api/settings`, `/api/system/metrics`, `/api/safety-limits`, `/api/claims` | 机器人状态、计算模块（每 5 秒）、每种型号的安全限制和预约 |
 | `POST /api/robot/{id}/command`, `/claim`, `/release`, jog arming | 针对单个机器人的小命令、它的预约和点动的武装，并按机器人修订版进行条件写入 |
 | `POST /api/stop-all` | 全局停止：所有机器人，逐个机器人应答 |
@@ -147,7 +147,7 @@ flutter build ios --no-codesign  # a real iOS build; only on a Mac with Xcode
 
 ## 🧪 测试
 
-运行 `flutter test` 会执行 220 个自动测试。 不需要硬件，也不需要这台机器以外的任何东西。
+运行 `flutter test` 会执行 249 个自动测试。 不需要硬件，也不需要这台机器以外的任何东西。
 
 CI 运行 `HYDRA_UMC_CI=1 python tools/ci_validate.py`，检查清单、文档、八个 README 和图片。
 

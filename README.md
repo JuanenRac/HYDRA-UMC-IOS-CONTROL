@@ -19,7 +19,7 @@ GPL-3.0-or-later - see LICENSE
   <img src="https://img.shields.io/badge/Framework-Flutter-02569B.svg" alt="Framework">
   <img src="https://img.shields.io/badge/Language-Dart-0175C2.svg" alt="Language">
   <img src="https://img.shields.io/badge/Platform-iOS-000000.svg" alt="Platform">
-  <img src="https://img.shields.io/badge/Tests-220%20passing-2ea44f.svg" alt="Tests">
+  <img src="https://img.shields.io/badge/Tests-249%20passing-2ea44f.svg" alt="Tests">
   <img src="https://img.shields.io/badge/Version-0.2.7-0f6cbd.svg" alt="Version">
   <img src="https://img.shields.io/badge/Maturity-functional-0F6CBD.svg" alt="Maturity">
 </p>
@@ -38,7 +38,7 @@ A cross-platform Flutter app (Dart) that controls a robot on the [HYDRA-UMC](htt
 |---|---|
 | Version | `0.2.7` |
 | Maturity | Functional |
-| Tests | 220 (`flutter test`) |
+| Tests | 249 (`flutter test`) |
 | Stack | Flutter 3.x / Dart |
 | Target | An iPhone or iPad |
 | On real hardware | Not yet: no run on real hardware is recorded for this version |
@@ -54,7 +54,7 @@ Each line is one part of this repository and the light says how far it is today.
 | Area | State | What it means here |
 |---|---|---|
 | Software | 🟡 | Works for its main purpose; the honesty check above lists what is still missing |
-| Tests | 🟢 | 220 automated tests, run on every change |
+| Tests | 🟢 | 249 automated tests, run on every change |
 | Real hardware | 🔴 | Not yet: no run on real hardware is recorded for this version |
 | Documentation | 🟢 | README in eight languages, checked against the manifest on every change |
 
@@ -108,14 +108,14 @@ This app targets iOS/iPadOS, but it is built in **Flutter** rather than Swift/Sw
 | Someone holding the unlocked phone | An optional biometric lock (Face ID, Touch ID) gates restoring a saved session on launch; the camera picture is closed while the app is in the background | `network/biometric_helper.dart`, `ui/biometric_gate_screen.dart` |
 | A robot moved by two people, a PLAY pressed by mistake, or a stop that does not arrive | The robot is reserved before it is jogged and the screen says who holds it; PLAY asks first by default and shows the robot, its points, the speed and who has it reserved; the global STOP is retried once, falls back to one stop per robot, and keeps a persistent "STOP not confirmed" banner if nothing answered | `models/access.dart`, `util/play_confirmation.dart`, `ui/widgets/stop_all.dart` |
 
-**What it never does:** replace a physical emergency stop, or encrypt the traffic by itself: the app tries HTTPS once when a plain HTTP probe gets no answer, and it has no certificate pinning and no guard against plain traffic outside the local network. The STOP is the server's software stop.
+**What it never does:** replace a physical emergency stop, or encrypt a link that you allowed to stay plain. The app connects over HTTPS first and uses plain HTTP only when you allow it in Security (outside the local network, only when you allow that too); a server with a self-signed certificate is trusted by the SHA-256 fingerprint you read from it and confirm, or by a CA you give. The 3D view (a web view) still follows the system certificates. The STOP is the server's software stop.
 
 ## 🔌 Interfaces
 
 | Topic or route | What it carries |
 |---|---|
 | `POST /api/login`, `/api/logout`, `/api/refresh` | sign in, sign out and renew the session |
-| `GET /api/hydra-info` | tells a real server apart; used by the subnet scan and by the manual address, with one retry over HTTPS |
+| `GET /api/hydra-info` | tells a real server apart; used by the subnet scan and by the manual address, over HTTPS first (plain HTTP only if allowed in Security) |
 | `GET /api/settings`, `/api/system/metrics`, `/api/safety-limits`, `/api/claims` | the state of the robots, the compute module (every 5 s), the safety limits of each model and the reservations |
 | `POST /api/robot/{id}/command`, `/claim`, `/release`, jog arming | one small command for one robot, its reservation and the arming of a jog, with conditional writes by robot revision |
 | `POST /api/stop-all` | the global STOP: every robot, answered robot by robot |
@@ -147,7 +147,7 @@ flutter build ios --no-codesign  # a real iOS build; only on a Mac with Xcode
 
 ## 🧪 Testing
 
-220 automated tests run with `flutter test`. They need no hardware and nothing outside this machine.
+249 automated tests run with `flutter test`. They need no hardware and nothing outside this machine.
 
 The CI runs `HYDRA_UMC_CI=1 python tools/ci_validate.py`, which checks the manifest, the documents, the eight READMEs and the pictures.
 

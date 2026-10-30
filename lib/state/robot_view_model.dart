@@ -34,6 +34,7 @@ import '../network/hydra_api_client.dart';
 import '../network/hydra_websocket.dart';
 import '../network/client_prefs.dart';
 import '../network/state_cache.dart';
+import '../network/tls_settings.dart';
 import 'hydra_error.dart';
 
 class SystemMetrics {
@@ -68,6 +69,10 @@ class RobotViewModel extends ChangeNotifier {
   final LanguagePrefs _languagePrefs = LanguagePrefs();
   final StateCache _stateCache = StateCache();
   final ClientPrefs _clientPrefs = ClientPrefs();
+  final TlsPrefs _tlsPrefs = TlsPrefs();
+
+  /// How the app reaches the server and what it trusts (see network/tls_settings.dart).
+  TlsSettings tlsSettings = const TlsSettings();
 
   /// When on, commands are not sent while [isShowingCachedState] is true (the
   /// screen shows the saved copy, not the live state). STOP is never blocked.
@@ -237,6 +242,8 @@ class RobotViewModel extends ChangeNotifier {
     // is still in flight - genuinely useful right after the phone comes
     // back into WiFi range. Superseded by the real fetch the moment
     // connect() succeeds; see network/state_cache.dart's own header comment.
+    tlsSettings = await _tlsPrefs.load();
+    TlsSettingsStore.current = tlsSettings;
     blockCommandsOnSavedData = await _clientPrefs.loadBlockCommandsOnSavedData();
     confirmPlay = await _clientPrefs.loadConfirmPlay();
     // The controller id of this installation: made once, kept, and adopted here.
@@ -322,6 +329,19 @@ class RobotViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Keeps new security settings for the next connections. Returns what is
+  /// wrong with them (and keeps nothing) or null when they were saved.
+  Future<TlsProblem?> setTlsSettings(TlsSettings value) async {
+    final problem = value.validate();
+    if (problem != null) return problem;
+    final clean = value.normalized();
+    tlsSettings = clean;
+    TlsSettingsStore.current = clean;
+    await _tlsPrefs.save(clean);
+    notifyListeners();
+    return null;
+  }
+
   Future<void> setBlockCommandsOnSavedData(bool value) async {
     blockCommandsOnSavedData = value;
     await _clientPrefs.saveBlockCommandsOnSavedData(value);
@@ -380,7 +400,9 @@ class RobotViewModel extends ChangeNotifier {
       await connect();
       return true;
     } catch (e) {
-      lastError = HydraError(HydraErrorKind.loginError, {'error': '$e'});
+      lastError = isTlsFailure(e)
+          ? const HydraError(HydraErrorKind.tlsFailed)
+          : HydraError(HydraErrorKind.loginError, {'error': '$e'});
       _logTelemetry('Login error: $e');
       notifyListeners();
       return false;
@@ -571,7 +593,9 @@ class RobotViewModel extends ChangeNotifier {
       _logTelemetry('Initial state synchronized via REST');
       notifyListeners();
     } catch (e) {
-      lastError = HydraError(HydraErrorKind.fetchFailed, {'error': '$e'});
+      lastError = isTlsFailure(e)
+          ? const HydraError(HydraErrorKind.tlsFailed)
+          : HydraError(HydraErrorKind.fetchFailed, {'error': '$e'});
       connectionStatus = 'error';
       _logTelemetry('REST sync error: $e');
       if (e is HydraApiException && e.isSessionProblem) {
