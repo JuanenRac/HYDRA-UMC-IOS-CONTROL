@@ -19,7 +19,7 @@ GPL-3.0-or-later - see LICENSE
   <img src="https://img.shields.io/badge/Framework-Flutter-02569B.svg" alt="Framework">
   <img src="https://img.shields.io/badge/Language-Dart-0175C2.svg" alt="Language">
   <img src="https://img.shields.io/badge/Platform-iOS-000000.svg" alt="Platform">
-  <img src="https://img.shields.io/badge/Tests-249%20passing-2ea44f.svg" alt="Tests">
+  <img src="https://img.shields.io/badge/Tests-254%20passing-2ea44f.svg" alt="Tests">
   <img src="https://img.shields.io/badge/Version-0.2.7-0f6cbd.svg" alt="Version">
   <img src="https://img.shields.io/badge/Maturity-functional-0F6CBD.svg" alt="Maturity">
 </p>
@@ -38,7 +38,7 @@ Uma aplicação Flutter multiplataforma (Dart) que controla um robô da platafor
 |---|---|
 | Versão | `0.2.7` |
 | Maturidade | Funcional |
-| Testes | 249 (`flutter test`) |
+| Testes | 254 (`flutter test`) |
 | Tecnologia | Flutter 3.x / Dart |
 | Destino | Um iPhone ou iPad |
 | Em hardware real | Ainda não: não há registo de execução em hardware real para esta versão |
@@ -54,7 +54,7 @@ Cada linha é uma parte deste repositório e a luz diz até onde chega hoje. É 
 | Área | Estado | O que significa aqui |
 |---|---|---|
 | Software | 🟡 | Funciona para o seu propósito principal; a verificação de honestidade acima lista o que ainda falta |
-| Testes | 🟢 | 249 testes automáticos, executados a cada alteração |
+| Testes | 🟢 | 254 testes automáticos, executados a cada alteração |
 | Hardware real | 🔴 | Ainda não: não há registo de execução em hardware real para esta versão |
 | Documentação | 🟢 | README em oito idiomas, verificado contra o manifesto a cada alteração |
 
@@ -147,7 +147,7 @@ flutter build ios --no-codesign  # a real iOS build; only on a Mac with Xcode
 
 ## 🧪 Testes
 
-249 testes automáticos correm com `flutter test`. Não precisam de hardware nem de nada fora desta máquina.
+254 testes automáticos correm com `flutter test`. Não precisam de hardware nem de nada fora desta máquina.
 
 A CI executa `HYDRA_UMC_CI=1 python tools/ci_validate.py`, que verifica o manifesto, os documentos, os oito README e as imagens.
 

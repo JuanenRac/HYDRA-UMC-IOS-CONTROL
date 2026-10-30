@@ -19,7 +19,7 @@ GPL-3.0-or-later - see LICENSE
   <img src="https://img.shields.io/badge/Framework-Flutter-02569B.svg" alt="Framework">
   <img src="https://img.shields.io/badge/Language-Dart-0175C2.svg" alt="Language">
   <img src="https://img.shields.io/badge/Platform-iOS-000000.svg" alt="Platform">
-  <img src="https://img.shields.io/badge/Tests-249%20passing-2ea44f.svg" alt="Tests">
+  <img src="https://img.shields.io/badge/Tests-254%20passing-2ea44f.svg" alt="Tests">
   <img src="https://img.shields.io/badge/Version-0.2.7-0f6cbd.svg" alt="Version">
   <img src="https://img.shields.io/badge/Maturity-functional-0F6CBD.svg" alt="Maturity">
 </p>
@@ -38,7 +38,7 @@ A cross-platform Flutter app (Dart) that controls a robot on the [HYDRA-UMC](htt
 |---|---|
 | Version | `0.2.7` |
 | Maturity | Functional |
-| Tests | 249 (`flutter test`) |
+| Tests | 254 (`flutter test`) |
 | Stack | Flutter 3.x / Dart |
 | Target | An iPhone or iPad |
 | On real hardware | Not yet: no run on real hardware is recorded for this version |
@@ -54,7 +54,7 @@ Each line is one part of this repository and the light says how far it is today.
 | Area | State | What it means here |
 |---|---|---|
 | Software | 🟡 | Works for its main purpose; the honesty check above lists what is still missing |
-| Tests | 🟢 | 249 automated tests, run on every change |
+| Tests | 🟢 | 254 automated tests, run on every change |
 | Real hardware | 🔴 | Not yet: no run on real hardware is recorded for this version |
 | Documentation | 🟢 | README in eight languages, checked against the manifest on every change |
 
@@ -147,7 +147,7 @@ flutter build ios --no-codesign  # a real iOS build; only on a Mac with Xcode
 
 ## 🧪 Testing
 
-249 automated tests run with `flutter test`. They need no hardware and nothing outside this machine.
+254 automated tests run with `flutter test`. They need no hardware and nothing outside this machine.
 
 The CI runs `HYDRA_UMC_CI=1 python tools/ci_validate.py`, which checks the manifest, the documents, the eight READMEs and the pictures.
 
