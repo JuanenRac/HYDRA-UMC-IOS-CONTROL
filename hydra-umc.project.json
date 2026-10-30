@@ -11,6 +11,7 @@
   ],
   "deployment_target": "mobile",
   "maturity": "functional",
+  "evidence": "none",
   "family": "Core Backend & Clients",
   "parent": "HYDRA-UMC-SERVER",
   "build": "flutter pub get && flutter test (checks, any platform); flutter build ios (real iOS build, requires Xcode on macOS)",
