@@ -102,4 +102,36 @@ void main() {
       expect(cached.age().inDays, greaterThan(365));
     });
   });
+
+  group('scope of the copy', () {
+    test('a copy is returned only to the server and account it was saved for', () async {
+      final cache = StateCache();
+      final scope = StateCache.scopeOf('10.0.0.5', 3000, 'ana');
+      await cache.saveState({'x': 1}, scope: scope);
+      expect((await cache.loadCachedState(scope: scope))!.raw, {'x': 1});
+    });
+
+    test('another server or another account does not see it, and the copy is erased', () async {
+      final cache = StateCache();
+      await cache.saveState({'x': 1}, scope: StateCache.scopeOf('10.0.0.5', 3000, 'ana'));
+      expect(await cache.loadCachedState(scope: StateCache.scopeOf('10.0.0.6', 3000, 'ana')), isNull);
+      expect(await cache.loadState(), isNull);
+
+      await cache.saveState({'x': 1}, scope: StateCache.scopeOf('10.0.0.5', 3000, 'ana'));
+      expect(await cache.loadCachedState(scope: StateCache.scopeOf('10.0.0.5', 3000, 'luis')), isNull);
+    });
+
+    test('a copy saved without a scope (an older build) is dropped when a scope is asked for', () async {
+      SharedPreferences.setMockInitialValues({'hydra_last_state': jsonEncode({'x': 1})});
+      final cache = StateCache();
+      expect(await cache.loadCachedState(scope: StateCache.scopeOf('h', 1, 'u')), isNull);
+      expect(await cache.loadState(), isNull);
+    });
+
+    test('without a scope the copy is returned as before', () async {
+      final cache = StateCache();
+      await cache.saveState({'x': 1}, scope: 'u@h:1');
+      expect((await cache.loadCachedState())!.raw, {'x': 1});
+    });
+  });
 }

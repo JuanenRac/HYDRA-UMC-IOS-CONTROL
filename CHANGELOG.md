@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **The offline copy belongs to one server and one account:** the saved state carries the account and the server it was read from, and a copy that belongs to another server or account (or that an older build saved without one) is erased instead of being shown as the state of the one being opened.
+
 ## [0.2.8] - Safe mode of a robot, HTTPS first with a certificate you can trust and the version moved by the shared project tool
 
 - **Safe mode of a robot:** the control bar has a button to disable the selected robot (hold to confirm, like STOP): the robot stops, its valves and pumps go off and the server refuses everything but STOP. A disabled robot shows the button in green; an administrator can hold it to enable the robot again. The server keeps enabling off by default, so the refusal says so in its own words (enabling not allowed, administrator required), and a command sent to a disabled robot says the robot is in safe mode, in the eight languages.

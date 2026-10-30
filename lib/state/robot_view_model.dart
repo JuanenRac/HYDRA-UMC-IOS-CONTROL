@@ -97,8 +97,17 @@ class RobotViewModel extends ChangeNotifier {
     if (!isLoggedIn) return;
     _stateCacheTimer?.cancel();
     _stateCacheTimer = Timer(const Duration(seconds: 1), () {
-      unawaited(_stateCache.saveState(state.raw));
+      unawaited(_stateCache.saveState(state.raw, scope: _cacheScope()));
     });
+  }
+
+  /// The account the offline copy belongs to (see network/state_cache.dart).
+  String _cacheUser = '';
+
+  String? _cacheScope() {
+    final server = activeServer;
+    if (server == null) return null;
+    return StateCache.scopeOf(server.host, server.port, _cacheUser.isNotEmpty ? _cacheUser : server.username);
   }
 
   bool _disposed = false;
@@ -254,13 +263,16 @@ class RobotViewModel extends ChangeNotifier {
     } else {
       await _clientPrefs.saveControllerId(HydraApiClient.controllerId);
     }
-    final cached = await _stateCache.loadCachedState();
+    final saved = await _authPrefs.loadConnection();
+    _cacheUser = await _authPrefs.loadUsername() ?? '';
+    final cached = await _stateCache.loadCachedState(
+      scope: saved == null ? null : StateCache.scopeOf(saved.$1, saved.$2, _cacheUser),
+    );
     if (cached != null) {
       state = HydraState(cached.raw);
       isShowingCachedState = true;
       cachedStateSavedAt = cached.savedAt;
     }
-    final saved = await _authPrefs.loadConnection();
     final token = await _authPrefs.loadToken();
     biometricAvailable = await _biometricHelper.isAvailable();
     biometricEnabled = await _authPrefs.loadBiometricEnabled();
@@ -394,6 +406,7 @@ class RobotViewModel extends ChangeNotifier {
       // account can never be used for this session.
       final refreshToken = resp['refreshToken'] as String?;
       await _authPrefs.saveToken(token, server.username, refreshToken: refreshToken, replaceRefreshToken: true);
+      _cacheUser = server.username;
       lastError = null;
       _logTelemetry('Login successful');
       notifyListeners();
