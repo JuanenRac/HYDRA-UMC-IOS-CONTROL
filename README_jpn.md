@@ -170,7 +170,7 @@ build.bat      # cmd.exe / PowerShell —— flutter pub get + flutter build win
 flutter pub get
 flutter analyze          # 静的解析——コンパイラ不要
 flutter test             # ウィジェットテスト
-dart run tool/bump_version.dart  # バージョンを加算、build.sh/build.bat が行うのと同じ
+python tools/hydra_project_tool.py bump  # バージョンを加算（ビルドでは決して行わない）
 flutter build windows    # build/windows/x64/runner/Release/hydra_umc_control.exe を生成
 flutter run -d windows   # または Mac 上で -d <ios-device-id>
 ```
@@ -179,7 +179,7 @@ flutter run -d windows   # または Mac 上で -d <ios-device-id>
 
 ### バージョン管理
 
-このリポジトリはエコシステム全体の方針に従います：ビルドはバージョンを一切変更しません。明示的な `bump` コマンド（`python tools/hydra_project_tool.py bump`）が `tool/bump_version.dart` を実行し、次を適用します：
+このリポジトリはエコシステム全体の方針に従います：ビルドはバージョンを一切変更しません。明示的な `bump` コマンド（`python tools/hydra_project_tool.py bump`）が `bump_manifest_version.py` を実行し、次を適用します：
 
 - **ビルド番号**（`+` の後の部分）：単純な単調カウンター、bump のたびに +1、繰り上がりなし。
 
@@ -209,14 +209,13 @@ flutter run -d windows   # または Mac 上で -d <ios-device-id>
 HYDRA-UMC-IOS-CONTROL/
 ├── lib/                                                              ソースコード
 │   ├── main.dart                                                     アプリのエントリポイント、ChangeNotifierProvider + ログインゲート
-│   ├── app_version.dart                                              生成物——tool/bump_version.dart によって再生成される、手動編集禁止
+│   ├── app_version.dart                                              生成物——bump_manifest_version.py によって再生成される、手動編集禁止
 │   ├── models/                                                       データモデルと純粋なルール
 │   ├── network/                                                      REST クライアント、WebSocket、探索
 │   ├── state/                                                        すべての画面が監視する状態
 │   ├── l10n/                                                         実際に生成されたローカライゼーション(8言語) - リポジトリルートのl10n.yamlを参照
 │   ├── util/                                                         専用画面を持たない補助機能
 │   └── ui/                                                           画面とウィジェット
-├── tool/                                                             バージョン用ツール
 ├── ios/                                                              Xcode プロジェクト（macOS からのみビルド可能）
 ├── windows/                                                          Windows デスクトップターゲット——Mac なしでのビルド検証
 ├── tools/                                                            プロジェクトのツールと CI の検査

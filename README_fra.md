@@ -170,7 +170,7 @@ Les deux produisent `build/windows/x64/runner/Release/hydra_umc_control.exe`, et
 flutter pub get
 flutter analyze          # analyse statique - aucun compilateur necessaire
 flutter test             # tests de widgets
-dart run tool/bump_version.dart  # incremente la version, comme le font build.sh/build.bat
+python tools/hydra_project_tool.py bump  # incrémente la version (un build ne le fait jamais)
 flutter build windows    # produit build/windows/x64/runner/Release/hydra_umc_control.exe
 flutter run -d windows   # ou -d <ios-device-id> depuis un Mac
 ```
@@ -179,7 +179,7 @@ flutter run -d windows   # ou -d <ios-device-id> depuis un Mac
 
 ### Versionnage
 
-Ce dépôt suit une politique à l'échelle de l'écosystème : compiler ne change jamais la version. La commande `bump` explicite (`python tools/hydra_project_tool.py bump`) exécute `tool/bump_version.dart`, qui applique :
+Ce dépôt suit une politique à l'échelle de l'écosystème : compiler ne change jamais la version. La commande `bump` explicite (`python tools/hydra_project_tool.py bump`) exécute `bump_manifest_version.py`, qui applique :
 
 - **Patch, façon compteur kilométrique (base 10) :** +1 à chaque bump ;
   une fois 9 dépassé, il repasse à 0 et minor gagne +1 - ex. `0.0.9` ->
@@ -217,14 +217,13 @@ pour afficher sa propre version sur l'écran **Paramètres**. Voir
 HYDRA-UMC-IOS-CONTROL/
 ├── lib/                                                              code source
 │   ├── main.dart                                                     Point d'entree de l'application, ChangeNotifierProvider + porte de connexion
-│   ├── app_version.dart                                              GENERE - regenere par tool/bump_version.dart, ne pas modifier a la main
+│   ├── app_version.dart                                              GENERE - regenere par bump_manifest_version.py, ne pas modifier a la main
 │   ├── models/                                                       modèles de données et règles pures
 │   ├── network/                                                      client REST, WebSocket et découverte
 │   ├── state/                                                        l'état que chaque écran écoute
 │   ├── l10n/                                                         Vraies localisations générées (8 langues) - voir l10n.yaml à la racine du dépôt
 │   ├── util/                                                         Utilitaires sans écran propre
 │   └── ui/                                                           écrans et widgets
-├── tool/                                                             outil de versions
 ├── ios/                                                              Projet Xcode (compiler uniquement depuis macOS)
 ├── windows/                                                          Cible de bureau Windows - verification de build sans un Mac
 ├── tools/                                                            outils du projet et vérifications de la CI

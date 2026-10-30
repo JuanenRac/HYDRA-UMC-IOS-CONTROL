@@ -170,7 +170,7 @@ Ambos producen `build/windows/x64/runner/Release/hydra_umc_control.exe`, y ningu
 flutter pub get
 flutter analyze          # analisis estatico - sin necesidad de compilador
 flutter test             # pruebas de widgets
-dart run tool/bump_version.dart  # sube la versión, igual que hacen build.sh/build.bat
+python tools/hydra_project_tool.py bump  # sube la versión (compilar nunca lo hace)
 flutter build windows    # produce build/windows/x64/runner/Release/hydra_umc_control.exe
 flutter run -d windows   # o -d <ios-device-id> desde un Mac
 ```
@@ -179,7 +179,7 @@ flutter run -d windows   # o -d <ios-device-id> desde un Mac
 
 ### Versionado
 
-Este repositorio sigue una política a nivel de ecosistema: compilar nunca cambia la versión. El comando `bump` explícito (`python tools/hydra_project_tool.py bump`) ejecuta `tool/bump_version.dart`, que aplica:
+Este repositorio sigue una política a nivel de ecosistema: compilar nunca cambia la versión. El comando `bump` explícito (`python tools/hydra_project_tool.py bump`) ejecuta `bump_manifest_version.py`, que aplica:
 
 - **Patch, estilo cuentakilómetros (base 10):** +1 en cada bump; al
   superar 9 se resetea a 0 y minor sube +1 - p. ej. `0.0.9` ->
@@ -217,14 +217,13 @@ mostrar su propia versión en la pantalla de **Ajustes**. Ver
 HYDRA-UMC-IOS-CONTROL/
 ├── lib/                                                              código fuente
 │   ├── main.dart                                                     Punto de entrada de la app, ChangeNotifierProvider + puerta de login
-│   ├── app_version.dart                                              GENERADO - regenerado por tool/bump_version.dart, no editar a mano
+│   ├── app_version.dart                                              GENERADO - regenerado por bump_manifest_version.py, no editar a mano
 │   ├── models/                                                       modelos de datos y reglas puras
 │   ├── network/                                                      cliente REST, WebSocket y descubrimiento
 │   ├── state/                                                        el estado que escucha cada pantalla
 │   ├── l10n/                                                         Localizaciones reales generadas (8 idiomas) - ver l10n.yaml en la raíz del repo
 │   ├── util/                                                         Utilidades sin pantalla propia
 │   └── ui/                                                           pantallas y widgets
-├── tool/                                                             herramienta de versiones
 ├── ios/                                                              Proyecto Xcode (compilar solo desde macOS)
 ├── windows/                                                          Target de escritorio Windows - verificacion de build sin un Mac
 ├── tools/                                                            herramientas del proyecto y comprobaciones del CI

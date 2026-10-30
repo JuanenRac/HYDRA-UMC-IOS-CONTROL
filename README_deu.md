@@ -170,7 +170,7 @@ Beide erzeugen `build/windows/x64/runner/Release/hydra_umc_control.exe`, und bei
 flutter pub get
 flutter analyze          # statische Analyse - kein Compiler notwendig
 flutter test             # Widget-Tests
-dart run tool/bump_version.dart  # erhöht die Version, genau wie build.sh/build.bat
+python tools/hydra_project_tool.py bump  # erhöht die Version (ein Build tut das nie)
 flutter build windows    # erzeugt build/windows/x64/runner/Release/hydra_umc_control.exe
 flutter run -d windows   # oder -d <ios-device-id> von einem Mac aus
 ```
@@ -179,7 +179,7 @@ flutter run -d windows   # oder -d <ios-device-id> von einem Mac aus
 
 ### Versionierung
 
-Dieses Repository folgt einer Richtlinie für das gesamte Ökosystem: Bauen ändert die Version nie. Der explizite `bump`-Befehl (`python tools/hydra_project_tool.py bump`) führt `tool/bump_version.dart` aus und wendet dabei an:
+Dieses Repository folgt einer Richtlinie für das gesamte Ökosystem: Bauen ändert die Version nie. Der explizite `bump`-Befehl (`python tools/hydra_project_tool.py bump`) führt `bump_manifest_version.py` aus und wendet dabei an:
 
 - **Build-Nummer** (der Teil nach `+`): ein einfacher monotoner
   Zähler, +1 bei jedem Bump, ohne Übertrag.
@@ -214,14 +214,13 @@ anzuzeigen. Siehe [CHANGELOG.md](CHANGELOG.md) für die Versionshistorie.
 HYDRA-UMC-IOS-CONTROL/
 ├── lib/                                                              Quellcode
 │   ├── main.dart                                                     App-Einstiegspunkt, ChangeNotifierProvider + Login-Gate
-│   ├── app_version.dart                                              GENERIERT - von tool/bump_version.dart neu erzeugt, nicht manuell bearbeiten
+│   ├── app_version.dart                                              GENERIERT - von bump_manifest_version.py neu erzeugt, nicht manuell bearbeiten
 │   ├── models/                                                       Datenmodelle und reine Regeln
 │   ├── network/                                                      REST-Client, WebSocket und Erkennung
 │   ├── state/                                                        der Zustand, den jede Ansicht beobachtet
 │   ├── l10n/                                                         Echte generierte Lokalisierungen (8 Sprachen) - siehe l10n.yaml im Repo-Root
 │   ├── util/                                                         Hilfsfunktionen ohne eigenen Bildschirm
 │   └── ui/                                                           Ansichten und Widgets
-├── tool/                                                             Versionswerkzeug
 ├── ios/                                                              Xcode-Projekt (nur von macOS aus kompilieren)
 ├── windows/                                                          Windows-Desktop-Target - Build-Verifikation ohne Mac
 ├── tools/                                                            Projektwerkzeuge und CI-Prüfungen

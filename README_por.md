@@ -170,7 +170,7 @@ Ambos produzem `build/windows/x64/runner/Release/hydra_umc_control.exe`, e ambos
 flutter pub get
 flutter analyze          # análise estática - não precisa de compilador
 flutter test             # testes de widgets
-dart run tool/bump_version.dart  # sobe a versão, tal como o build.sh/build.bat fazem
+python tools/hydra_project_tool.py bump  # sobe a versão (compilar nunca o faz)
 flutter build windows    # produz build/windows/x64/runner/Release/hydra_umc_control.exe
 flutter run -d windows   # ou -d <id-do-dispositivo-ios> a partir de um Mac
 ```
@@ -179,7 +179,7 @@ flutter run -d windows   # ou -d <id-do-dispositivo-ios> a partir de um Mac
 
 ### Versionamento
 
-Este repositório segue uma política de todo o ecossistema: compilar nunca altera a versão. O comando `bump` explícito (`python tools/hydra_project_tool.py bump`) executa o `tool/bump_version.dart`, que aplica:
+Este repositório segue uma política de todo o ecossistema: compilar nunca altera a versão. O comando `bump` explícito (`python tools/hydra_project_tool.py bump`) executa o `bump_manifest_version.py`, que aplica:
 
 - **Número de compilação** (a parte depois do `+`): um contador monótono
   simples, +1 em cada bump, sem transporte.
@@ -214,14 +214,13 @@ histórico de versões.
 HYDRA-UMC-IOS-CONTROL/
 ├── lib/                                                              código-fonte
 │   ├── main.dart                                                     Ponto de entrada da aplicação, ChangeNotifierProvider + porta de login
-│   ├── app_version.dart                                              GERADO - regenerado pelo tool/bump_version.dart, não editar à mão
+│   ├── app_version.dart                                              GERADO - regenerado pelo bump_manifest_version.py, não editar à mão
 │   ├── models/                                                       modelos de dados e regras puras
 │   ├── network/                                                      cliente REST, WebSocket e descoberta
 │   ├── state/                                                        o estado que cada ecrã escuta
 │   ├── l10n/                                                         Localizações geradas reais (8 idiomas) - ver o l10n.yaml na raiz do repositório
 │   ├── util/                                                         Utilitários sem ecrã próprio
 │   └── ui/                                                           ecrãs e widgets
-├── tool/                                                             ferramenta de versões
 ├── ios/                                                              Projeto Xcode (compilar apenas a partir do macOS)
 ├── windows/                                                          Alvo de desktop Windows - verificação de compilação sem um Mac
 ├── tools/                                                            ferramentas do projeto e verificações da CI

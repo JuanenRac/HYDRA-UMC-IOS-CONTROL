@@ -170,7 +170,7 @@ build.bat      # cmd.exe / PowerShell —— flutter pub get + flutter build win
 flutter pub get
 flutter analyze          # 静态分析——无需编译器
 flutter test             # 组件测试
-dart run tool/bump_version.dart  # 递增版本号，与 build.sh/build.bat 所做的相同
+python tools/hydra_project_tool.py bump  # 递增版本号（构建从不这样做）
 flutter build windows    # 生成 build/windows/x64/runner/Release/hydra_umc_control.exe
 flutter run -d windows   # 或在 Mac 上使用 -d <ios-device-id>
 ```
@@ -179,7 +179,7 @@ flutter run -d windows   # 或在 Mac 上使用 -d <ios-device-id>
 
 ### 版本管理
 
-本仓库遵循生态系统统一的策略：构建绝不会更改版本号。显式的 `bump` 命令（`python tools/hydra_project_tool.py bump`）会运行 `tool/bump_version.dart`，并应用：
+本仓库遵循生态系统统一的策略：构建绝不会更改版本号。显式的 `bump` 命令（`python tools/hydra_project_tool.py bump`）会运行 `bump_manifest_version.py`，并应用：
 
 - **构建号**（`+` 之后的部分）：一个纯粹的单调计数器,每次 bump +1,不进位。
 
@@ -209,14 +209,13 @@ flutter run -d windows   # 或在 Mac 上使用 -d <ios-device-id>
 HYDRA-UMC-IOS-CONTROL/
 ├── lib/                                                              源代码
 │   ├── main.dart                                                     应用入口点，ChangeNotifierProvider + 登录门禁
-│   ├── app_version.dart                                              生成文件——由 tool/bump_version.dart 重新生成，请勿手动编辑
+│   ├── app_version.dart                                              生成文件——由 bump_manifest_version.py 重新生成，请勿手动编辑
 │   ├── models/                                                       数据模型和纯规则
 │   ├── network/                                                      REST 客户端、WebSocket 和发现
 │   ├── state/                                                        每个界面监听的状态
 │   ├── l10n/                                                         真实生成的本地化文件（8 种语言）——见仓库根目录的 l10n.yaml
 │   ├── util/                                                         没有独立界面的辅助模块
 │   └── ui/                                                           界面和控件
-├── tool/                                                             版本工具
 ├── ios/                                                              Xcode 项目（仅可在 macOS 上构建）
 ├── windows/                                                          Windows 桌面目标——无需 Mac 即可进行构建验证
 ├── tools/                                                            项目工具和 CI 检查
