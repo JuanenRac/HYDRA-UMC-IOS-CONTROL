@@ -20,7 +20,7 @@ GPL-3.0-or-later - see LICENSE
   <img src="https://img.shields.io/badge/Language-Dart-0175C2.svg" alt="Language">
   <img src="https://img.shields.io/badge/Platform-iOS-000000.svg" alt="Platform">
   <img src="https://img.shields.io/badge/Tests-254%20passing-2ea44f.svg" alt="Tests">
-  <img src="https://img.shields.io/badge/Version-0.2.7-0f6cbd.svg" alt="Version">
+  <img src="https://img.shields.io/badge/Version-0.2.8-0f6cbd.svg" alt="Version">
   <img src="https://img.shields.io/badge/Maturity-functional-0F6CBD.svg" alt="Maturity">
 </p>
 
@@ -36,7 +36,7 @@ Un'app Flutter (Dart) multipiattaforma che controlla un robot sulla piattaforma 
 
 | | |
 |---|---|
-| Versione | `0.2.7` |
+| Versione | `0.2.8` |
 | Maturità | Funzionale |
 | Test | 254 (`flutter test`) |
 | Tecnologia | Flutter 3.x / Dart |
@@ -108,14 +108,14 @@ Questa app punta a iOS/iPadOS, ma è costruita in **Flutter** anziché Swift/Swi
 | Qualcuno con il telefono sbloccato | Un blocco biometrico facoltativo (Face ID, Touch ID) condiziona il ripristino di una sessione salvata all'avvio; l'immagine della telecamera si chiude mentre l'app è in background | `network/biometric_helper.dart`, `ui/biometric_gate_screen.dart` |
 | Un robot mosso da due persone, un PLAY premuto per errore o uno stop che non arriva | Il robot viene prenotato prima di muoverlo e lo schermo dice chi lo detiene; PLAY chiede prima per impostazione predefinita e mostra il robot, i suoi punti, la velocità e chi lo ha prenotato; lo STOP globale è ritentato una volta, ricade su uno stop per robot e mantiene un banner persistente «STOP non confermato» se nessuno ha risposto | `models/access.dart`, `util/play_confirmation.dart`, `ui/widgets/stop_all.dart` |
 
-**Cosa non fa mai:** sostituire un arresto di emergenza fisico, o cifrare un collegamento che hai lasciato in chiaro. L'app si connette prima in HTTPS e usa l'HTTP in chiaro solo se lo consenti in Sicurezza (fuori dalla rete locale, solo se consenti anche questo); un server con certificato autofirmato è considerato attendibile tramite l'impronta SHA-256 che leggi da esso e confermi, o tramite una CA che fornisci. La vista 3D (una vista web) segue ancora i certificati di sistema. Lo STOP è l'arresto software del server.
+**Cosa non fa mai:** sostituire un arresto di emergenza fisico, né cifrare da sola il traffico: l'app prova HTTPS una volta quando una sonda HTTP in chiaro non riceve risposta, e non ha il pinning dei certificati né una protezione dal traffico in chiaro fuori dalla rete locale. Lo STOP è lo stop software del server.
 
 ## 🔌 Interfacce
 
 | Topic o rotta | Cosa porta |
 |---|---|
 | `POST /api/login`, `/api/logout`, `/api/refresh` | accedere, uscire e rinnovare la sessione |
-| `GET /api/hydra-info` | distingue un vero server; usato dalla scansione della sottorete e dall'indirizzo manuale, prima in HTTPS (HTTP in chiaro solo se consentito in Sicurezza) |
+| `GET /api/hydra-info` | riconosce un vero server; usato dalla scansione della sottorete e dall'indirizzo manuale, con un nuovo tentativo in HTTPS |
 | `GET /api/settings`, `/api/system/metrics`, `/api/safety-limits`, `/api/claims` | lo stato dei robot, il modulo di calcolo (ogni 5 s), i limiti di sicurezza di ogni modello e le prenotazioni |
 | `POST /api/robot/{id}/command`, `/claim`, `/release`, jog arming | un piccolo comando per un robot, la sua prenotazione e l'armamento di un movimento manuale, con scritture condizionali per revisione del robot |
 | `POST /api/stop-all` | lo STOP globale: tutti i robot, con risposta robot per robot |
@@ -170,7 +170,7 @@ Entrambi producono `build/windows/x64/runner/Release/hydra_umc_control.exe`, ed 
 flutter pub get
 flutter analyze          # analisi statica - nessun compilatore necessario
 flutter test             # widget test
-python tools/hydra_project_tool.py bump  # incrementa la versione (una build non lo fa mai)
+dart run tool/bump_version.dart  # incrementa la versione, come fanno build.sh/build.bat
 flutter build windows    # produce build/windows/x64/runner/Release/hydra_umc_control.exe
 flutter run -d windows   # oppure -d <ios-device-id> da un Mac
 ```
@@ -179,7 +179,7 @@ flutter run -d windows   # oppure -d <ios-device-id> da un Mac
 
 ### Versioning
 
-Questo repository segue una politica a livello di ecosistema: compilare non cambia mai la versione. Il comando `bump` esplicito (`python tools/hydra_project_tool.py bump`) esegue `bump_manifest_version.py`, che applica:
+Questo repository segue una politica a livello di ecosistema: compilare non cambia mai la versione. Il comando `bump` esplicito (`python tools/hydra_project_tool.py bump`) esegue `tool/bump_version.dart`, che applica:
 
 - **Patch, stile contachilometri (base 10):** +1 a ogni bump; una
   volta superato 9 si resetta a 0 e minor sale di +1 - es. `0.0.9` ->

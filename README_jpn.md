@@ -20,7 +20,7 @@ GPL-3.0-or-later - see LICENSE
   <img src="https://img.shields.io/badge/Language-Dart-0175C2.svg" alt="Language">
   <img src="https://img.shields.io/badge/Platform-iOS-000000.svg" alt="Platform">
   <img src="https://img.shields.io/badge/Tests-254%20passing-2ea44f.svg" alt="Tests">
-  <img src="https://img.shields.io/badge/Version-0.2.7-0f6cbd.svg" alt="Version">
+  <img src="https://img.shields.io/badge/Version-0.2.8-0f6cbd.svg" alt="Version">
   <img src="https://img.shields.io/badge/Maturity-functional-0F6CBD.svg" alt="Maturity">
 </p>
 
@@ -36,7 +36,7 @@ Wi-Fi 経由で [HYDRA-UMC](https://github.com/JuanenRac/HYDRA-UMC) プラット
 
 | | |
 |---|---|
-| バージョン | `0.2.7` |
+| バージョン | `0.2.8` |
 | 成熟度 | 機能する |
 | テスト | 254 (`flutter test`) |
 | 技術 | Flutter 3.x / Dart |
@@ -108,14 +108,14 @@ Wi-Fi 経由で [HYDRA-UMC](https://github.com/JuanenRac/HYDRA-UMC) プラット
 | ロック解除されたスマートフォンを持つ人 | 任意の生体認証ロック（Face ID、Touch ID）が、起動時の保存済みセッションの復元を制御します。アプリがバックグラウンドにある間、カメラ映像は閉じられます | `network/biometric_helper.dart`, `ui/biometric_gate_screen.dart` |
 | 二人で動かされるロボット、誤って押された PLAY、届かない停止 | ロボットは動かす前に予約され、画面には保持者が表示されます。PLAY は既定で先に確認を求め、ロボット、ポイント、速度、予約者を表示します。全停止は 1 回再試行し、ロボットごとの停止にフォールバックし、何も応答がなければ「停止未確認」のバナーを保持し続けます | `models/access.dart`, `util/play_confirmation.dart`, `ui/widgets/stop_all.dart` |
 
-**絶対にしないこと：** 物理的な非常停止の代わりになること、平文のままにした接続を暗号化すること。アプリはまず HTTPS で接続し、平文 HTTP は「セキュリティ」で許可した場合にのみ使います（ローカルネットワークの外では、それも許可した場合のみ）。自己署名証明書のサーバーは、サーバーから読み取って確認した SHA-256 フィンガープリント、または指定した CA で信頼されます。3D ビュー（ウェブビュー）は引き続きシステムの証明書に従います。STOP はサーバーのソフトウェア停止です。
+**絶対にしないこと：** 物理的な非常停止の代わりになること、そして自分でトラフィックを暗号化すること。平文 HTTP のプローブに応答がないとき HTTPS を 1 回試しますが、証明書のピン留めも、ローカルネットワーク外での平文通信に対するガードもありません。停止はサーバーのソフトウェア停止です。
 
 ## 🔌 インターフェース
 
 | トピックまたはルート | 内容 |
 |---|---|
 | `POST /api/login`, `/api/logout`, `/api/refresh` | サインイン、サインアウト、セッションの更新 |
-| `GET /api/hydra-info` | 本物のサーバーを見分けます。サブネットスキャンと手動アドレスで使われ、まず HTTPS（平文 HTTP は「セキュリティ」で許可した場合のみ） |
+| `GET /api/hydra-info` | 本物のサーバーを判別。サブネットスキャンと手入力アドレスで使用し、HTTPS で 1 回再試行します |
 | `GET /api/settings`, `/api/system/metrics`, `/api/safety-limits`, `/api/claims` | ロボットの状態、演算モジュール（5 秒ごと）、各モデルの安全限界、予約 |
 | `POST /api/robot/{id}/command`, `/claim`, `/release`, jog arming | 1 台のロボットへの小さなコマンド、その予約、ジョグの有効化。ロボットのリビジョンによる条件付き書き込みに対応 |
 | `POST /api/stop-all` | 全停止：すべてのロボット。結果はロボットごとに返ります |
@@ -170,7 +170,7 @@ build.bat      # cmd.exe / PowerShell —— flutter pub get + flutter build win
 flutter pub get
 flutter analyze          # 静的解析——コンパイラ不要
 flutter test             # ウィジェットテスト
-python tools/hydra_project_tool.py bump  # バージョンを加算（ビルドでは決して行わない）
+dart run tool/bump_version.dart  # バージョンを加算、build.sh/build.bat が行うのと同じ
 flutter build windows    # build/windows/x64/runner/Release/hydra_umc_control.exe を生成
 flutter run -d windows   # または Mac 上で -d <ios-device-id>
 ```
@@ -179,7 +179,7 @@ flutter run -d windows   # または Mac 上で -d <ios-device-id>
 
 ### バージョン管理
 
-このリポジトリはエコシステム全体の方針に従います：ビルドはバージョンを一切変更しません。明示的な `bump` コマンド（`python tools/hydra_project_tool.py bump`）が `bump_manifest_version.py` を実行し、次を適用します：
+このリポジトリはエコシステム全体の方針に従います：ビルドはバージョンを一切変更しません。明示的な `bump` コマンド（`python tools/hydra_project_tool.py bump`）が `tool/bump_version.dart` を実行し、次を適用します：
 
 - **ビルド番号**（`+` の後の部分）：単純な単調カウンター、bump のたびに +1、繰り上がりなし。
 
