@@ -36,6 +36,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import '../app_version.dart';
 import '../models/access.dart';
 import '../models/contract_v2.dart';
 import '../models/assistant_reply.dart';
@@ -152,7 +153,17 @@ class HydraApiClient {
   /// Only GET /api/hydra-info actually checks this header server-side;
   /// sending it on every request is simpler than special-casing just that
   /// one call, and harmless everywhere else.
-  static const Map<String, String> _clientHeaders = {'X-Hydra-Client': 'ios'};
+  ///
+  /// The value is the type and, after a slash, the version of this build
+  /// ("ios/0.2.8"). The server compares the type only (the version goes to
+  /// its history of connections), so the version never opens or closes
+  /// access.
+  static final Map<String, String> _clientHeaders = {'X-Hydra-Client': clientHeaderValue(kAppVersion)};
+
+  /// `ios/<version>`, or just `ios` when the version is not one the server
+  /// takes (1 to 24 of 0-9 A-Z a-z . _ -).
+  static String clientHeaderValue(String version) =>
+      RegExp(r'^[0-9A-Za-z._-]{1,24}$').hasMatch(version) ? 'ios/$version' : 'ios';
 
   Future<Map<String, dynamic>> login(String username, String password) async {
     // login() is this app's own real FIRST request against a fresh host

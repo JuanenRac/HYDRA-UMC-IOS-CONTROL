@@ -42,7 +42,7 @@ under-documents relative to what it actually does).
 - `GET /api/hydra-info` - discover/confirm a candidate IP is actually
   running a HYDRA-UMC-SERVER instance, 404 if this app's own access has
   been disabled server-side (Config > Remote Access, per-client - identified
-  via the `X-Hydra-Client: ios` header this app sends on every request,
+  via the `X-Hydra-Client: ios/<version>` header this app sends on every request,
   see `hydra_api_client.dart`'s own `_clientHeaders`).
 - `GET`/`POST /api/settings` - full application state read/write -
   `GET` needs a bearer token (either role), `POST` requires an **admin** token specifically

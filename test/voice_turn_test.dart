@@ -15,6 +15,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:hydra_umc_control/app_version.dart';
 import 'package:hydra_umc_control/network/hydra_api_client.dart';
 
 void main() {
@@ -66,7 +67,7 @@ void main() {
     expect(lastBody?['transcript'], 'status for robot 1');
     expect(lastBody?['locale'], 'en-US');
     expect(lastBody?['requestId'], isA<String>());
-    expect(lastClientHeader, 'ios');
+    expect(lastClientHeader, HydraApiClient.clientHeaderValue(kAppVersion));
   });
 
   test('a requiresConfirmation reply round-trips correctly', () async {
