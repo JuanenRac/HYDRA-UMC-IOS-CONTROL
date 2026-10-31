@@ -162,7 +162,7 @@ Requiere el [Flutter SDK](https://docs.flutter.dev/get-started/install) (canal s
 build.bat      # cmd.exe / PowerShell - flutter pub get + flutter build windows
 ```
 
-Ambos producen `build/windows/x64/runner/Release/hydra_umc_control.exe`, y ninguno cambia la versión de la app - ver [Versionado](#-versionado) más abajo.
+Ambos producen `build/windows/x64/runner/Release/hydra_umc_control.exe`, y ninguno cambia la versión de la app - ver [Versionado](#versionado) más abajo.
 
 ### Build manual
 

@@ -162,7 +162,7 @@ Erfordert das [Flutter SDK](https://docs.flutter.dev/get-started/install) (stabl
 build.bat      # cmd.exe / PowerShell - flutter pub get + flutter build windows
 ```
 
-Beide erzeugen `build/windows/x64/runner/Release/hydra_umc_control.exe`, und beide erhöhen zuerst die App-Version - siehe [Versionierung](#-versionierung) unten.
+Beide erzeugen `build/windows/x64/runner/Release/hydra_umc_control.exe`, und beide erhöhen zuerst die App-Version - siehe [Versionierung](#versionierung) unten.
 
 ### Manueller Build
 

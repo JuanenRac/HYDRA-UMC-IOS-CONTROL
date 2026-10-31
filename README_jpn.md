@@ -162,7 +162,7 @@ CI は `HYDRA_UMC_CI=1 python tools/ci_validate.py` を実行し、マニフェ�
 build.bat      # cmd.exe / PowerShell —— flutter pub get + flutter build windows
 ```
 
-どちらも `build/windows/x64/runner/Release/hydra_umc_control.exe` を生成し、どちらもアプリのバージョンを変更しません——下記の[バージョン管理](#-バージョン管理)参照。
+どちらも `build/windows/x64/runner/Release/hydra_umc_control.exe` を生成し、どちらもアプリのバージョンを変更しません——下記の[バージョン管理](#バージョン管理)参照。
 
 ### 手動ビルド
 
