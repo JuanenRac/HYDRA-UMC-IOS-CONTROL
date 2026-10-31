@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+## [0.2.9] - The version of the client in its identity and an offline copy that belongs to one server and one account
+
 - **The client identity carries the version:** every request now sends `X-Hydra-Client: ios/<version>` (for example `ios/0.2.8`) instead of the bare type, as the Android app does. The server compares the type only, so access is opened and closed exactly as before, and keeps the version apart for the history of connections. A version the server would not take (1 to 24 of `0-9 A-Z a-z . _ -`) is left out and the header is just `ios`. New `test/client_header_test.dart` (the value, what the server reads of it, versions that are refused, every request and the headers of the camera stream); `test/voice_turn_test.dart` reads the value from the same function. Written and tested on the Dart VM only: not built for iOS.
 - **The offline copy belongs to one server and one account:** the saved state carries the account and the server it was read from, and a copy that belongs to another server or account (or that an older build saved without one) is erased instead of being shown as the state of the one being opened.
 
