@@ -32,6 +32,10 @@ import '../models/server_info.dart';
 import '../models/server_security.dart';
 import '../models/stop_all_result.dart';
 import '../network/auth_prefs.dart';
+import '../network/ble_contract.dart';
+import '../network/ble_gatt.dart';
+import '../network/ble_gatt_fbp.dart';
+import '../network/hydra_ble_client.dart';
 import '../network/biometric_helper.dart';
 import '../network/hydra_api_client.dart';
 import '../network/hydra_websocket.dart';
@@ -65,7 +69,13 @@ class RobotViewModel extends ChangeNotifier {
   // injectable so login / _attemptTokenRefresh / logout get real
   // test coverage against a fake AuthPrefs backed by a fake SecureTokenBackend,
   // the same pattern HYDRA-UMC-DSI's own RobotViewModel already uses.
-  RobotViewModel({AuthPrefs? authPrefs}) : _authPrefs = authPrefs ?? AuthPrefs();
+  RobotViewModel({AuthPrefs? authPrefs, BleScanner? bleScanner, BleGattConnector? bleConnector})
+      : _authPrefs = authPrefs ?? AuthPrefs(),
+        _bleScanner = bleScanner ?? FbpBleScanner(),
+        _bleConnector = bleConnector ?? const FbpBleGattConnector();
+
+  final BleScanner _bleScanner;
+  final BleGattConnector _bleConnector;
 
   final AuthPrefs _authPrefs;
   final BiometricHelper _biometricHelper = BiometricHelper();
@@ -432,6 +442,8 @@ class RobotViewModel extends ChangeNotifier {
     jogArmedUntil.clear();
     isLoggedIn = false;
     _ws?.disconnect();
+    _bleClient?.disconnect();
+    unawaited(_bleScanner.stop());
     _metricsTimer?.cancel();
     _stateCacheTimer?.cancel();
     // A pending debounced command (a speed change) would otherwise be sent
@@ -1549,6 +1561,101 @@ class RobotViewModel extends ChangeNotifier {
     }
   }
 
+  // ---- Bluetooth LE (experimental) ----
+  // The state of a HYDRA-UMC device read over Bluetooth LE, as the Android app does. Tested against a fake link only.
+  List<BleDevice> discoveredBleDevices = const [];
+  bool isBleScanning = false;
+
+  /// True when the list also holds devices that do not advertise the HYDRA service.
+  bool bleShowAll = false;
+
+  /// The last Bluetooth problem, for the sentence the screen shows; null when there is none.
+  BleError? bleError;
+  HydraBleClient? _bleClient;
+
+  /// How long one scan lasts.
+  static const Duration bleScanDuration = Duration(seconds: 5);
+
+  void setBleShowAll(bool value) {
+    bleShowAll = value;
+    notifyListeners();
+  }
+
+  /// Looks for devices for [bleScanDuration]; a problem is left in [bleError], never raised on the screen.
+  Future<void> scanBle() async {
+    if (isBleScanning) return;
+    bleError = null;
+    discoveredBleDevices = const [];
+    isBleScanning = true;
+    notifyListeners();
+    try {
+      await _bleScanner.scan(
+        timeout: bleScanDuration,
+        showAll: bleShowAll,
+        onFound: (device) {
+          discoveredBleDevices = upsertBleDevice(discoveredBleDevices, device);
+          notifyListeners();
+        },
+      );
+      await Future<void>.delayed(bleScanDuration);
+    } on BleException catch (e) {
+      bleError = e.error;
+    } catch (_) {
+      bleError = const BleError(BleErrorKind.scanFailed);
+    } finally {
+      await _bleScanner.stop();
+      isBleScanning = false;
+    }
+    notifyListeners();
+  }
+
+  /// Connects to a device over Bluetooth LE. Like the Android app it replaces the Wi-Fi link: the state comes from the
+  /// device and this phone does not talk to the server meanwhile.
+  void connectBle(BleDevice device) {
+    unawaited(_bleScanner.stop());
+    isBleScanning = false;
+    _ws?.disconnect();
+    _bleClient?.disconnect();
+    apiClient = null;
+    lastError = null;
+    bleError = null;
+    connectionStatus = 'connecting';
+    notifyListeners();
+    _bleClient = HydraBleClient(
+      connector: _bleConnector,
+      deviceId: device.id,
+      onStatus: (status) {
+        connectionStatus = switch (status) {
+          BleStatus.connecting => 'connecting',
+          BleStatus.connected => 'connected',
+          BleStatus.disconnected => 'disconnected',
+        };
+        notifyListeners();
+      },
+      onSettings: (payload) {
+        try {
+          final decoded = jsonDecode(payload);
+          if (decoded is! Map<String, dynamic>) throw const FormatException('not an object');
+          state = HydraState(decoded);
+          isShowingCachedState = false;
+          _ensureSelectedRobot();
+        } catch (e) {
+          bleError = const BleError(BleErrorKind.malformedFrame);
+        }
+        notifyListeners();
+      },
+      onError: (error) {
+        bleError = error;
+        notifyListeners();
+      },
+    )..connect();
+  }
+
+  void disconnectBle() {
+    _bleClient?.disconnect();
+    _bleClient = null;
+  }
+
   // Who connects to the server (the list of clients and the latest sign-ins), for every signed-in account.
   List<ConnectionClient>? connectionClients;
   List<ConnectionEvent>? connectionEvents;
@@ -1825,6 +1932,8 @@ class RobotViewModel extends ChangeNotifier {
   void dispose() {
     _disposed = true;
     _ws?.disconnect();
+    _bleClient?.disconnect();
+    unawaited(_bleScanner.stop());
     _metricsTimer?.cancel();
     _stateCacheTimer?.cancel();
     for (final timer in _debounceTimers.values) {

@@ -19,7 +19,7 @@ GPL-3.0-or-later - see LICENSE
   <img src="https://img.shields.io/badge/Framework-Flutter-02569B.svg" alt="Framework">
   <img src="https://img.shields.io/badge/Language-Dart-0175C2.svg" alt="Language">
   <img src="https://img.shields.io/badge/Platform-iOS-000000.svg" alt="Platform">
-  <img src="https://img.shields.io/badge/Tests-294%20passing-2ea44f.svg" alt="Tests">
+  <img src="https://img.shields.io/badge/Tests-313%20passing-2ea44f.svg" alt="Tests">
   <img src="https://img.shields.io/badge/Version-0.2.9-0f6cbd.svg" alt="Version">
   <img src="https://img.shields.io/badge/Maturity-functional-0F6CBD.svg" alt="Maturity">
 </p>
@@ -38,7 +38,7 @@ Wi-Fi 経由で [HYDRA-UMC](https://github.com/JuanenRac/HYDRA-UMC) プラット
 |---|---|
 | バージョン | `0.2.9` |
 | 成熟度 | 機能する |
-| テスト | 294 (`flutter test`) |
+| テスト | 313 (`flutter test`) |
 | 技術 | Flutter 3.x / Dart |
 | 対象 | iPhone または iPad |
 | 実機での確認 | まだです：このバージョンについて実機での動作記録はありません |
@@ -54,7 +54,7 @@ Wi-Fi 経由で [HYDRA-UMC](https://github.com/JuanenRac/HYDRA-UMC) プラット
 | 領域 | 状態 | ここでの意味 |
 |---|---|---|
 | ソフトウェア | 🟡 | 主な目的では動作します。足りない点は上の正直さの確認に書かれています |
-| テスト | 🟢 | 自動テスト 294 件。変更のたびに実行されます |
+| テスト | 🟢 | 自動テスト 313 件。変更のたびに実行されます |
 | 実機 | 🔴 | まだです：このバージョンについて実機での動作記録はありません |
 | ドキュメント | 🟢 | 8 言語の README。変更のたびにマニフェストと照合されます |
 
@@ -92,6 +92,7 @@ Wi-Fi 経由で [HYDRA-UMC](https://github.com/JuanenRac/HYDRA-UMC) プラット
 - **PLAY の前に確認** - 既定でオン、設定でオフにできます。軌道を開始する前に、ロボット、記録済みの点、速度、予約している人を表示します(他の人が予約しているロボットは、サーバーがコマンドを拒否することを伝えます)。すでに再生中のロボットでは再度確認しません。選択は保存されます。
 - **サーバーに接続しているのは誰か：** アクセスパネルの「接続」ボタンから、サーバーが見たアプリの簡単な一覧（種類、ユーザー、バージョン、ローカルネットワークか外部か、現在開いているセッション、成功または拒否されたサインイン、どれくらい前か）と、最近のサインイン、拒否されたサインイン、サインアウト、終了したセッションを開けます。サーバーの接続ルートから読みます。管理者はすべての項目を、その他のアカウントは自分の分だけを見ます。どちらの一覧にもパスワードやトークンは含まれず、アドレスはサーバーに保存を指示した場合だけ表示されます。サーバーが古くて提供できない場合は、その旨をはっきり表示します。
 - **設定のサーバーのアクセスオプション（管理者のみ）：** 設定の項目から、サーバー設定から読んだ 9 つのスイッチがあります。サインインなしのヘルスルート、グローバル停止の通知、接続履歴に各クライアントのアドレスを残すこと、チケットなしのカメラ映像、WebSocket アドレス内のトークン、ログの秘密情報の伏せ字、音声確認の署名、環境経由でプロセスに渡す IP カメラのパスワード、新規インストールでの TLS の自動有効化です。それぞれ値の出どころ（既定、画面から保存、またはサーバーの環境で固定されロックされる）を表示し、変更した分だけを送り、保護を下げる変更は先に確認を求め、サーバーが提供しないオプションは表示しません。
+- **Bluetooth LE (GATT)**(`lib/network/hydra_ble_client.dart`, `lib/network/ble_contract.dart`, `lib/network/ble_gatt_fbp.dart`)- 文書化された規約に従う本物のGATTクライアント。HYDRAサービスで絞り込むスキャン、MTU交渉付きの接続、サービスの確認、通知、双方向のフレーム分割メッセージ、書き込みは一度に1件、待ち時間を延ばしながらの自動再接続、iOS の Bluetooth 権限、失敗ごとにユーザーの言語で表示する明確なメッセージ。**ペリフェラル側を実装したHYDRA-UMCデバイスはまだありません。** クライアントは模擬GATTに対してのみテストされており、Bluetooth リンクは iPhone で実行されたことがなく、ロボットへのコマンドはBluetoothでは送信されません。
 - **カメラ**（`lib/ui/camera_screen.dart`、`lib/ui/widgets/mjpeg_view.dart`）—— 小さな手作りの MJPEG ストリームパーサー（サードパーティパッケージなし）、（サイレントに空白のフィードを表示するのではなく）明確な「カメラ無効」状態、そしてサーバーから直接ロボットのビジョンシステムをオン/オフする切り替えスイッチ（`server.ts` の `"vision"` 原子指令）。
 - **3D ビュー**（`lib/ui/three_d_screen.dart`）—— HYDRA-UMC-STUDIO 自身のリアルタイム 3D ビューポートを WebView に埋め込みます（`?hideUI=true&robotId=#token=`）。Android アプリと同じアプローチで、同じ理由からです（実際の、現在提供されている 3D シーンを無料で得られます）。`webview_flutter` がサポートしていないプラットフォーム（本リポジトリのビルド検証に使用される Windows デスクトップターゲット）では、正直なプレースホルダーにフォールバックします。
 - **システム指標**（`lib/state/robot_view_model.dart`）—— `GET /api/system/metrics` を 5 秒ごとにポーリングします。他の 2 つのクライアントと同じ頻度で、ダッシュボードに表示されます。
@@ -149,7 +150,7 @@ flutter build ios --no-codesign  # a real iOS build; only on a Mac with Xcode
 
 ## 🧪 テスト
 
-`flutter test` で自動テスト 294 件を実行します。 ハードウェアも、このマシンの外にあるものも必要ありません。
+`flutter test` で自動テスト 313 件を実行します。 ハードウェアも、このマシンの外にあるものも必要ありません。
 
 CI は `HYDRA_UMC_CI=1 python tools/ci_validate.py` を実行し、マニフェスト、文書、8 つの README、図を検査します。
 

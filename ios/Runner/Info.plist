@@ -54,6 +54,8 @@
 		     this key, LocalAuthentication's own authenticate() call throws
 		     instead of showing the Face ID prompt on a device that only
 		     has Face ID. -->
+		<key>NSBluetoothAlwaysUsageDescription</key>
+		<string>HYDRA-UMC Control uses Bluetooth to read the state of a HYDRA-UMC device nearby.</string>
 		<key>NSFaceIDUsageDescription</key>
 		<string>HYDRA-UMC Control can use Face ID to confirm it's you before reconnecting to a saved server session.</string>
 		<key>CFBundleExecutable</key>

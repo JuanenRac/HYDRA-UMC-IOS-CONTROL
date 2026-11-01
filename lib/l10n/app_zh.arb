@@ -334,5 +334,32 @@
 
   "errJogOutOfReach": "该动作超出机器人的工作范围：未发送任何指令。",
   "jogRotateLeft": "底座向左旋转 (J1)",
-  "jogRotateRight": "底座向右旋转 (J1)"
+  "jogRotateRight": "底座向右旋转 (J1)",
+
+  "btScanButton": "搜索设备",
+  "btNoDevices": "未找到蓝牙设备。",
+  "btUnnamedDevice": "未命名设备",
+  "bleErrorUnavailable": "此设备没有蓝牙。",
+  "bleErrorOff": "蓝牙已关闭。请打开后重试。",
+  "bleErrorInvalidAddress": "设备的蓝牙地址无效。",
+  "bleErrorScanner": "蓝牙扫描器不可用。",
+  "bleErrorScanFailed": "蓝牙搜索失败。",
+  "bleErrorConnectFailed": "无法连接到设备。",
+  "bleErrorDiscoveryFailed": "无法读取设备的服务。",
+  "bleErrorNotHydra": "这不是HYDRA-UMC设备(缺少HYDRA服务)。",
+  "bleErrorCharacteristic": "设备没有提供HYDRA-UMC所需的状态和命令特征。",
+  "bleErrorNotifications": "无法开启设备的状态更新。",
+  "bleErrorWriteFailed": "设备未接受该命令。",
+  "bleErrorNotConnected": "未通过蓝牙连接。",
+  "bleErrorTooLarge": "消息对蓝牙来说太大。",
+  "bleErrorMalformed": "设备发送了损坏的消息。",
+  "bleErrorGaveUp": "蓝牙连接已丢失,无法恢复。",
+  "bleErrorWithStatus": "{text} (代码 {code})",
+  "btShowAllDevices": "显示所有蓝牙设备",
+  "btShowAllHint": "关闭:只列出广播HYDRA-UMC服务的设备。",
+  "blePermissionDenied": "蓝牙权限被拒绝。请在 iOS 设置中允许此应用使用蓝牙。",
+  "bleTitle": "蓝牙（实验性）",
+  "bleIntro": "通过蓝牙 LE 读取附近 HYDRA-UMC 设备的状态。实验性功能：已用模拟链路测试，未用真实设备测试。以这种方式连接时，手机不会与服务器通信。",
+  "bleConnect": "连接",
+  "bleDisconnect": "断开"
 }

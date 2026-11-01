@@ -334,5 +334,32 @@
 
   "errJogOutOfReach": "Questo movimento è fuori dalla portata del robot: non è stato inviato alcun comando.",
   "jogRotateLeft": "Ruota la base a sinistra (J1)",
-  "jogRotateRight": "Ruota la base a destra (J1)"
+  "jogRotateRight": "Ruota la base a destra (J1)",
+
+  "btScanButton": "Cerca dispositivi",
+  "btNoDevices": "Nessun dispositivo Bluetooth trovato.",
+  "btUnnamedDevice": "Dispositivo senza nome",
+  "bleErrorUnavailable": "Questo dispositivo non ha il Bluetooth.",
+  "bleErrorOff": "Il Bluetooth è spento. Accendilo e riprova.",
+  "bleErrorInvalidAddress": "L'indirizzo Bluetooth del dispositivo non è valido.",
+  "bleErrorScanner": "Lo scanner Bluetooth non è disponibile.",
+  "bleErrorScanFailed": "La ricerca Bluetooth non è riuscita.",
+  "bleErrorConnectFailed": "Impossibile connettersi al dispositivo.",
+  "bleErrorDiscoveryFailed": "Impossibile leggere i servizi del dispositivo.",
+  "bleErrorNotHydra": "Non è un dispositivo HYDRA-UMC (manca il servizio HYDRA).",
+  "bleErrorCharacteristic": "Il dispositivo non offre le caratteristiche di stato e di comando che servono a HYDRA-UMC.",
+  "bleErrorNotifications": "Impossibile attivare gli aggiornamenti di stato del dispositivo.",
+  "bleErrorWriteFailed": "Il dispositivo non ha accettato il comando.",
+  "bleErrorNotConnected": "Nessuna connessione Bluetooth.",
+  "bleErrorTooLarge": "Il messaggio è troppo grande per il Bluetooth.",
+  "bleErrorMalformed": "Il dispositivo ha inviato un messaggio danneggiato.",
+  "bleErrorGaveUp": "Il collegamento Bluetooth è andato perso e non è stato possibile ripristinarlo.",
+  "bleErrorWithStatus": "{text} (codice {code})",
+  "btShowAllDevices": "Mostra tutti i dispositivi Bluetooth",
+  "btShowAllHint": "Disattivato: vengono elencati solo i dispositivi che annunciano il servizio HYDRA-UMC.",
+  "blePermissionDenied": "Autorizzazione Bluetooth negata. Consenti il Bluetooth a questa app nelle Impostazioni di iOS.",
+  "bleTitle": "Bluetooth (sperimentale)",
+  "bleIntro": "Legge lo stato di un dispositivo HYDRA-UMC vicino tramite Bluetooth LE. Sperimentale: provato con un collegamento simulato, non con un dispositivo reale. Finché si è collegati così, il telefono non parla con il server.",
+  "bleConnect": "Collega",
+  "bleDisconnect": "Scollega"
 }

@@ -1,3 +1,4 @@
 /* Texts of the permission prompts, in the language of the device. */
 "NSLocalNetworkUsageDescription" = "HYDRA-UMC Control verbindet sich mit einem HYDRA-UMC-STUDIO-Server in deinem lokalen Netzwerk, um echte Roboter zu steuern.";
 "NSFaceIDUsageDescription" = "HYDRA-UMC Control kann Face ID verwenden, um vor dem erneuten Verbinden mit einer gespeicherten Serversitzung zu bestätigen, dass du es bist.";
+"NSBluetoothAlwaysUsageDescription" = "HYDRA-UMC Control verwendet Bluetooth, um den Zustand eines HYDRA-UMC-Geräts in der Nähe zu lesen.";

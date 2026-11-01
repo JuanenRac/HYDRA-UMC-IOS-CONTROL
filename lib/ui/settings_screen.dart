@@ -11,6 +11,7 @@ import '../app_version.dart';
 import '../l10n/app_localizations.dart';
 import '../network/tls_settings.dart';
 import '../state/robot_view_model.dart';
+import 'widgets/ble_dialog.dart';
 import 'widgets/security_dialog.dart';
 import 'widgets/server_options_dialog.dart';
 
@@ -87,6 +88,13 @@ class SettingsScreen extends StatelessWidget {
             host: server?.host ?? '',
             port: server?.port ?? 3000,
           ),
+        ),
+        ListTile(
+          key: const Key('settings-bluetooth'),
+          leading: const Icon(Icons.bluetooth),
+          title: Text(l10n.bleTitle),
+          subtitle: Text(l10n.bleIntro, maxLines: 2, overflow: TextOverflow.ellipsis),
+          onTap: () => showBleDialog(context, vm),
         ),
         // The access options of the server itself: only an administrator can read or change them.
         if (vm.isAdmin)

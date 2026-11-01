@@ -21,6 +21,8 @@ Every file of the repository with a line on what it does: the annotated tree tha
 │   │   └── sha256.dart             # SHA-256 in plain Dart, for the chain check of the server's audit record
 │   ├── network/
 │   │   ├── hydra_api_client.dart    # REST: login, settings, atomic robot command, system metrics
+│   │   ├── ble_contract.dart, ble_commands.dart, ble_gatt.dart # Bluetooth LE contract, framing, commands and the link abstraction (experimental)
+│   │   ├── hydra_ble_client.dart    # The Bluetooth LE client state machine; ble_gatt_fbp.dart is the real link (flutter_blue_plus)
 │   │   ├── command_sequence.dart    # The rising number (seq) on motion commands and on the stop
 │   │   ├── hydra_websocket.dart     # /ws live sync client
 │   │   ├── discovery.dart           # Concurrent scan of this device's own real local subnet(s) against GET /api/hydra-info
@@ -53,6 +55,7 @@ Every file of the repository with a line on what it does: the annotated tree tha
 │       ├── settings_screen.dart     # Connection info + sign out
 │       └── widgets/
 │           ├── access_panel.dart      # Reservation and jog-arming panel of the Control screen
+│           ├── ble_dialog.dart        # Bluetooth LE search and connection (experimental)
 │           ├── audit_dialog.dart      # Audit record of the server (administrators), with the chain check
 │           ├── connections_dialog.dart # Who connects to the server (apps seen and latest sign-ins)
 │           ├── server_options_dialog.dart # Access options of the server (administrators), asked about before they lower the protection
@@ -70,7 +73,7 @@ Every file of the repository with a line on what it does: the annotated tree tha
 │   ├── _readme_parity.py                 # Check that the eight READMEs share one structure (a copy of HYDRA-UMC-SDK's, kept in sync)
 │   └── hydra_project_tool.py             # The same commands in every repository: validate, test, ci, version, status, bump
 ├── docs/ARCHITECTURE.md
-├── test/                             # widget_test, auth_prefs_test, discovery_interfaces_test, format_uptime_test, hostile_answers_test, hydra_error_test, hydra_websocket_reconnect_test, hydra_websocket_token_test, joystick_pad_test, localization_test, main_screen_cached_state_banner_test, mjpeg_lifecycle_test, play_confirmation_test, robot_view_model_background_pause_test, parol6_kinematics_test, robot_view_model_parol6_jog_test, command_sequence_test, connection_history_test, server_security_test, robot_view_model_cached_state_test, robot_view_model_server_errors_test, robot_view_model_silent_refresh_test, robot_view_model_stop_all_test, saved_data_block_test, session_storage_test, state_cache_test, telemetry_log_test, voice_turn_test, websocket_uri_test
+├── test/                             # widget_test, auth_prefs_test, discovery_interfaces_test, format_uptime_test, hostile_answers_test, hydra_error_test, hydra_websocket_reconnect_test, hydra_websocket_token_test, joystick_pad_test, localization_test, main_screen_cached_state_banner_test, mjpeg_lifecycle_test, play_confirmation_test, robot_view_model_background_pause_test, parol6_kinematics_test, robot_view_model_parol6_jog_test, command_sequence_test, ble_test, robot_view_model_ble_test, connection_history_test, server_security_test, robot_view_model_cached_state_test, robot_view_model_server_errors_test, robot_view_model_silent_refresh_test, robot_view_model_stop_all_test, saved_data_block_test, session_storage_test, state_cache_test, telemetry_log_test, voice_turn_test, websocket_uri_test
 ├── images/
 ├── pubspec.yaml / pubspec.lock / l10n.yaml / analysis_options.yaml # The Flutter package definition and its locked versions, the settings of the l10n generator and the lint rules
 ├── README.md                         # this file

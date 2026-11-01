@@ -19,7 +19,7 @@ GPL-3.0-or-later - see LICENSE
   <img src="https://img.shields.io/badge/Framework-Flutter-02569B.svg" alt="Framework">
   <img src="https://img.shields.io/badge/Language-Dart-0175C2.svg" alt="Language">
   <img src="https://img.shields.io/badge/Platform-iOS-000000.svg" alt="Platform">
-  <img src="https://img.shields.io/badge/Tests-294%20passing-2ea44f.svg" alt="Tests">
+  <img src="https://img.shields.io/badge/Tests-313%20passing-2ea44f.svg" alt="Tests">
   <img src="https://img.shields.io/badge/Version-0.2.9-0f6cbd.svg" alt="Version">
   <img src="https://img.shields.io/badge/Maturity-functional-0F6CBD.svg" alt="Maturity">
 </p>
@@ -38,7 +38,7 @@ Eine plattformübergreifende Flutter-App (Dart), die einen Roboter der [HYDRA-UM
 |---|---|
 | Version | `0.2.9` |
 | Reifegrad | Funktionsfähig |
-| Tests | 294 (`flutter test`) |
+| Tests | 313 (`flutter test`) |
 | Technik | Flutter 3.x / Dart |
 | Ziel | Ein iPhone oder iPad |
 | Auf echter Hardware | Noch nicht: für diese Version ist kein Lauf auf echter Hardware vermerkt |
@@ -54,7 +54,7 @@ Jede Zeile ist ein Teil dieses Repositorys, und die Ampel sagt, wie weit er heut
 | Bereich | Stand | Was das hier bedeutet |
 |---|---|---|
 | Software | 🟡 | Funktioniert für seinen Hauptzweck; die Ehrlichkeitsprüfung oben nennt, was noch fehlt |
-| Tests | 🟢 | 294 automatische Tests, bei jeder Änderung ausgeführt |
+| Tests | 🟢 | 313 automatische Tests, bei jeder Änderung ausgeführt |
 | Echte Hardware | 🔴 | Noch nicht: für diese Version ist kein Lauf auf echter Hardware vermerkt |
 | Dokumentation | 🟢 | README in acht Sprachen, bei jeder Änderung gegen das Manifest geprüft |
 
@@ -92,6 +92,7 @@ Diese App zielt auf iOS/iPadOS ab, ist aber in **Flutter** statt Swift/SwiftUI g
 - **Vor PLAY nachfragen** - standardmäßig an, in den Einstellungen abschaltbar: Vor dem Start einer Bahn zeigt die App den Roboter, seine aufgezeichneten Punkte, die Geschwindigkeit und wer ihn reserviert hat (ein von jemand anderem reservierter Roboter weist darauf hin, dass der Server den Befehl ablehnt). Ein Roboter, der schon spielt, wird nicht erneut gefragt. Die Wahl bleibt gespeichert.
 - **Wer sich mit dem Server verbindet:** Eine Schaltfläche Verbindungen im Zugriffsbereich öffnet eine einfache Liste der Apps, die der Server gesehen hat (Art, Benutzer, Version, lokales Netz oder von außen, jetzt offene Sitzungen, gelungene oder abgelehnte Anmeldungen, vor wie langer Zeit) und der letzten Anmeldungen, abgelehnten Anmeldungen, Abmeldungen und beendeten Sitzungen, gelesen aus den Verbindungsrouten des Servers. Ein Administrator sieht alle Einträge, jedes andere Konto nur seine eigenen; keine Liste enthält Passwörter oder Token, und eine Adresse erscheint nur, wenn der Server sie speichern soll. Ist der Server zu alt, sagt die App das deutlich.
 - **Zugriffsoptionen des Servers in den Einstellungen (nur Administratoren):** ein Eintrag der Einstellungen öffnet neun Schalter, gelesen aus der Serverkonfiguration: die Health-Route ohne Anmeldung, die Ankündigung des globalen Stopps, die Adresse jedes Clients im Verbindungsverlauf behalten, Kamerabilder ohne Ticket, ein Token in der WebSocket-Adresse, das Schwärzen von Geheimnissen im Protokoll, die Signatur einer gesprochenen Bestätigung, das Passwort einer IP-Kamera, das über die Umgebung an ihren Prozess übergeben wird, und das von einer neuen Installation selbst eingeschaltete TLS. Jeder zeigt, woher sein Wert stammt (Standard, von einem Bildschirm gespeichert oder von der Umgebung des Servers fest vorgegeben, was ihn sperrt), nur Geändertes wird gesendet, jede Änderung, die den Schutz senkt, fragt vorher, und eine Option, die der Server nicht anbietet, wird nicht angezeigt.
+- **Bluetooth LE (GATT)** (`lib/network/hydra_ble_client.dart`, `lib/network/ble_contract.dart`, `lib/network/ble_gatt_fbp.dart`) - Ein echter GATT-Client nach einem dokumentierten Vertrag: Suche nach dem HYDRA-Dienst gefiltert, Verbindung mit MTU-Aushandlung, Dienstprüfung, Benachrichtigungen, in Rahmen zerlegte Nachrichten in beide Richtungen, jeweils ein Schreibvorgang, automatische Wiederverbindung mit wachsenden Wartezeiten, die Bluetooth-Berechtigung von iOS und eine klare Meldung in der Sprache des Nutzers bei jedem Fehler. **Noch kein HYDRA-UMC-Gerät implementiert die Peripherieseite:** Der Client ist nur gegen ein simuliertes GATT getestet, die Bluetooth-Verbindung lief nie auf einem iPhone, und Roboterbefehle werden nicht über Bluetooth gesendet.
 - **Kamera** (`lib/ui/camera_screen.dart`, `lib/ui/widgets/mjpeg_view.dart`) - ein kleiner, handgeschriebener MJPEG-Stream-Parser (kein Drittanbieter-Paket), ein klarer "Camera Disabled"-Zustand statt eines stillschweigend leeren Feeds, und ein Schalter, um das Vision-System eines Roboters direkt vom Server aus ein-/auszuschalten (der eigene atomare `"vision"`-Befehl von `server.ts`).
 - **3D-Ansicht** (`lib/ui/three_d_screen.dart`) - bettet das eigene Echtzeit-3D-Viewport von HYDRA-UMC-STUDIO in eine WebView ein (`?hideUI=true&robotId=#token=`), derselbe Ansatz wie bei der Android-App, aus demselben Grund (bekommt die echte, aktuell ausgelieferte 3D-Szene kostenlos). Fällt auf einen ehrlichen Platzhalter zurück bei Plattformen, die `webview_flutter` nicht unterstützt (das Windows-Desktop-Target dieses Repositorys, verwendet zur Build-Verifikation).
 - **Systemmetriken** (`lib/state/robot_view_model.dart`) - `GET /api/system/metrics` alle 5s abgefragt, dieselbe Kadenz wie bei den anderen 2 Clients, im Dashboard angezeigt.
@@ -149,7 +150,7 @@ flutter build ios --no-codesign  # a real iOS build; only on a Mac with Xcode
 
 ## 🧪 Tests
 
-294 automatische Tests laufen mit `flutter test`. Sie brauchen weder Hardware noch etwas außerhalb dieses Rechners.
+313 automatische Tests laufen mit `flutter test`. Sie brauchen weder Hardware noch etwas außerhalb dieses Rechners.
 
 Die CI führt `HYDRA_UMC_CI=1 python tools/ci_validate.py` aus; das prüft das Manifest, die Dokumente, die acht READMEs und die Bilder.
 

@@ -334,5 +334,32 @@
 
   "errJogOutOfReach": "Ce mouvement est hors de portée du robot : rien n'a été envoyé.",
   "jogRotateLeft": "Tourner la base vers la gauche (J1)",
-  "jogRotateRight": "Tourner la base vers la droite (J1)"
+  "jogRotateRight": "Tourner la base vers la droite (J1)",
+
+  "btScanButton": "Rechercher des appareils",
+  "btNoDevices": "Aucun appareil Bluetooth trouvé.",
+  "btUnnamedDevice": "Appareil sans nom",
+  "bleErrorUnavailable": "Cet appareil n'a pas de Bluetooth.",
+  "bleErrorOff": "Le Bluetooth est désactivé. Activez-le et réessayez.",
+  "bleErrorInvalidAddress": "L'adresse Bluetooth de l'appareil n'est pas valide.",
+  "bleErrorScanner": "Le scanner Bluetooth n'est pas disponible.",
+  "bleErrorScanFailed": "La recherche Bluetooth a échoué.",
+  "bleErrorConnectFailed": "Impossible de se connecter à l'appareil.",
+  "bleErrorDiscoveryFailed": "Impossible de lire les services de l'appareil.",
+  "bleErrorNotHydra": "Ce n'est pas un appareil HYDRA-UMC (le service HYDRA est absent).",
+  "bleErrorCharacteristic": "L'appareil n'offre pas les caractéristiques d'état et de commande dont HYDRA-UMC a besoin.",
+  "bleErrorNotifications": "Impossible d'activer les mises à jour d'état de l'appareil.",
+  "bleErrorWriteFailed": "L'appareil n'a pas accepté la commande.",
+  "bleErrorNotConnected": "Pas de connexion Bluetooth.",
+  "bleErrorTooLarge": "Le message est trop grand pour le Bluetooth.",
+  "bleErrorMalformed": "L'appareil a envoyé un message corrompu.",
+  "bleErrorGaveUp": "La liaison Bluetooth a été perdue et n'a pas pu être rétablie.",
+  "bleErrorWithStatus": "{text} (code {code})",
+  "btShowAllDevices": "Afficher tous les appareils Bluetooth",
+  "btShowAllHint": "Désactivé : seuls les appareils qui annoncent le service HYDRA-UMC sont listés.",
+  "blePermissionDenied": "Autorisation Bluetooth refusée. Autorisez Bluetooth pour cette application dans les Réglages d'iOS.",
+  "bleTitle": "Bluetooth (expérimental)",
+  "bleIntro": "Lit l'état d'un appareil HYDRA-UMC proche par Bluetooth LE. Expérimental : testé avec une liaison simulée, pas avec un appareil réel. Tant que vous êtes connecté ainsi, le téléphone ne parle pas au serveur.",
+  "bleConnect": "Connecter",
+  "bleDisconnect": "Déconnecter"
 }

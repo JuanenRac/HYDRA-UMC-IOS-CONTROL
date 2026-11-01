@@ -334,5 +334,32 @@
 
   "errJogOutOfReach": "この動きはロボットの可動範囲外です。何も送信されていません。",
   "jogRotateLeft": "ベースを左に回転 (J1)",
-  "jogRotateRight": "ベースを右に回転 (J1)"
+  "jogRotateRight": "ベースを右に回転 (J1)",
+
+  "btScanButton": "デバイスを検索",
+  "btNoDevices": "Bluetooth デバイスが見つかりませんでした。",
+  "btUnnamedDevice": "名前のないデバイス",
+  "bleErrorUnavailable": "この端末にはBluetoothがありません。",
+  "bleErrorOff": "Bluetoothがオフです。オンにしてもう一度お試しください。",
+  "bleErrorInvalidAddress": "デバイスのBluetoothアドレスが無効です。",
+  "bleErrorScanner": "Bluetoothスキャナーを利用できません。",
+  "bleErrorScanFailed": "Bluetoothの検索に失敗しました。",
+  "bleErrorConnectFailed": "デバイスに接続できませんでした。",
+  "bleErrorDiscoveryFailed": "デバイスのサービスを読み取れませんでした。",
+  "bleErrorNotHydra": "HYDRA-UMCデバイスではありません(HYDRAサービスがありません)。",
+  "bleErrorCharacteristic": "デバイスにHYDRA-UMCが必要な状態と命令の特性がありません。",
+  "bleErrorNotifications": "デバイスの状態更新を有効にできませんでした。",
+  "bleErrorWriteFailed": "デバイスがコマンドを受け付けませんでした。",
+  "bleErrorNotConnected": "Bluetoothで接続されていません。",
+  "bleErrorTooLarge": "メッセージがBluetoothには大きすぎます。",
+  "bleErrorMalformed": "デバイスが破損したメッセージを送信しました。",
+  "bleErrorGaveUp": "Bluetooth接続が切れ、復旧できませんでした。",
+  "bleErrorWithStatus": "{text} (コード {code})",
+  "btShowAllDevices": "すべてのBluetoothデバイスを表示",
+  "btShowAllHint": "オフ:HYDRA-UMCサービスを通知するデバイスのみ表示します。",
+  "blePermissionDenied": "Bluetooth の権限が拒否されました。iOS の設定でこのアプリに Bluetooth を許可してください。",
+  "bleTitle": "Bluetooth（試験的）",
+  "bleIntro": "近くの HYDRA-UMC デバイスの状態を Bluetooth LE で読み取ります。試験的機能：実機ではなく模擬リンクで検証しています。この方法で接続している間、スマートフォンはサーバーと通信しません。",
+  "bleConnect": "接続",
+  "bleDisconnect": "切断"
 }

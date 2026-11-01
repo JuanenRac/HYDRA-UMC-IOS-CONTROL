@@ -49,6 +49,7 @@ dependencies:
   # storage on Windows. See network/auth_prefs.dart for the real,
   # no-regression fallback this app uses if a secure call ever fails.
   flutter_secure_storage: ^11.0.0
+  flutter_blue_plus: ">=1.35.0 <2.0.0"
 
 dev_dependencies:
   flutter_test:

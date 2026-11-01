@@ -333,5 +333,32 @@
 
   "errJogOutOfReach": "Este movimento está fora do alcance do robô: não foi enviado nada.",
   "jogRotateLeft": "Rodar a base para a esquerda (J1)",
-  "jogRotateRight": "Rodar a base para a direita (J1)"
+  "jogRotateRight": "Rodar a base para a direita (J1)",
+
+  "btScanButton": "Procurar dispositivos",
+  "btNoDevices": "Nenhum dispositivo Bluetooth encontrado.",
+  "btUnnamedDevice": "Dispositivo sem nome",
+  "bleErrorUnavailable": "Este dispositivo não tem Bluetooth.",
+  "bleErrorOff": "O Bluetooth está desligado. Ligue-o e tente novamente.",
+  "bleErrorInvalidAddress": "O endereço Bluetooth do dispositivo não é válido.",
+  "bleErrorScanner": "O leitor Bluetooth não está disponível.",
+  "bleErrorScanFailed": "A procura Bluetooth falhou.",
+  "bleErrorConnectFailed": "Não foi possível ligar ao dispositivo.",
+  "bleErrorDiscoveryFailed": "Não foi possível ler os serviços do dispositivo.",
+  "bleErrorNotHydra": "Este não é um dispositivo HYDRA-UMC (falta o serviço HYDRA).",
+  "bleErrorCharacteristic": "O dispositivo não oferece as caraterísticas de estado e de comando de que o HYDRA-UMC precisa.",
+  "bleErrorNotifications": "Não foi possível ativar as atualizações de estado do dispositivo.",
+  "bleErrorWriteFailed": "O dispositivo não aceitou o comando.",
+  "bleErrorNotConnected": "Sem ligação por Bluetooth.",
+  "bleErrorTooLarge": "A mensagem é demasiado grande para Bluetooth.",
+  "bleErrorMalformed": "O dispositivo enviou uma mensagem danificada.",
+  "bleErrorGaveUp": "A ligação Bluetooth perdeu-se e não foi possível restabelecê-la.",
+  "bleErrorWithStatus": "{text} (código {code})",
+  "btShowAllDevices": "Mostrar todos os dispositivos Bluetooth",
+  "btShowAllHint": "Desativado: só são listados os dispositivos que anunciam o serviço HYDRA-UMC.",
+  "blePermissionDenied": "Permissão de Bluetooth recusada. Permita o Bluetooth a esta aplicação nas Definições do iOS.",
+  "bleTitle": "Bluetooth (experimental)",
+  "bleIntro": "Lê o estado de um dispositivo HYDRA-UMC próximo por Bluetooth LE. Experimental: testado com uma ligação simulada, não com um dispositivo real. Enquanto estiver ligado assim, o telemóvel não fala com o servidor.",
+  "bleConnect": "Ligar",
+  "bleDisconnect": "Desligar"
 }

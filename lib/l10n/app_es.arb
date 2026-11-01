@@ -334,5 +334,32 @@
 
   "errJogOutOfReach": "Ese movimiento queda fuera del alcance del robot: no se ha enviado nada.",
   "jogRotateLeft": "Girar la base a la izquierda (J1)",
-  "jogRotateRight": "Girar la base a la derecha (J1)"
+  "jogRotateRight": "Girar la base a la derecha (J1)",
+
+  "btScanButton": "Buscar Dispositivos",
+  "btNoDevices": "No se encontraron dispositivos Bluetooth.",
+  "btUnnamedDevice": "Dispositivo sin nombre",
+  "bleErrorUnavailable": "Este dispositivo no tiene Bluetooth.",
+  "bleErrorOff": "El Bluetooth está apagado. Enciéndelo e inténtalo de nuevo.",
+  "bleErrorInvalidAddress": "La dirección Bluetooth del dispositivo no es válida.",
+  "bleErrorScanner": "El escáner Bluetooth no está disponible.",
+  "bleErrorScanFailed": "Falló la búsqueda Bluetooth.",
+  "bleErrorConnectFailed": "No se pudo conectar con el dispositivo.",
+  "bleErrorDiscoveryFailed": "No se pudieron leer los servicios del dispositivo.",
+  "bleErrorNotHydra": "No es un dispositivo HYDRA-UMC (falta el servicio HYDRA).",
+  "bleErrorCharacteristic": "El dispositivo no ofrece las características de estado y de comandos que necesita HYDRA-UMC.",
+  "bleErrorNotifications": "No se pudieron activar las actualizaciones de estado del dispositivo.",
+  "bleErrorWriteFailed": "El dispositivo no aceptó el comando.",
+  "bleErrorNotConnected": "Sin conexión por Bluetooth.",
+  "bleErrorTooLarge": "El mensaje es demasiado grande para Bluetooth.",
+  "bleErrorMalformed": "El dispositivo envió un mensaje dañado.",
+  "bleErrorGaveUp": "Se perdió el enlace Bluetooth y no se pudo restablecer.",
+  "bleErrorWithStatus": "{text} (código {code})",
+  "btShowAllDevices": "Mostrar todos los dispositivos Bluetooth",
+  "btShowAllHint": "Desactivado: solo se listan los dispositivos que anuncian el servicio HYDRA-UMC.",
+  "blePermissionDenied": "Permiso de Bluetooth denegado. Permite Bluetooth para esta app en los Ajustes de iOS.",
+  "bleTitle": "Bluetooth (experimental)",
+  "bleIntro": "Lee el estado de un dispositivo HYDRA-UMC cercano por Bluetooth LE. Experimental: probado con un enlace simulado, no con un dispositivo real. Mientras estás conectado así, el teléfono no habla con el servidor.",
+  "bleConnect": "Conectar",
+  "bleDisconnect": "Desconectar"
 }
