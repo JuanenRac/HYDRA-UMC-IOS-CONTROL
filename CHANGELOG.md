@@ -3,6 +3,7 @@
 All notable changes to this project are documented here.
 
 ## [Unreleased]
+
 - **Jog of a Parol6 on its real kinematics:** the jog pad resolves a combined move once against the real chain of the arm (the same solver as the studio and the Android app) and every axis command of that tick carries the same joints, instead of leaving the generic formula of the server to guess them. A target outside the reach of the arm is refused before anything is sent, with a sentence in the eight languages.
 - **Base rotation (J1) buttons:** two buttons beside the jog pad turn the base alone by the chosen step; they work for every model, stop at the real limit of a Parol6 (a generic -180 to 180 for the others) and send nothing once the limit is reached.
 - **Motion commands are numbered:** a jog, a table move, a joint move and a stop carry a rising number, so the server can refuse a jog that arrives after a later stop; a refusal for arriving out of order is told apart from a reservation and shown in the eight languages.
