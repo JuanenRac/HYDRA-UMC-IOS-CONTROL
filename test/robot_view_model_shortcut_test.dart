@@ -18,7 +18,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:hydra_umc_control/models/server_info.dart';
 import 'package:hydra_umc_control/network/auth_prefs.dart';
 import 'package:hydra_umc_control/network/shortcut_bridge.dart';
-import 'package:hydra_umc_control/state/hydra_error.dart';
 import 'package:hydra_umc_control/state/robot_view_model.dart';
 
 class _FakeSecureBackend implements SecureTokenBackend {
