@@ -19,7 +19,7 @@ GPL-3.0-or-later - see LICENSE
   <img src="https://img.shields.io/badge/Framework-Flutter-02569B.svg" alt="Framework">
   <img src="https://img.shields.io/badge/Language-Dart-0175C2.svg" alt="Language">
   <img src="https://img.shields.io/badge/Platform-iOS-000000.svg" alt="Platform">
-  <img src="https://img.shields.io/badge/Tests-261%20passing-2ea44f.svg" alt="Tests">
+  <img src="https://img.shields.io/badge/Tests-279%20passing-2ea44f.svg" alt="Tests">
   <img src="https://img.shields.io/badge/Version-0.2.9-0f6cbd.svg" alt="Version">
   <img src="https://img.shields.io/badge/Maturity-functional-0F6CBD.svg" alt="Maturity">
 </p>
@@ -38,7 +38,7 @@ GPL-3.0-or-later - see LICENSE
 |---|---|
 | 版本 | `0.2.9` |
 | 成熟度 | 可用 |
-| 测试 | 261 (`flutter test`) |
+| 测试 | 279 (`flutter test`) |
 | 技术栈 | Flutter 3.x / Dart |
 | 目标 | iPhone 或 iPad |
 | 真实硬件 | 尚未：此版本没有在真实硬件上运行的记录 |
@@ -54,7 +54,7 @@ GPL-3.0-or-later - see LICENSE
 | 领域 | 状态 | 在这里的含义 |
 |---|---|---|
 | 软件 | 🟡 | 主要用途可用；上面的诚实性检查列出了仍然缺少的内容 |
-| 测试 | 🟢 | 261 项自动测试，每次变更都会运行 |
+| 测试 | 🟢 | 279 项自动测试，每次变更都会运行 |
 | 真实硬件 | 🔴 | 尚未：此版本没有在真实硬件上运行的记录 |
 | 文档 | 🟢 | 八种语言的 README，每次变更都会与清单核对 |
 
@@ -90,6 +90,8 @@ GPL-3.0-or-later - see LICENSE
 - **预留与安全限值**（`lib/ui/widgets/access_panel.dart`、`lib/models/access.dart`、`lib/network/hydra_api_client.dart`、`lib/state/robot_view_model.dart`）- Control 屏幕显示谁持有所选机器人（无人、本手机、同一账户的另一台设备，或其他账户），提供**预留**和**释放**，并列出服务器上的所有预留（`GET /api/claims`）。设备为每次安装保存一个控制器 ID，并在每次预留、释放、点动解锁和指令中发送（请求体和 `X-Controller-Id` 头），因此预留属于账户和这台设备，而不是整个账户。服务器的拒绝会被区分：被其他账户预留、被你的账户在另一台设备或窗口预留、需要控制器 ID、点动未解锁。机器人型号的限值从 `GET /api/safety-limits` 读取：超过限值的点动步长不会发送，并显示服务器的警告。当管理员要求时，必须先按**解锁点动**（带倒计时），摇杆才会移动机器人；解锁会自动结束，也会在按下 STOP 或释放时结束。预留是可选的：没人预留的机器人照常控制。 仅**管理员**会在他人持有的机器人上看到 **接管控制** 按钮；点击后先要求确认，然后以 `force: true` 预约该机器人（服务器只接受管理员的此请求，并会再次检查角色）。 写入是有条件的:每次写入都带有此应用最后看到的机器人修订号(`If-Match`,`lib/models/contract_v2.dart`),如果期间有其他人修改了机器人,服务器返回 412,不会应用任何内容,机器人会被重新读取并给出提示(标准模式检查预约、工作台和一次性命令;严格模式检查除 STOP 外的全部命令;关闭则不检查;该选项位于预约列表中;STOP 永远不检查)。XY 工作台的点动是一条原子的 `table` 命令(较旧的服务器会收到它能理解的点动),服务器通过 WebSocket 推送预约,因此在推送到达期间 Control 屏幕不再轮询,管理员可以读取审计记录(`lib/ui/widgets/audit_dialog.dart`),其 SHA-256 链由服务器和设备各校验一次,并可将各行以 `.jsonl` 复制。
 - **可选开关** - 两个开关，默认均为关闭：*显示已保存数据时禁止发送指令*（设置）会在屏幕显示的是机器人状态的已保存副本而非实时状态时，拦截除停止以外的所有指令；*不扫描移动数据网络和VPN*（登录界面）会在子网扫描中排除这些网络接口。点动方向键按钮至少 44 pt，VoiceOver 会读出其轴和方向；应用处于后台时，摄像头画面会被关闭。
 - **PLAY 之前先确认** - 默认开启,可在设置中关闭:开始轨迹之前,应用会显示机器人、已记录的点、速度以及预留者(被他人预留的机器人会提示服务器将拒绝该命令)。已在播放的机器人不会再次询问。该选择会被保存。
+- **谁在连接服务器：** 访问面板中的“连接”按钮会打开一个简单列表，列出服务器见过的应用（类型、用户、版本、本地网络或外部、当前打开的会话、成功或被拒绝的登录、多久以前），以及最近的登录、被拒绝的登录、登出和已结束的会话，数据来自服务器的连接路由。管理员能看到全部条目，其他账号只能看到自己的；两个列表都不含密码或令牌，只有在告知服务器保存地址时才会显示地址。服务器太旧而无法提供时，应用会明确说明。
+- **设置中的服务器访问选项（仅管理员）：** 设置中的一个条目会打开九个从服务器配置读取的开关：无需登录的健康检查路由、全局停止的通告、在连接历史中保留每个客户端的地址、无需票据的摄像头画面、WebSocket 地址中的令牌、遮蔽日志中的机密、语音确认的签名、通过环境交给进程的 IP 摄像头密码，以及新安装自动开启 TLS。每个开关都显示其值的来源（默认、从界面保存，或由服务器环境固定并因此被锁定），只发送发生变化的部分，凡是降低保护的更改都会先询问，服务器不提供的选项不会显示。
 - **摄像头**（`lib/ui/camera_screen.dart`、`lib/ui/widgets/mjpeg_view.dart`）—— 一个小型的手写 MJPEG 流解析器（无第三方包）,一个明确的“摄像头已禁用”状态（而非静默显示空白画面）,以及一个可直接从服务器打开/关闭机器人视觉系统的开关（`server.ts` 的 `"vision"` 原子指令）。
 - **3D 视图**（`lib/ui/three_d_screen.dart`）—— 通过 WebView 嵌入 HYDRA-UMC-STUDIO 自身的实时 3D 视口（`?hideUI=true&robotId=#token=`）,与 Android 应用的方式相同,原因也相同（免费获得真实的、当前正在使用的 3D 场景）。在 `webview_flutter` 不支持的平台（本仓库用于构建验证的 Windows 桌面目标）上,会回退到一个诚实的占位符。
 - **系统指标**（`lib/state/robot_view_model.dart`）—— 每 5 秒轮询一次 `GET /api/system/metrics`,与其他 2 个客户端的节奏相同,显示在仪表盘中。
@@ -147,7 +149,7 @@ flutter build ios --no-codesign  # a real iOS build; only on a Mac with Xcode
 
 ## 🧪 测试
 
-运行 `flutter test` 会执行 261 个自动测试。 不需要硬件，也不需要这台机器以外的任何东西。
+运行 `flutter test` 会执行 279 个自动测试。 不需要硬件，也不需要这台机器以外的任何东西。
 
 CI 运行 `HYDRA_UMC_CI=1 python tools/ci_validate.py`，检查清单、文档、八个 README 和图片。
 

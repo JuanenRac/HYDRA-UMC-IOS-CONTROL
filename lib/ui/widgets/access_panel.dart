@@ -17,6 +17,7 @@ import '../../models/access.dart';
 import '../../models/contract_v2.dart';
 import '../../state/robot_view_model.dart';
 import 'audit_dialog.dart';
+import 'connections_dialog.dart';
 
 class AccessPanel extends StatefulWidget {
   final RobotViewModel vm;
@@ -93,6 +94,15 @@ class _AccessPanelState extends State<AccessPanel> {
                     child: Text(l10n.accessTakeOver),
                   ),
               ],
+            ),
+            // Who connects to the server: every signed-in account sees its own entries, an administrator sees all of them.
+            Align(
+              alignment: Alignment.centerLeft,
+              child: OutlinedButton(
+                key: const ValueKey('access-connections'),
+                onPressed: () => showDialog<void>(context: context, builder: (_) => ConnectionsDialog(vm: vm)),
+                child: Text(l10n.connectionsOpen),
+              ),
             ),
             // The audit record is for administrators only (the server refuses it to anyone else).
             if (vm.isAdmin)

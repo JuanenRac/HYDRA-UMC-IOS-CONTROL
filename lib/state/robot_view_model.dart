@@ -24,9 +24,11 @@ import 'package:flutter/foundation.dart';
 import '../l10n/language_prefs.dart';
 import '../models/access.dart';
 import '../models/assistant_reply.dart';
+import '../models/connection_history.dart';
 import '../models/contract_v2.dart';
 import '../models/hydra_state.dart';
 import '../models/server_info.dart';
+import '../models/server_security.dart';
 import '../models/stop_all_result.dart';
 import '../network/auth_prefs.dart';
 import '../network/biometric_helper.dart';
@@ -1543,6 +1545,116 @@ class RobotViewModel extends ChangeNotifier {
     } catch (_) {
       return null;
     }
+  }
+
+  // Who connects to the server (the list of clients and the latest sign-ins), for every signed-in account.
+  List<ConnectionClient>? connectionClients;
+  List<ConnectionEvent>? connectionEvents;
+  bool connectionsBusy = false;
+  ConnectionsFailure? connectionsFailure;
+
+  /// How many lines of the history of sign-ins the screen asks for.
+  static const int connectionEventsShown = 30;
+
+  /// Reads the list of clients and the latest sign-ins; never raises an error on the screen: the reason is left in
+  /// [connectionsFailure].
+  Future<void> refreshConnections() async {
+    if (apiClient == null) {
+      connectionsFailure = ConnectionsFailure.network;
+      notifyListeners();
+      return;
+    }
+    connectionsBusy = true;
+    notifyListeners();
+    try {
+      final clients = ConnectionHistory.parseClients(await _authed((c) => c.getConnectionClientsBody()));
+      final events = ConnectionHistory.parseEvents(await _authed((c) => c.getConnectionEventsBody(connectionEventsShown)));
+      connectionClients = clients;
+      connectionEvents = events;
+      connectionsFailure = null;
+    } catch (e) {
+      connectionClients = null;
+      connectionEvents = null;
+      if (e is HydraApiException) {
+        connectionsFailure = e.isSessionProblem
+            ? ConnectionsFailure.session
+            : e.isNotFound
+                ? ConnectionsFailure.unavailable
+                : e.statusCode == null
+                    ? ConnectionsFailure.network
+                    : ConnectionsFailure.other;
+        if (e.isSessionProblem) _forceLogout();
+      } else {
+        connectionsFailure = ConnectionsFailure.network;
+      }
+    } finally {
+      connectionsBusy = false;
+    }
+    notifyListeners();
+  }
+
+  // The access options of the server (administrators only).
+  ServerSecurityOptions? serverOptions;
+  bool serverOptionsBusy = false;
+  ServerOptionsFailure? serverOptionsFailure;
+  bool serverOptionsSaved = false;
+
+  ServerOptionsFailure _serverOptionsFailureOf(Object e) {
+    if (e is! HydraApiException) return ServerOptionsFailure.network;
+    if (e.isSessionProblem) return ServerOptionsFailure.session;
+    if (e.statusCode == 403) return ServerOptionsFailure.forbidden;
+    if (e.isNotFound) return ServerOptionsFailure.unavailable;
+    if (e.statusCode == null) return ServerOptionsFailure.network;
+    return ServerOptionsFailure.other;
+  }
+
+  /// Reads the access options of the server; the reason it could not is left in [serverOptionsFailure], never raised
+  /// on the screen.
+  Future<void> refreshServerOptions() async {
+    if (apiClient == null) {
+      serverOptionsFailure = ServerOptionsFailure.network;
+      notifyListeners();
+      return;
+    }
+    serverOptionsBusy = true;
+    serverOptionsSaved = false;
+    notifyListeners();
+    try {
+      final options = ServerSecurity.parse(await _authed((c) => c.getServerConfigBody()));
+      serverOptions = options;
+      serverOptionsFailure = options == null ? ServerOptionsFailure.other : null;
+    } catch (e) {
+      serverOptions = null;
+      serverOptionsFailure = _serverOptionsFailureOf(e);
+      if (e is HydraApiException && e.isSessionProblem) _forceLogout();
+    } finally {
+      serverOptionsBusy = false;
+    }
+    notifyListeners();
+  }
+
+  /// Saves what changed in [values] (the screen has already asked about every change that lowers the protection) and
+  /// shows the options as the server now holds them.
+  Future<void> saveServerOptions(ServerSecurityValues values) async {
+    final current = serverOptions;
+    if (apiClient == null || current == null) return;
+    final body = ServerSecurity.patch(current, values);
+    if (body == null) return;
+    serverOptionsBusy = true;
+    serverOptionsSaved = false;
+    notifyListeners();
+    try {
+      final answer = await _authed((c) => c.putServerConfigBody(jsonEncode(body)));
+      serverOptions = ServerSecurity.parse(answer) ?? current;
+      serverOptionsFailure = null;
+      serverOptionsSaved = true;
+    } catch (e) {
+      serverOptionsFailure = _serverOptionsFailureOf(e);
+      if (e is HydraApiException && e.isSessionProblem) _forceLogout();
+    } finally {
+      serverOptionsBusy = false;
+    }
+    notifyListeners();
   }
 
   /// True while a jog should not be sent: the previous tick is still on the

@@ -12,6 +12,7 @@ import '../l10n/app_localizations.dart';
 import '../network/tls_settings.dart';
 import '../state/robot_view_model.dart';
 import 'widgets/security_dialog.dart';
+import 'widgets/server_options_dialog.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -87,6 +88,15 @@ class SettingsScreen extends StatelessWidget {
             port: server?.port ?? 3000,
           ),
         ),
+        // The access options of the server itself: only an administrator can read or change them.
+        if (vm.isAdmin)
+          ListTile(
+            key: const Key('settings-server-options'),
+            leading: const Icon(Icons.admin_panel_settings_outlined),
+            title: Text(l10n.serverOptionsTitle),
+            subtitle: Text(l10n.serverOptionsIntro, maxLines: 2, overflow: TextOverflow.ellipsis),
+            onTap: () => showServerOptionsDialog(context, vm),
+          ),
         const Divider(),
         ListTile(
           leading: const Icon(Icons.language),

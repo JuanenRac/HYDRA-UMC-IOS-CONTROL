@@ -19,7 +19,7 @@ GPL-3.0-or-later - see LICENSE
   <img src="https://img.shields.io/badge/Framework-Flutter-02569B.svg" alt="Framework">
   <img src="https://img.shields.io/badge/Language-Dart-0175C2.svg" alt="Language">
   <img src="https://img.shields.io/badge/Platform-iOS-000000.svg" alt="Platform">
-  <img src="https://img.shields.io/badge/Tests-261%20passing-2ea44f.svg" alt="Tests">
+  <img src="https://img.shields.io/badge/Tests-279%20passing-2ea44f.svg" alt="Tests">
   <img src="https://img.shields.io/badge/Version-0.2.9-0f6cbd.svg" alt="Version">
   <img src="https://img.shields.io/badge/Maturity-functional-0F6CBD.svg" alt="Maturity">
 </p>
@@ -38,7 +38,7 @@ Eine plattformübergreifende Flutter-App (Dart), die einen Roboter der [HYDRA-UM
 |---|---|
 | Version | `0.2.9` |
 | Reifegrad | Funktionsfähig |
-| Tests | 261 (`flutter test`) |
+| Tests | 279 (`flutter test`) |
 | Technik | Flutter 3.x / Dart |
 | Ziel | Ein iPhone oder iPad |
 | Auf echter Hardware | Noch nicht: für diese Version ist kein Lauf auf echter Hardware vermerkt |
@@ -54,7 +54,7 @@ Jede Zeile ist ein Teil dieses Repositorys, und die Ampel sagt, wie weit er heut
 | Bereich | Stand | Was das hier bedeutet |
 |---|---|---|
 | Software | 🟡 | Funktioniert für seinen Hauptzweck; die Ehrlichkeitsprüfung oben nennt, was noch fehlt |
-| Tests | 🟢 | 261 automatische Tests, bei jeder Änderung ausgeführt |
+| Tests | 🟢 | 279 automatische Tests, bei jeder Änderung ausgeführt |
 | Echte Hardware | 🔴 | Noch nicht: für diese Version ist kein Lauf auf echter Hardware vermerkt |
 | Dokumentation | 🟢 | README in acht Sprachen, bei jeder Änderung gegen das Manifest geprüft |
 
@@ -90,6 +90,8 @@ Diese App zielt auf iOS/iPadOS ab, ist aber in **Flutter** statt Swift/SwiftUI g
 - **Reservierungen und Sicherheitsgrenzen** (`lib/ui/widgets/access_panel.dart`, `lib/models/access.dart`, `lib/network/hydra_api_client.dart`, `lib/state/robot_view_model.dart`) - Der Control-Bildschirm zeigt, wer den gewählten Roboter hält (niemand, dieses Gerät, dasselbe Konto auf einem anderen Gerät oder ein anderes Konto), und bietet **Reservieren** und **Freigeben** sowie die Liste aller Reservierungen des Servers (`GET /api/claims`). Das Gerät behält pro Installation eine Controller-ID und sendet sie bei jeder Reservierung, Freigabe, Jog-Schaltung und jedem Befehl mit (Body und Header `X-Controller-Id`); die Reservierung gehört also dem Konto und diesem Telefon, nicht dem ganzen Konto. Die Ablehnungen des Servers werden unterschieden: von einem anderen Konto reserviert, von deinem Konto auf einem anderen Gerät oder Fenster, Controller-ID erforderlich und Jog nicht scharf. Die Grenzen des Robotermodells kommen von `GET /api/safety-limits`: Ein Jog-Schritt über dem Limit wird nicht gesendet, und die Warnungen des Servers werden angezeigt. Verlangt der Administrator es, muss **Jog scharfschalten** (mit Countdown) gedrückt werden, bevor der Joystick den Roboter bewegt; die Schaltung endet von selbst, mit STOP oder bei der Freigabe. Reservierungen sind optional: Ein Roboter, den niemand reserviert hat, wird wie bisher gesteuert. Nur für einen **Administrator** erscheint bei einem Roboter, den jemand anderes hält, eine Schaltfläche **Steuerung übernehmen**; sie fragt nach einer Bestätigung und reserviert den Roboter dann mit `force: true` (der Server akzeptiert das nur von Administratoren und prüft die Rolle erneut). Schreibzugriffe sind bedingt: jeder trägt die Revision des Roboters, die diese App zuletzt gesehen hat (`If-Match`, `lib/models/contract_v2.dart`); hat inzwischen jemand anderes den Roboter geändert, antwortet der Server mit 412, nichts wird ausgeführt, der Roboter wird neu gelesen und die Meldung sagt es (Standard prüft Reservierungen, Tisch und einmalige Befehle; Streng prüft alles außer STOP; Aus prüft nichts; die Wahl steht in der Liste der Reservierungen; STOP wird nie geprüft). Der Jog des XY-Tischs ist ein einziger atomarer Befehl `table` (ein älterer Server bekommt die Jogs, die er versteht), der Server schickt die Reservierungen über den WebSocket, sodass der Control-Bildschirm nicht abfragt, solange sie ankommen, und Administratoren lesen das Audit-Protokoll (`lib/ui/widgets/audit_dialog.dart`) mit zweifach geprüfter SHA-256-Kette, vom Server und auf dem Gerät, und können dessen Zeilen als `.jsonl` kopieren.
 - **Optionale Schalter** - zwei Schalter, beide standardmäßig aus: *Befehle bei gespeicherten Daten sperren* (Einstellungen) hält jeden Befehl außer STOP zurück, solange der Bildschirm die gespeicherte Kopie des Roboterzustands statt des Livezustands zeigt, und *Mobilfunk- und VPN-Netze nicht durchsuchen* (Anmeldebildschirm) lässt diese Schnittstellen beim Subnetz-Scan aus. Die Jog-Tasten des D-Pads sind mindestens 44 pt groß und werden von VoiceOver mit Achse und Richtung angesagt; das Kamerabild wird geschlossen, solange die App im Hintergrund ist.
 - **Vor PLAY nachfragen** - standardmäßig an, in den Einstellungen abschaltbar: Vor dem Start einer Bahn zeigt die App den Roboter, seine aufgezeichneten Punkte, die Geschwindigkeit und wer ihn reserviert hat (ein von jemand anderem reservierter Roboter weist darauf hin, dass der Server den Befehl ablehnt). Ein Roboter, der schon spielt, wird nicht erneut gefragt. Die Wahl bleibt gespeichert.
+- **Wer sich mit dem Server verbindet:** Eine Schaltfläche Verbindungen im Zugriffsbereich öffnet eine einfache Liste der Apps, die der Server gesehen hat (Art, Benutzer, Version, lokales Netz oder von außen, jetzt offene Sitzungen, gelungene oder abgelehnte Anmeldungen, vor wie langer Zeit) und der letzten Anmeldungen, abgelehnten Anmeldungen, Abmeldungen und beendeten Sitzungen, gelesen aus den Verbindungsrouten des Servers. Ein Administrator sieht alle Einträge, jedes andere Konto nur seine eigenen; keine Liste enthält Passwörter oder Token, und eine Adresse erscheint nur, wenn der Server sie speichern soll. Ist der Server zu alt, sagt die App das deutlich.
+- **Zugriffsoptionen des Servers in den Einstellungen (nur Administratoren):** ein Eintrag der Einstellungen öffnet neun Schalter, gelesen aus der Serverkonfiguration: die Health-Route ohne Anmeldung, die Ankündigung des globalen Stopps, die Adresse jedes Clients im Verbindungsverlauf behalten, Kamerabilder ohne Ticket, ein Token in der WebSocket-Adresse, das Schwärzen von Geheimnissen im Protokoll, die Signatur einer gesprochenen Bestätigung, das Passwort einer IP-Kamera, das über die Umgebung an ihren Prozess übergeben wird, und das von einer neuen Installation selbst eingeschaltete TLS. Jeder zeigt, woher sein Wert stammt (Standard, von einem Bildschirm gespeichert oder von der Umgebung des Servers fest vorgegeben, was ihn sperrt), nur Geändertes wird gesendet, jede Änderung, die den Schutz senkt, fragt vorher, und eine Option, die der Server nicht anbietet, wird nicht angezeigt.
 - **Kamera** (`lib/ui/camera_screen.dart`, `lib/ui/widgets/mjpeg_view.dart`) - ein kleiner, handgeschriebener MJPEG-Stream-Parser (kein Drittanbieter-Paket), ein klarer "Camera Disabled"-Zustand statt eines stillschweigend leeren Feeds, und ein Schalter, um das Vision-System eines Roboters direkt vom Server aus ein-/auszuschalten (der eigene atomare `"vision"`-Befehl von `server.ts`).
 - **3D-Ansicht** (`lib/ui/three_d_screen.dart`) - bettet das eigene Echtzeit-3D-Viewport von HYDRA-UMC-STUDIO in eine WebView ein (`?hideUI=true&robotId=#token=`), derselbe Ansatz wie bei der Android-App, aus demselben Grund (bekommt die echte, aktuell ausgelieferte 3D-Szene kostenlos). Fällt auf einen ehrlichen Platzhalter zurück bei Plattformen, die `webview_flutter` nicht unterstützt (das Windows-Desktop-Target dieses Repositorys, verwendet zur Build-Verifikation).
 - **Systemmetriken** (`lib/state/robot_view_model.dart`) - `GET /api/system/metrics` alle 5s abgefragt, dieselbe Kadenz wie bei den anderen 2 Clients, im Dashboard angezeigt.
@@ -147,7 +149,7 @@ flutter build ios --no-codesign  # a real iOS build; only on a Mac with Xcode
 
 ## 🧪 Tests
 
-261 automatische Tests laufen mit `flutter test`. Sie brauchen weder Hardware noch etwas außerhalb dieses Rechners.
+279 automatische Tests laufen mit `flutter test`. Sie brauchen weder Hardware noch etwas außerhalb dieses Rechners.
 
 Die CI führt `HYDRA_UMC_CI=1 python tools/ci_validate.py` aus; das prüft das Manifest, die Dokumente, die acht READMEs und die Bilder.
 

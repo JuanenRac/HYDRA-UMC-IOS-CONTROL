@@ -19,7 +19,7 @@ GPL-3.0-or-later - see LICENSE
   <img src="https://img.shields.io/badge/Framework-Flutter-02569B.svg" alt="Framework">
   <img src="https://img.shields.io/badge/Language-Dart-0175C2.svg" alt="Language">
   <img src="https://img.shields.io/badge/Platform-iOS-000000.svg" alt="Platform">
-  <img src="https://img.shields.io/badge/Tests-261%20passing-2ea44f.svg" alt="Tests">
+  <img src="https://img.shields.io/badge/Tests-279%20passing-2ea44f.svg" alt="Tests">
   <img src="https://img.shields.io/badge/Version-0.2.9-0f6cbd.svg" alt="Version">
   <img src="https://img.shields.io/badge/Maturity-functional-0F6CBD.svg" alt="Maturity">
 </p>
@@ -38,7 +38,7 @@ A cross-platform Flutter app (Dart) that controls a robot on the [HYDRA-UMC](htt
 |---|---|
 | Version | `0.2.9` |
 | Maturity | Functional |
-| Tests | 261 (`flutter test`) |
+| Tests | 279 (`flutter test`) |
 | Stack | Flutter 3.x / Dart |
 | Target | An iPhone or iPad |
 | On real hardware | Not yet: no run on real hardware is recorded for this version |
@@ -54,7 +54,7 @@ Each line is one part of this repository and the light says how far it is today.
 | Area | State | What it means here |
 |---|---|---|
 | Software | 🟡 | Works for its main purpose; the honesty check above lists what is still missing |
-| Tests | 🟢 | 261 automated tests, run on every change |
+| Tests | 🟢 | 279 automated tests, run on every change |
 | Real hardware | 🔴 | Not yet: no run on real hardware is recorded for this version |
 | Documentation | 🟢 | README in eight languages, checked against the manifest on every change |
 
@@ -90,6 +90,8 @@ This app targets iOS/iPadOS, but it is built in **Flutter** rather than Swift/Sw
 - **Reservations and safety limits** (`lib/ui/widgets/access_panel.dart`, `lib/models/access.dart`, `lib/network/hydra_api_client.dart`, `lib/state/robot_view_model.dart`) - The Control screen shows who holds the selected robot (nobody, this device, the same account on another device, or another account) and offers **Reserve** and **Release**, plus the list of every reservation of the server (`GET /api/claims`). The device keeps one controller id for the installation and sends it with every reserve, release, jog-arm and command (body and `X-Controller-Id` header), so a reservation belongs to the account and to this device, not to the whole account. The refusals of the server are told apart: reserved by another account, by your account on another device or window, controller id required, and jog not armed. The limits of the robot's model are read from `GET /api/safety-limits`: a jog step above the limit is not sent, and the server's warnings are shown. When the administrator requires it, an **Arm jog** button (with a countdown) must be pressed before the joystick moves the robot; the arming ends by itself, with STOP, or on release. Reservations are optional: a robot nobody reserved is commanded as before. For an **administrator** only, a **Take control** button appears on a robot someone else holds; it asks for confirmation and then reserves the robot with `force: true` (the server accepts that from administrators only and checks the role again). Writes are conditional: each one carries the revision of the robot this app last saw (`If-Match`, `lib/models/contract_v2.dart`), and when someone else changed the robot in between the server answers 412, nothing is applied, the robot is read again and the message says so (Standard checks reservations, the table and one-off commands; Strict checks everything but STOP; Off checks nothing; the choice is in the list of reservations; STOP is never checked). The XY table jog is one atomic `table` command (an older server gets the jogs it understands), the server pushes the reservations over the WebSocket so the Control screen stops polling while they arrive, and administrators read the audit record (`lib/ui/widgets/audit_dialog.dart`) with its SHA-256 chain verified twice, by the server and on the device, and can copy its lines as `.jsonl`.
 - **Optional switches** - two switches, both off by default: *Block commands on saved data* (Settings) holds back every command except STOP while the screen shows the saved copy of the robot state instead of the live one, and *Do not scan mobile-data or VPN networks* (login screen) leaves those interfaces out of the subnet scan. The jog D-pad buttons are at least 44 pt and are announced by VoiceOver with their axis and direction; the camera picture is closed while the app is in the background.
 - **Ask before PLAY** - on by default, turned off in Settings: before a trajectory starts the app shows the robot, its recorded points, the speed and who has it reserved (a robot reserved by someone else says the server will refuse the command). A robot that is already playing is not asked again. The choice is kept.
+- **Who connects to the server:** a Connections button in the access panel opens a simple list of the apps the server has seen (kind, user, version, local network or from outside, the sessions open now, the sign-ins that worked or were refused, how long ago) and the latest sign-ins, refused sign-ins, sign-outs and ended sessions, read from the connection routes of the server. An administrator sees every entry and any other account only its own; no password or token is in either list, and an address appears only if the server was told to keep it. It says so plainly when the server is too old to offer them.
+- **Access options of the server in Settings (administrators only):** an entry of Settings opens nine switches read from the server configuration: the health route without a sign-in, the announcement of the global stop, keeping the address of each client in the history of connections, the camera pictures without a ticket, a token in the WebSocket address, the blanking of secrets in the log, the signature of a spoken confirmation, the password of an IP camera handed over through the environment of its process and TLS switched on by a new installation. Each shows where its value comes from (default, saved from a screen, or fixed by the environment of the server, which locks it), only what changed is sent, every change that lowers the protection asks first, and a server that does not offer an option does not show it.
 - **Camera** (`lib/ui/camera_screen.dart`, `lib/ui/widgets/mjpeg_view.dart`) - a small hand-rolled MJPEG stream parser (no third-party package), a clear "Camera Disabled" state instead of a silently blank feed, and a switch to turn a robot's vision system on/off directly from the server (`server.ts`'s `"vision"` atomic command).
 - **3D View** (`lib/ui/three_d_screen.dart`) - embeds HYDRA-UMC-STUDIO's own real-time 3D viewport in a WebView (`?hideUI=true&robotId=#token=`), same approach as the Android app, for the same reason (gets the real, currently-shipping 3D scene for free). Falls back to an honest placeholder on platforms `webview_flutter` doesn't support (this repo's Windows desktop target, used for build verification).
 - **System metrics** (`lib/state/robot_view_model.dart`) - `GET /api/system/metrics` polled every 5s, same cadence as the other 2 clients, shown in the Dashboard.
@@ -147,7 +149,7 @@ flutter build ios --no-codesign  # a real iOS build; only on a Mac with Xcode
 
 ## 🧪 Testing
 
-261 automated tests run with `flutter test`. They need no hardware and nothing outside this machine.
+279 automated tests run with `flutter test`. They need no hardware and nothing outside this machine.
 
 The CI runs `HYDRA_UMC_CI=1 python tools/ci_validate.py`, which checks the manifest, the documents, the eight READMEs and the pictures.
 

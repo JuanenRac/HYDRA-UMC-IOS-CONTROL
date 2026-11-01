@@ -19,7 +19,7 @@ GPL-3.0-or-later - see LICENSE
   <img src="https://img.shields.io/badge/Framework-Flutter-02569B.svg" alt="Framework">
   <img src="https://img.shields.io/badge/Language-Dart-0175C2.svg" alt="Language">
   <img src="https://img.shields.io/badge/Platform-iOS-000000.svg" alt="Platform">
-  <img src="https://img.shields.io/badge/Tests-261%20passing-2ea44f.svg" alt="Tests">
+  <img src="https://img.shields.io/badge/Tests-279%20passing-2ea44f.svg" alt="Tests">
   <img src="https://img.shields.io/badge/Version-0.2.9-0f6cbd.svg" alt="Version">
   <img src="https://img.shields.io/badge/Maturity-functional-0F6CBD.svg" alt="Maturity">
 </p>
@@ -38,7 +38,7 @@ Una app Flutter (Dart) multiplataforma que controla un robot de la plataforma [H
 |---|---|
 | Versión | `0.2.9` |
 | Madurez | Funcional |
-| Tests | 261 (`flutter test`) |
+| Tests | 279 (`flutter test`) |
 | Tecnología | Flutter 3.x / Dart |
 | Destino | Un iPhone o iPad |
 | En hardware real | Todavía no: no consta ninguna ejecución en hardware real para esta versión |
@@ -54,7 +54,7 @@ Cada línea es una parte de este repositorio y la luz dice hasta dónde llega ho
 | Área | Estado | Qué significa aquí |
 |---|---|---|
 | Software | 🟡 | Funciona para su propósito principal; la comprobación de honestidad de arriba lista lo que aún falta |
-| Pruebas | 🟢 | 261 pruebas automáticas, ejecutadas en cada cambio |
+| Pruebas | 🟢 | 279 pruebas automáticas, ejecutadas en cada cambio |
 | Hardware real | 🔴 | Todavía no: no consta ninguna ejecución en hardware real para esta versión |
 | Documentación | 🟢 | README en ocho idiomas, comprobado contra el manifiesto en cada cambio |
 
@@ -90,6 +90,8 @@ Esta app tiene como objetivo iOS/iPadOS, pero está construida en **Flutter** en
 - **Reservas y límites de seguridad** (`lib/ui/widgets/access_panel.dart`, `lib/models/access.dart`, `lib/network/hydra_api_client.dart`, `lib/state/robot_view_model.dart`) - La pantalla de Control muestra quién tiene el robot seleccionado (nadie, este dispositivo, la misma cuenta en otro dispositivo u otra cuenta) y ofrece **Reservar** y **Liberar**, además de la lista de todas las reservas del servidor (`GET /api/claims`). El dispositivo guarda un identificador de controlador por instalación y lo envía con cada reserva, liberación, armado del jog y comando (en el cuerpo y en la cabecera `X-Controller-Id`), de modo que la reserva pertenece a la cuenta y a este dispositivo, no a toda la cuenta. Las negativas del servidor se distinguen: reservado por otra cuenta, por tu cuenta en otro dispositivo o ventana, falta el identificador de controlador y jog sin armar. Los límites del modelo del robot se leen de `GET /api/safety-limits`: un paso de jog por encima del límite no se envía y se muestran los avisos del servidor. Cuando el administrador lo exige, hay que pulsar **Armar jog** (con cuenta atrás) antes de que el joystick mueva el robot; el armado termina solo, con STOP o al liberar. Las reservas son opcionales: un robot que nadie reservó se controla como antes. Solo para un **administrador**, aparece un botón **Tomar el control** sobre un robot que tiene otra persona; pide confirmación y luego reserva el robot con `force: true` (el servidor solo lo admite de administradores y vuelve a comprobar el rol). Las escrituras son condicionales: cada una lleva la revisión del robot que esta app vio por última vez (`If-Match`, `lib/models/contract_v2.dart`) y, si otra persona cambió el robot entretanto, el servidor responde 412, no se aplica nada, el robot se vuelve a leer y el mensaje lo dice (Estándar comprueba reservas, mesa y comandos puntuales; Estricto comprueba todo salvo STOP; Desactivado no comprueba nada; la elección está en la lista de reservas; STOP nunca se comprueba). El jog de la mesa XY es un único comando atómico `table` (un servidor antiguo recibe los jogs que entiende), el servidor empuja las reservas por el WebSocket para que la pantalla Control deje de consultar mientras llegan, y los administradores leen el registro de auditoría (`lib/ui/widgets/audit_dialog.dart`) con su cadena SHA-256 verificada dos veces, por el servidor y en el dispositivo, y pueden copiar sus líneas como `.jsonl`.
 - **Interruptores opcionales** - dos interruptores, ambos apagados por defecto: *Bloquear órdenes con datos guardados* (Ajustes) retiene toda orden salvo el STOP mientras la pantalla muestra la copia guardada del estado de los robots y no el estado real, y *No explorar redes de datos móviles ni VPN* (pantalla de acceso) deja esas interfaces fuera del barrido de la subred. Los botones del D-pad de jog miden al menos 44 pt y VoiceOver los anuncia con su eje y dirección; la imagen de la cámara se cierra mientras la app está en segundo plano.
 - **Preguntar antes de PLAY** - activado por defecto, se desactiva en Ajustes: antes de empezar una trayectoria la app muestra el robot, sus puntos grabados, la velocidad y quién lo tiene reservado (un robot reservado por otra persona avisa de que el servidor rechazará la orden). Un robot que ya está reproduciendo no vuelve a preguntar. La elección se conserva.
+- **Quién se conecta al servidor:** un botón Conexiones del panel de acceso abre una lista sencilla de las apps que el servidor ha visto (tipo, usuario, versión, red local o desde fuera, las sesiones abiertas ahora, las entradas que funcionaron o fueron rechazadas, hace cuánto) y las últimas entradas, entradas rechazadas, salidas y sesiones terminadas, leídas de las rutas de conexiones del servidor. Un administrador ve todas las entradas y cualquier otra cuenta solo las suyas; ninguna lista lleva contraseñas ni tokens y una dirección solo aparece si se indicó al servidor que la guardara. Lo dice con claridad cuando el servidor es demasiado antiguo para ofrecerlas.
+- **Opciones de acceso del servidor en Ajustes (solo administradores):** una entrada de Ajustes abre nueve interruptores leídos de la configuración del servidor: la ruta de salud sin iniciar sesión, el anuncio de la parada global, guardar la dirección de cada cliente en el historial de conexiones, las imágenes de cámara sin ticket, un token en la dirección del WebSocket, el ocultado de secretos en el registro, la firma de una confirmación hablada, la contraseña de una cámara IP entregada por el entorno de su proceso y TLS activado por una instalación nueva. Cada uno muestra de dónde viene su valor (por defecto, guardado desde una pantalla o fijado por el entorno del servidor, que lo bloquea), solo se envía lo que cambió, todo cambio que baja la protección pregunta antes y un servidor que no ofrece una opción no la muestra.
 - **Cámara** (`lib/ui/camera_screen.dart`, `lib/ui/widgets/mjpeg_view.dart`) - un pequeño analizador de stream MJPEG hecho a mano (sin paquete de terceros), un estado claro de "Camera Disabled" en vez de una imagen en blanco silenciosa, y un interruptor para activar/desactivar el sistema de visión de un robot directamente desde el servidor (el comando atómico `"vision"` propio de `server.ts`).
 - **Vista 3D** (`lib/ui/three_d_screen.dart`) - embebe el propio viewport 3D en tiempo real de HYDRA-UMC-STUDIO en un WebView (`?hideUI=true&robotId=#token=`), el mismo enfoque que la app de Android, por la misma razón (obtiene gratis la escena 3D real, actualmente en producción). Recae en un placeholder honesto en plataformas que `webview_flutter` no soporta (el target de escritorio Windows de este repositorio, usado para verificación de build).
 - **Métricas del sistema** (`lib/state/robot_view_model.dart`) - `GET /api/system/metrics` consultado cada 5s, la misma cadencia que los otros 2 clientes, mostrado en el Dashboard.
@@ -147,7 +149,7 @@ flutter build ios --no-codesign  # a real iOS build; only on a Mac with Xcode
 
 ## 🧪 Pruebas
 
-261 pruebas automáticas se ejecutan con `flutter test`. No necesitan hardware ni nada fuera de esta máquina.
+279 pruebas automáticas se ejecutan con `flutter test`. No necesitan hardware ni nada fuera de esta máquina.
 
 El CI ejecuta `HYDRA_UMC_CI=1 python tools/ci_validate.py`, que comprueba el manifiesto, los documentos, los ocho README y las imágenes.
 
