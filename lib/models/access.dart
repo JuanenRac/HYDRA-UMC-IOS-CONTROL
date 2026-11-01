@@ -91,6 +91,19 @@ ClaimStanding claimStanding(ClaimInfo? claim, String myUsername, String myContro
   return ClaimStanding.mineElsewhere;
 }
 
+/// How long before a reservation ends this app asks for it again (the server's default reservation is five minutes, so
+/// this is a little under half of it).
+const int claimRenewBeforeMs = 120000;
+
+/// Whether the reservation [claim] of this installation should be asked for again now: it is held here and has less than
+/// [renewBeforeMs] left ([nowMs] is this device's clock, the one the server's expiry is compared with). Asking again for a
+/// reservation one already holds only extends it; a reservation that already ended is not brought back this way.
+bool claimNeedsRenewal(ClaimInfo? claim, ClaimStanding standing, int nowMs, {int renewBeforeMs = claimRenewBeforeMs}) {
+  if (claim == null || standing != ClaimStanding.mineHere) return false;
+  final left = claim.expiresAt - nowMs;
+  return left > 0 && left <= renewBeforeMs;
+}
+
 /// The role the session token carries (`admin` or `operator`), or null when it cannot be read. The server
 /// checks the role again on every request; this only decides whether the take-over button is shown.
 String? jwtRole(String? token) {

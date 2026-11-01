@@ -28,6 +28,7 @@ import '../models/assistant_reply.dart';
 import '../models/connection_history.dart';
 import '../models/contract_v2.dart';
 import '../models/hydra_state.dart';
+import '../models/robot_command_contract.dart';
 import '../models/server_info.dart';
 import '../models/server_security.dart';
 import '../models/stop_all_result.dart';
@@ -45,6 +46,7 @@ import '../network/client_prefs.dart';
 import '../network/state_cache.dart';
 import '../network/tls_settings.dart';
 import 'hydra_error.dart';
+import 'robot_command_repository.dart';
 
 class SystemMetrics {
   final int cpuLoad;
@@ -154,7 +156,7 @@ class RobotViewModel extends ChangeNotifier {
   // command name so debouncing 'speed' can never coalesce away or delay an
   // unrelated command (e.g. a jog or E-STOP) that happens to fire during
   // the same debounce window.
-  final Map<String, Timer> _debounceTimers = {};
+  // (the timers live in [commands], keyed by command name)
 
   // Per-robot generation counter guarding _sendAtomicCommand()'s own
   // rollback-on-failure below. A held jog button (joystick_pad.dart's
@@ -170,7 +172,7 @@ class RobotViewModel extends ChangeNotifier {
   // Jog commands on the wire, per robot. A held button repeats every 150 ms;
   // on a slow link the POSTs used to pile up and still be applied after the
   // button was released. While one is in flight the next tick is dropped.
-  final Map<dynamic, int> _jogsInFlight = {};
+  // (counted in [commands])
 
   // One session renewal at a time, however many requests and socket events
   // notice the expired token together: the refresh token is single-use, so a
@@ -188,7 +190,11 @@ class RobotViewModel extends ChangeNotifier {
   HydraError? lastError;
   String connectionStatus = 'disconnected';
   dynamic selectedRobotId;
-  SystemMetrics? metrics;
+  /// The last reading of the server's load, listened to by the one widget that shows it: a reading every few seconds
+  /// must not rebuild every screen that watches the view model.
+  final ValueNotifier<SystemMetrics?> metricsListenable = ValueNotifier<SystemMetrics?>(null);
+
+  SystemMetrics? get metrics => metricsListenable.value;
 
   // `state` shown on screen came from network/state_cache.dart's own
   // persisted last-known tree, not yet from a real, live response - see
@@ -514,6 +520,11 @@ class RobotViewModel extends ChangeNotifier {
   }
 
   void logout() {
+    // The robots this installation holds are released with the session, not left reserved until they expire.
+    final held = [
+      for (final claim in claims)
+        if (claimStanding(claim, _myUsername ?? activeServer?.username ?? '', controllerId) == ClaimStanding.mineHere) claim.robotId,
+    ];
     _myUsername = null;
     claims = const [];
     safetyByRobot.clear();
@@ -526,16 +537,17 @@ class RobotViewModel extends ChangeNotifier {
     _stateCacheTimer?.cancel();
     // A pending debounced command (a speed change) would otherwise be sent
     // after sign-out, with no token, and answer with a 401.
-    for (final timer in _debounceTimers.values) {
-      timer.cancel();
-    }
-    _debounceTimers.clear();
-    _jogsInFlight.clear();
+    commands.reset();
     stopAllResult = null;
     stopAllUnconfirmed = false;
     // Clear the bearer token from the live apiClient too, not just from
     // persisted storage.
     final client = apiClient;
+    if (client != null) {
+      for (final id in held) {
+        unawaited(client.postRelease(id).catchError((Object _) => <String, dynamic>{}));
+      }
+    }
     final pushToken = _pushToken;
     _pushToken = null;
     pushState = PushState.off;
@@ -782,14 +794,13 @@ class RobotViewModel extends ChangeNotifier {
         // Carries the bearer token: a server run with
         // HYDRA_UMC_INFO_AUTH=required answers 401 to the open read.
         final m = await client.getSystemMetrics();
-        metrics = SystemMetrics(
+        metricsListenable.value = SystemMetrics(
           cpuLoad: _asInt(m['cpu_load']),
           memoryUsage: _asInt(m['memory_usage']),
           temp: m['temp'] is num ? (m['temp'] as num).toDouble() : 0.0,
           uptime: _asInt(m['uptime']),
           tempIsReal: m['temp_is_real'] != false,
         );
-        notifyListeners();
       } catch (_) {
         // best-effort background poll - a miss doesn't clear the last known reading
       }
@@ -1033,14 +1044,14 @@ class RobotViewModel extends ChangeNotifier {
       }
     }
 
-    final isStop = command == 'stop';
-    final isJog = command == 'jog' || command == 'table';
+    final isStop = command == RobotCommandContract.stop;
+    final isJog = command == RobotCommandContract.jog || command == RobotCommandContract.table;
 
     Future<void> send() async {
-      if (isJog) _jogsInFlight[robotId] = (_jogsInFlight[robotId] ?? 0) + 1;
+      if (isJog) commands.jogStarted(robotId);
       try {
-        final answer = await _postCommandConditionally(robotId, command, payload);
-        final warnings = _commandWarnings(answer);
+        final answer = await commands.send(robotId, command, payload, _postCommand);
+        final warnings = RobotCommandRepository.warningsOf(answer);
         if (warnings != null) {
           // The server answered 200 but applied nothing (a speed outside its
           // range, a malformed jog): the same as a failure.
@@ -1076,14 +1087,7 @@ class RobotViewModel extends ChangeNotifier {
         }
         notifyListeners();
       } finally {
-        if (isJog) {
-          final left = (_jogsInFlight[robotId] ?? 1) - 1;
-          if (left <= 0) {
-            _jogsInFlight.remove(robotId);
-          } else {
-            _jogsInFlight[robotId] = left;
-          }
-        }
+        if (isJog) commands.jogEnded(robotId);
       }
     }
 
@@ -1092,43 +1096,25 @@ class RobotViewModel extends ChangeNotifier {
     // command name, then schedule a new one after `debounce` - a rapid
     // burst of calls for the same command (e.g. every Slider drag frame)
     // collapses into exactly one real POST once the drag settles.
-    _debounceTimers.remove(command)?.cancel();
-    if (debounce > Duration.zero) {
-      _debounceTimers[command] = Timer(debounce, send);
-    } else {
-      await send();
-    }
+    await commands.debounce(command, debounce, send);
   }
 
-  // A STOP is posted with short timeouts and, when nobody answers (a network
-  // failure, not a refusal), sent again up to 3 times in about a second. An
-  // answer from the server, of any kind, is final.
-  Future<Map<String, dynamic>> _postWithRetry(
+  /// How one command reaches the server: through [_authed], so an expired session is renewed once and the write repeated.
+  /// A stop goes out with short timeouts.
+  Future<Map<String, dynamic>> _postCommand(
     dynamic robotId,
     Map<String, dynamic> payload, {
     required bool urgent,
     String? ifMatch,
-  }) async {
-    var attempt = 0;
-    while (true) {
-      try {
-        return await _authed(
-          (c) => c.postRobotCommand(
-            robotId,
-            payload,
-            timeout: urgent ? const Duration(seconds: 2) : const Duration(seconds: 5),
-            ifMatch: ifMatch,
-          ),
-        );
-      } on HydraApiException {
-        rethrow; // the server answered: not a delivery problem
-      } catch (_) {
-        if (!urgent || attempt >= 2) rethrow;
-      }
-      attempt++;
-      await Future<void>.delayed(const Duration(milliseconds: 250));
-    }
-  }
+  }) =>
+      _authed(
+        (c) => c.postRobotCommand(
+          robotId,
+          payload,
+          timeout: urgent ? const Duration(seconds: 2) : const Duration(seconds: 5),
+          ifMatch: ifMatch,
+        ),
+      );
 
   // Conditional writes (contract v2, block 2): every write carries the revision of the robot this app last saw
   // (If-Match), and the server refuses it with 412 when the robot changed in between.
@@ -1136,11 +1122,11 @@ class RobotViewModel extends ChangeNotifier {
   /// Which writes are checked (chosen in the list of reservations); the standard mode by default.
   ConditionalMode conditionalMode = ConditionalMode.standard;
 
-  /// The last revision seen of each robot.
-  late final RevisionTracker revisions = RevisionTracker(() => conditionalMode);
+  /// Sends every robot command: revisions, retry of a stop, `table` fallback, jogs on the wire, debounce and timings.
+  late final RobotCommandRepository commands = RobotCommandRepository(conditionalMode: () => conditionalMode);
 
-  // Whether the server was last seen to understand the `table` command (true until it says otherwise).
-  bool _tableCommandSupported = true;
+  /// The last revision seen of each robot.
+  RevisionTracker get revisions => commands.revisions;
 
   /// When the server last pushed the reservations (this device's clock); null before the first push.
   DateTime? claimsPushedAt;
@@ -1150,52 +1136,6 @@ class RobotViewModel extends ChangeNotifier {
     conditionalMode = mode;
     notifyListeners();
     await _clientPrefs.saveConditionalMode(mode.key);
-  }
-
-  /// Runs one write with the revision this app last saw of the robot as If-Match (never for STOP, and only when the
-  /// mode and the tracker allow it), keeps the revision of the answer for the next write, and on a 412 keeps the one
-  /// the server says the robot is at now. The failure is rethrown for the caller to report.
-  Future<Map<String, dynamic>> _withRevision(dynamic robotId, String command, Future<Map<String, dynamic>> Function(String? ifMatch) call) async {
-    final ticket = revisions.begin(robotId, command);
-    try {
-      final answer = await call(ticket.ifMatch);
-      revisions.finish(robotId, ticket.seq, revisionOf(answer));
-      return answer;
-    } catch (e) {
-      revisions.finish(robotId, ticket.seq, null);
-      if (e is HydraApiException && e.isRevisionMismatch) revisions.learn(robotId, e.revision);
-      rethrow;
-    }
-  }
-
-  /// Posts a command conditionally; a `table` move goes out as the jogs that did the same on a server that has no such command.
-  Future<Map<String, dynamic>> _postCommandConditionally(dynamic robotId, String command, Map<String, dynamic> payload) async {
-    final params = payload['params'];
-    final tableParamsMap = params is Map<String, dynamic> ? params : null;
-    if (command == 'table' && !_tableCommandSupported && tableParamsMap != null) {
-      return _postTableAsJogs(robotId, tableParamsMap);
-    }
-    try {
-      return await _withRevision(
-        robotId,
-        command,
-        (ifMatch) => _postWithRetry(robotId, payload, urgent: command == 'stop', ifMatch: ifMatch),
-      );
-    } on HydraApiException catch (e) {
-      if (command == 'table' && tableParamsMap != null && isUnknownCommandAnswer(e.statusCode, e.code, e.serverMessage)) {
-        _tableCommandSupported = false;
-        return _postTableAsJogs(robotId, tableParamsMap);
-      }
-      rethrow;
-    }
-  }
-
-  Future<Map<String, dynamic>> _postTableAsJogs(dynamic robotId, Map<String, dynamic> params) async {
-    Map<String, dynamic> last = {'success': true};
-    for (final jog in tableAsJogs(params)) {
-      last = await _postWithRetry(robotId, {'command': 'jog', 'params': jog}, urgent: false);
-    }
-    return last;
   }
 
   /// The id of the controller that holds [robotId] in the settings tree, or null.
@@ -1255,13 +1195,6 @@ class RobotViewModel extends ChangeNotifier {
   bool claimsArePushed([DateTime? now, Duration within = const Duration(seconds: 30)]) {
     final at = claimsPushedAt;
     return at != null && (now ?? DateTime.now()).difference(at) < within;
-  }
-
-  // The `warnings` of a 200 answer (the server applied nothing), joined; null when there are none.
-  String? _commandWarnings(Map<String, dynamic> answer) {
-    final warnings = answer['warnings'];
-    if (warnings is! List || warnings.isEmpty) return null;
-    return warnings.map((w) => w is Map && w['message'] is String ? w['message'] as String : '$w').join('; ');
   }
 
   // The user-facing error for a command that failed, by what the server said.
@@ -1562,11 +1495,34 @@ class RobotViewModel extends ChangeNotifier {
       }
     }
     notifyListeners();
+    if (robotId != null) unawaited(_renewOwnClaim(robotId));
+  }
+
+  bool _renewingClaim = false;
+
+  /// Keeps a reservation this installation holds alive while the Control screen is open (it polls this): asks for it again
+  /// when it is about to end, so a long session does not lose the robot in the middle of a move. Silent: a failure here
+  /// is shown by the next refresh as a reservation that ended, never as an error on the screen.
+  Future<void> _renewOwnClaim(dynamic robotId) async {
+    if (_renewingClaim || accessBusy || apiClient == null) return;
+    final claim = claimOf(robotId);
+    if (!claimNeedsRenewal(claim, claimStandingOf(robotId), DateTime.now().millisecondsSinceEpoch)) return;
+    _renewingClaim = true;
+    try {
+      await _authed((c) => commands.withRevision(robotId, 'claim', (ifMatch) => c.postClaim(robotId, ifMatch: ifMatch)));
+      claims = await _authed((c) => c.getClaims());
+      _logTelemetry('Reservation of robot $robotId renewed');
+      notifyListeners();
+    } catch (_) {
+      // the next poll shows where the reservation stands
+    } finally {
+      _renewingClaim = false;
+    }
   }
 
   /// Reserves the selected robot for this account on this installation.
   Future<void> claimSelectedRobot() =>
-      _runAccessRequest('claim', (c, id) => _withRevision(id, 'claim', (ifMatch) => c.postClaim(id, ifMatch: ifMatch)));
+      _runAccessRequest('claim', (c, id) => commands.withRevision(id, 'claim', (ifMatch) => c.postClaim(id, ifMatch: ifMatch)));
 
   /// Whether this session is an administrator's (the role in its token; the server checks it again).
   bool get isAdmin => jwtRole(apiClient?.authToken) == 'admin';
@@ -1583,7 +1539,7 @@ class RobotViewModel extends ChangeNotifier {
 
   /// Releases the selected robot's reservation. Also ends the arming of its jog, as the server does.
   Future<void> releaseSelectedRobot() => _runAccessRequest('release', (c, id) async {
-        final answer = await _withRevision(id, 'release', (ifMatch) => c.postRelease(id, ifMatch: ifMatch));
+        final answer = await commands.withRevision(id, 'release', (ifMatch) => c.postRelease(id, ifMatch: ifMatch));
         jogArmedUntil.remove(id);
         return answer;
       });
@@ -1895,7 +1851,7 @@ class RobotViewModel extends ChangeNotifier {
   bool jogBlocked([dynamic robotId]) {
     final id = robotId ?? selectedRobotId;
     if (id == null) return true;
-    if ((_jogsInFlight[id] ?? 0) > 0) return true;
+    if (commands.hasJogInFlight(id)) return true;
     final robot = state.robotById(id);
     if (robot == null) return true;
     return robot.isPlaying && !robot.isPaused;
@@ -2001,14 +1957,14 @@ class RobotViewModel extends ChangeNotifier {
     final r = selectedRobot;
     if (r == null) return;
     final newState = !((r.valves[index] ?? false) as bool);
-    _sendAtomicCommand('valve', params: {'index': index, 'state': newState}, localMutate: (r) => r.setValve(index, newState));
+    _sendAtomicCommand(RobotCommandContract.valve, params: {'index': index, 'state': newState}, localMutate: (r) => r.setValve(index, newState));
   }
 
   void togglePump(int index) {
     final r = selectedRobot;
     if (r == null) return;
     final newState = !((r.pumps[index] ?? false) as bool);
-    _sendAtomicCommand('pump', params: {'index': index, 'state': newState}, localMutate: (r) => r.setPump(index, newState));
+    _sendAtomicCommand(RobotCommandContract.pump, params: {'index': index, 'state': newState}, localMutate: (r) => r.setPump(index, newState));
   }
 
   /// Debounced (300ms, matching HYDRA-UMC-ANDROID-CONTROL's own setSpeed) -
@@ -2059,9 +2015,8 @@ class RobotViewModel extends ChangeNotifier {
     if (isBleScanning) unawaited(_bleScanner.stop());
     _metricsTimer?.cancel();
     _stateCacheTimer?.cancel();
-    for (final timer in _debounceTimers.values) {
-      timer.cancel();
-    }
+    commands.cancelAllPending();
+    metricsListenable.dispose();
     apiClient?.close();
     super.dispose();
   }

@@ -27,11 +27,14 @@ class DashboardScreen extends StatelessWidget {
     final vm = context.watch<RobotViewModel>();
     final l10n = AppLocalizations.of(context)!;
     final robots = vm.robots;
-    final metrics = vm.metrics;
 
     return Column(
       children: [
-        if (metrics != null) _MetricsBar(metrics: metrics),
+        // Only this bar listens to the reading that arrives every few seconds.
+        ValueListenableBuilder<SystemMetrics?>(
+          valueListenable: vm.metricsListenable,
+          builder: (context, metrics, _) => metrics == null ? const SizedBox.shrink() : _MetricsBar(metrics: metrics),
+        ),
         Expanded(
           child: robots.isEmpty
               ? Center(child: Text(l10n.controlNoRobots, style: const TextStyle(color: Colors.grey)))

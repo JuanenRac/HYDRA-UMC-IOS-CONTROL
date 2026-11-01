@@ -18,6 +18,7 @@ import 'package:provider/provider.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/hydra_state.dart';
+import '../models/robot_command_contract.dart';
 import '../models/access.dart';
 import '../state/robot_view_model.dart';
 import '../util/play_confirmation.dart';
@@ -203,8 +204,8 @@ class _ControlScreenState extends State<ControlScreen> {
             Expanded(
               child: Slider(
                 value: robot.speed.clamp(10, 500),
-                min: 10,
-                max: 500,
+                min: RobotCommandContract.speedMin,
+                max: RobotCommandContract.speedMax,
                 divisions: 49,
                 label: '${robot.speed.toStringAsFixed(0)}%',
                 onChanged: (v) => vm.setSpeed(v, robot.acceleration),
@@ -219,8 +220,8 @@ class _ControlScreenState extends State<ControlScreen> {
             Expanded(
               child: Slider(
                 value: robot.acceleration.clamp(10, 500),
-                min: 10,
-                max: 500,
+                min: RobotCommandContract.speedMin,
+                max: RobotCommandContract.speedMax,
                 divisions: 49,
                 label: '${robot.acceleration.toStringAsFixed(0)}%',
                 onChanged: (v) => vm.setSpeed(robot.speed, v),

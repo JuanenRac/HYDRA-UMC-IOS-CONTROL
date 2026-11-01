@@ -102,6 +102,7 @@ GPL-3.0-or-later - see LICENSE
 - **离线状态缓存**（`lib/network/state_cache.dart`）—— 最后一次已知的设置树会连同真实的保存时刻一起持久化到磁盘（1 秒防抖），这样在真正的 `connect()` 往返请求仍在进行时，仪表盘/控制界面会立即显示真实（即使可能已过时）的机器人数据，而不是空白状态。只要这种情况还成立，一个真实可见的提示条(而不是默默猜测)就会显示"正在显示 HH:mm 的缓存数据"。一旦真正的数据获取成功，就会被替换。
 - **遥测**（`lib/ui/telemetry_screen.dart`）—— 一个终端风格、最新在前的日志，记录真实的连接/登录/指令生命周期事件，最多保留 50 条，并提供清除日志的操作——与 HYDRA-UMC-ANDROID-CONTROL 自身的遥测标签页相同的"Matrix 绿"配色约定。
 - **应用内语音助手**（`lib/ui/voice_assistant_dialog.dart`）—— 应用栏中的麦克风图标会打开一个对话框，可输入问题或指令,通过与 HYDRA-UMC-ANDROID-CONTROL 自身应用内语音按钮及其手表中继相同的真实 `POST /api/voice/turn` 路由发送给 `HYDRA-UMC-VOICE-UI`。绝不上传音频——目前仅支持文本输入,因为 iOS 原生语音识别需要 Speech 框架,而这个仅限 Windows 的开发环境无法针对真实设备/Xcode 进行编译或验证。回复绝不会直接发出机器人指令。
+- **命令通道与预约维护**（`lib/state/robot_command_repository.dart`、`lib/models/robot_command_contract.dart`、`lib/models/access.dart`）- 与 HYDRA-UMC-ANDROID-CONTROL 相同的划分：视图模型之外的一个仓库保存每台机器人的修订号，无人应答时重发停止命令，对旧服务器把 `table` 移动改为点动发送，统计传输中的点动，合并连续命令并测量每次应答；命令名称和上限由 `tools/gen_command_contract.py` 从 `docs/robot_command_contract.json`（与 Android 文件完全相同的副本）生成，并由校验检查。控制界面打开期间，本设备持有的预约会在到期前不久重新申请，长时间操作不会丢失机器人；退出登录时释放本设备持有的预约。每隔几秒读取一次的服务器负载只会重绘显示它的那一条，而不是每个界面。测试中针对模拟服务器构建；未在 iPhone 上运行。
 
 ## 🔒 安全与防护
 

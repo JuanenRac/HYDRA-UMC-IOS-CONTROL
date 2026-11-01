@@ -21,6 +21,7 @@
 import 'dart:convert';
 
 import 'access.dart';
+import 'robot_command_contract.dart';
 import 'sha256.dart';
 
 // ---- conditional writes -----------------------------------------------------
@@ -47,7 +48,7 @@ enum ConditionalMode {
 }
 
 /// Commands sent many times a second while a control is held: a revision can not follow them.
-const Set<String> continuousCommands = {'jog', 'speed', 'jogStep'};
+const Set<String> continuousCommands = RobotCommandContract.continuous;
 
 /// Whether a command carries If-Match in a mode. Reservations are `claim` and `release`. STOP never does.
 bool isConditional(ConditionalMode mode, String command) {

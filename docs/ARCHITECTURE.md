@@ -105,6 +105,8 @@ so `discoverMdns()` failing quietly on an unentitled iOS build is expected
 behavior, not a bug - `scanSubnets()` keeps working independently either
 way.
 
+- **Command pipeline** (`lib/state/robot_command_repository.dart`, `lib/models/robot_command_contract.dart`): the same split as the Android app. The view model decides what a button means and shows the result; the repository keeps the revision (If-Match) of each robot, retries a stop when nobody answers, plays a `table` move as jogs on an older server, counts the jogs on the wire, debounces continuous commands and measures each answer. The command names and limits are generated from `docs/robot_command_contract.json`, identical to the Android file. A reservation this device holds is asked for again shortly before it ends while the Control screen is open, and released at sign-out.
+
 ## 3. Bluetooth transport - not built, and not planned until server-side support exists
 
 **Honesty note, matching the rest of this ecosystem's documentation

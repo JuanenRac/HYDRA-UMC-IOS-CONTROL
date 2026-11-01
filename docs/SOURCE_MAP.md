@@ -17,6 +17,7 @@ Every file of the repository with a line on what it does: the annotated tree tha
 │   │   ├── stop_all_result.dart    # answer of the global STOP, robot by robot
 │   │   ├── connection_history.dart # Who connects to the server: the clients seen and the history of sign-ins
 │   │   ├── server_security.dart   # The nine access options of the server an administrator can change
+│   │   ├── robot_command_contract.dart # Command names and limits, generated from docs/robot_command_contract.json (tools/gen_command_contract.py)
 │   │   ├── contract_v2.dart        # The server's second contract as pure rules: conditional writes by robot revision, the atomic table move and the audit record
 │   │   └── sha256.dart             # SHA-256 in plain Dart, for the chain check of the server's audit record
 │   ├── network/
@@ -34,6 +35,7 @@ Every file of the repository with a line on what it does: the annotated tree tha
 │   │   └── client_prefs.dart        # Small client-side preferences that are not secrets (today: the controller id of this installation)
 │   ├── state/
 │   │   ├── robot_view_model.dart    # Single ChangeNotifier every screen listens to
+│   │   ├── robot_command_repository.dart # Every robot write: revisions, retry of a stop, table fallback, jogs on the wire, debounce, timings
 │   │   └── hydra_error.dart         # Typed error surface for RobotViewModel (no BuildContext of its own)
 │   ├── l10n/                        # Real generated localizations (8 languages) - see l10n.yaml at repo root
 │   │   ├── app_*.arb                    # app_en.arb, app_es.arb, app_it.arb, app_fr.arb, app_de.arb, app_ja.arb, app_zh.arb, app_pt.arb: the phrases of each language (the generated classes below come from them)

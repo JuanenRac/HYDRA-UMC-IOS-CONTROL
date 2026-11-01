@@ -11,11 +11,13 @@
 // everything an earlier run sent.
 // =============================================================================
 
+import '../models/robot_command_contract.dart';
+
 class CommandSequence {
   CommandSequence._();
 
   /// The commands the server orders by number: the motion commands and the stop that must overtake them.
-  static const Set<String> _numbered = {'jog', 'table', 'joints', 'stop'};
+  static const Set<String> _numbered = {...RobotCommandContract.numbered, 'joints'};
 
   static int _last = 0;
 
