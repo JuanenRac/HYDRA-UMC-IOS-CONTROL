@@ -329,5 +329,9 @@
   "serverOptionsConfirmCameraCredentials": "A palavra-passe de uma câmara IP ficará na linha de comandos do seu processo, onde os outros utilizadores da máquina a podem ler.",
   "serverOptionsConfirmInstallTls": "Uma instalação nova deixa de ativar o TLS por si própria.",
 
-  "errStaleSequence": "Um comando de movimento mais recente deste telemóvel já tinha chegado ao robô, por isso o comando {command} NÃO foi aplicado, porque chegou fora de ordem. Repita-o se ainda o quiser."
+  "errStaleSequence": "Um comando de movimento mais recente deste telemóvel já tinha chegado ao robô, por isso o comando {command} NÃO foi aplicado, porque chegou fora de ordem. Repita-o se ainda o quiser.",
+
+  "errJogOutOfReach": "Este movimento está fora do alcance do robô: não foi enviado nada.",
+  "jogRotateLeft": "Rodar a base para a esquerda (J1)",
+  "jogRotateRight": "Rodar a base para a direita (J1)"
 }

@@ -359,5 +359,9 @@
   "serverOptionsConfirmInstallTls": "A new installation will no longer switch TLS on by itself.",
 
   "errStaleSequence": "A newer motion command from this phone had already reached the robot, so the {command} command was NOT applied because it arrived out of order. Repeat it if you still want it.",
-  "@errStaleSequence": {"placeholders": {"command": {"type": "String"}}}
+  "@errStaleSequence": {"placeholders": {"command": {"type": "String"}}},
+
+  "errJogOutOfReach": "That move is outside the robot's reach: nothing was sent.",
+  "jogRotateLeft": "Rotate the base left (J1)",
+  "jogRotateRight": "Rotate the base right (J1)"
 }

@@ -110,6 +110,53 @@ class JoystickPad extends StatelessWidget {
   }
 }
 
+/// The two buttons of the base rotation (J1), beside the jog pad: held, they repeat like the pad. [onRotate] gets
+/// +1 or -1 and the caller applies its own step.
+class BaseRotationButtons extends StatelessWidget {
+  final void Function(int direction) onRotate;
+  final bool enabled;
+
+  const BaseRotationButtons({super.key, required this.onRotate, this.enabled = true});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    const purple = Color(0xFFA855F7);
+    Widget button(IconData icon, int direction, String label) {
+      return SizedBox(
+        width: joystickMinButtonSize,
+        height: joystickMinButtonSize,
+        child: _RepeatButton(
+          label: label,
+          enabled: enabled,
+          onTick: () => onRotate(direction),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: purple.withValues(alpha: 0.6)),
+            ),
+            child: Icon(icon, color: purple, size: 18),
+          ),
+        ),
+      );
+    }
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        button(Icons.rotate_left, -1, l10n.jogRotateLeft),
+        const SizedBox(width: 8),
+        const ExcludeSemantics(
+          child: Text('J1', style: TextStyle(color: purple, fontWeight: FontWeight.w900, fontSize: 10)),
+        ),
+        const SizedBox(width: 8),
+        button(Icons.rotate_right, 1, l10n.jogRotateRight),
+      ],
+    );
+  }
+}
+
 class _RepeatButton extends StatefulWidget {
   final VoidCallback onTick;
   final Widget child;

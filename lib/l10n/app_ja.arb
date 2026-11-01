@@ -330,5 +330,9 @@
   "serverOptionsConfirmCameraCredentials": "IP カメラのパスワードが、同じマシンの他のユーザーが読めるプロセスのコマンドラインに載ります。",
   "serverOptionsConfirmInstallTls": "新規インストールは自動的に TLS を有効にしなくなります。",
 
-  "errStaleSequence": "このスマートフォンのより新しい動作コマンドがすでにロボットに届いていたため、順序が逆になった {command} コマンドは適用されませんでした。まだ必要な場合は、もう一度実行してください。"
+  "errStaleSequence": "このスマートフォンのより新しい動作コマンドがすでにロボットに届いていたため、順序が逆になった {command} コマンドは適用されませんでした。まだ必要な場合は、もう一度実行してください。",
+
+  "errJogOutOfReach": "この動きはロボットの可動範囲外です。何も送信されていません。",
+  "jogRotateLeft": "ベースを左に回転 (J1)",
+  "jogRotateRight": "ベースを右に回転 (J1)"
 }

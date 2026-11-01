@@ -122,6 +122,18 @@ class _ControlScreenState extends State<ControlScreen> {
                       vm.jogXYZ(_jogTarget, dx, dy, dz, robot.jogStepOr(_defaultJogStep, _jogSteps));
                     },
                   ),
+                  const SizedBox(height: 8),
+                  // The base rotation (J1) alone, next to the jog pad; the table has no J1.
+                  BaseRotationButtons(
+                    enabled: _jogTarget == 'robot' &&
+                        robot.online &&
+                        !(robot.isPlaying && !robot.isPaused) &&
+                        !vm.jogNeedsArming(robot.id, _now),
+                    onRotate: (direction) {
+                      HapticFeedback.selectionClick();
+                      vm.jogJ1(direction, robot.jogStepOr(_defaultJogStep, _jogSteps));
+                    },
+                  ),
                   const SizedBox(height: 16),
                   _speedAccelSliders(vm, robot, l10n),
                   const SizedBox(height: 16),

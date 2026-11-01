@@ -330,5 +330,9 @@
   "serverOptionsConfirmCameraCredentials": "Das Passwort einer IP-Kamera steht dann in der Befehlszeile ihres Prozesses, wo andere Benutzer des Rechners es lesen können.",
   "serverOptionsConfirmInstallTls": "Eine neue Installation schaltet TLS nicht mehr selbst ein.",
 
-  "errStaleSequence": "Ein neuerer Bewegungsbefehl dieses Telefons hatte den Roboter bereits erreicht, daher wurde der Befehl {command} NICHT angewendet, weil er außer der Reihe eintraf. Wiederholen Sie ihn, wenn Sie ihn noch möchten."
+  "errStaleSequence": "Ein neuerer Bewegungsbefehl dieses Telefons hatte den Roboter bereits erreicht, daher wurde der Befehl {command} NICHT angewendet, weil er außer der Reihe eintraf. Wiederholen Sie ihn, wenn Sie ihn noch möchten.",
+
+  "errJogOutOfReach": "Diese Bewegung liegt außerhalb der Reichweite des Roboters: Es wurde nichts gesendet.",
+  "jogRotateLeft": "Basis nach links drehen (J1)",
+  "jogRotateRight": "Basis nach rechts drehen (J1)"
 }

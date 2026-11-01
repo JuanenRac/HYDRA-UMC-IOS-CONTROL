@@ -330,5 +330,9 @@
   "serverOptionsConfirmCameraCredentials": "La password di una telecamera IP si troverà sulla riga di comando del suo processo, dove gli altri utenti della macchina possono leggerla.",
   "serverOptionsConfirmInstallTls": "Una nuova installazione non attiverà più TLS da sola.",
 
-  "errStaleSequence": "Un comando di movimento più recente di questo telefono aveva già raggiunto il robot, quindi il comando {command} NON è stato applicato perché è arrivato fuori ordine. Ripetilo se lo vuoi ancora."
+  "errStaleSequence": "Un comando di movimento più recente di questo telefono aveva già raggiunto il robot, quindi il comando {command} NON è stato applicato perché è arrivato fuori ordine. Ripetilo se lo vuoi ancora.",
+
+  "errJogOutOfReach": "Questo movimento è fuori dalla portata del robot: non è stato inviato alcun comando.",
+  "jogRotateLeft": "Ruota la base a sinistra (J1)",
+  "jogRotateRight": "Ruota la base a destra (J1)"
 }

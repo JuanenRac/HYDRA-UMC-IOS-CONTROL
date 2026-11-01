@@ -21,6 +21,7 @@ import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 
+import '../kinematics/parol6_kinematics.dart';
 import '../l10n/language_prefs.dart';
 import '../models/access.dart';
 import '../models/assistant_reply.dart';
@@ -1674,9 +1675,69 @@ class RobotViewModel extends ChangeNotifier {
   /// whole while the previous tick is still on the wire.
   void jogXYZ(String target, int dx, int dy, int dz, double step) {
     if (jogBlocked()) return;
+    final robot = selectedRobot;
+    if (target == 'robot' && robot != null && robot.model == parol6ModelName) {
+      // A Parol6 is jogged the way the studio does it: the combined move is resolved ONCE against the real kinematics
+      // of the arm and every axis command carries the same joints, instead of the generic formula of the server.
+      final x = robot.posAxis('x') + dx * step;
+      final y = robot.posAxis('y') + dy * step;
+      final z = robot.posAxis('z') + dz * step;
+      final joints = parol6CartesianToJointsOrNull(
+        x,
+        y,
+        z,
+        robot.posAxis('a'),
+        robot.posAxis('b'),
+        robot.posAxis('c'),
+      );
+      if (joints == null) {
+        // Out of reach: sending clamped joints next to a position that does not match them would store an incoherent
+        // pose on the server, so the jog is refused instead.
+        lastError = const HydraError(HydraErrorKind.jogOutOfReach);
+        notifyListeners();
+        return;
+      }
+      final jointsParam = {for (var i = 0; i < _jointNames.length; i++) _jointNames[i]: joints[i]};
+      for (final (axis, amount, value) in [('x', dx * step, x), ('y', dy * step, y), ('z', dz * step, z)]) {
+        if (amount == 0.0) continue;
+        _sendAtomicCommand(
+          'jog',
+          params: {'axis': axis, 'amount': amount, 'target': target, 'joints': jointsParam},
+          localMutate: (r) {
+            r.setPosAxis(axis, value);
+            for (var i = 0; i < _jointNames.length; i++) {
+              r.setJoint(_jointNames[i], joints[i]);
+            }
+          },
+        );
+      }
+      return;
+    }
     if (dx != 0) jog(target, 'x', dx * step);
     if (dy != 0) jog(target, 'y', dy * step);
     if (dz != 0) jog('robot', 'z', dz * step);
+  }
+
+  static const List<String> _jointNames = ['j1', 'j2', 'j3', 'j4', 'j5', 'j6'];
+
+  /// Rotates the base (J1) alone by one step in [direction] (+1 or -1). Pure joint space, so it needs no inverse
+  /// kinematics and works for every model; the limits are the real ones of a Parol6 and a generic [-180, 180] for the
+  /// others.
+  void jogJ1(int direction, double step) {
+    if (jogBlocked()) return;
+    final robot = selectedRobot;
+    if (robot == null) return;
+    final (lo, hi) = robot.model == parol6ModelName ? parol6JointLimitsDeg['j1']! : (-180.0, 180.0);
+    final current = robot.joint('j1');
+    final next = (current + direction * step).clamp(lo, hi).toDouble();
+    if (next == current) return; // already at a real limit: nothing is sent
+    final jointsParam = {for (final name in _jointNames) name: name == 'j1' ? next : robot.joint(name)};
+    // axis x with amount 0 changes nothing of the position: the desired state is the joints override.
+    _sendAtomicCommand(
+      'jog',
+      params: {'axis': 'x', 'amount': 0.0, 'target': 'robot', 'joints': jointsParam},
+      localMutate: (r) => r.setJoint('j1', next),
+    );
   }
 
   void jog(String target, String axis, double amount) {

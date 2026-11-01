@@ -121,6 +121,7 @@
       "code": [
         "lib/models/access.dart",
         "lib/models/contract_v2.dart",
+        "lib/kinematics/parol6_kinematics.dart",
         "lib/models/connection_history.dart",
         "lib/models/server_security.dart",
         "lib/util/play_confirmation.dart"

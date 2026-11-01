@@ -330,5 +330,9 @@
   "serverOptionsConfirmCameraCredentials": "La contraseña de una cámara IP quedará en la línea de órdenes de su proceso, donde otros usuarios de la máquina pueden leerla.",
   "serverOptionsConfirmInstallTls": "Una instalación nueva ya no activará TLS por sí sola.",
 
-  "errStaleSequence": "Un comando de movimiento más reciente de este teléfono ya había llegado al robot, así que el comando {command} NO se aplicó porque llegó fuera de orden. Repítelo si aún lo quieres."
+  "errStaleSequence": "Un comando de movimiento más reciente de este teléfono ya había llegado al robot, así que el comando {command} NO se aplicó porque llegó fuera de orden. Repítelo si aún lo quieres.",
+
+  "errJogOutOfReach": "Ese movimiento queda fuera del alcance del robot: no se ha enviado nada.",
+  "jogRotateLeft": "Girar la base a la izquierda (J1)",
+  "jogRotateRight": "Girar la base a la derecha (J1)"
 }
