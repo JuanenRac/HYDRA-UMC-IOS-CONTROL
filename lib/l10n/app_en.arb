@@ -391,5 +391,11 @@
   "bleTitle": "Bluetooth (experimental)",
   "bleIntro": "Reads the state of a HYDRA-UMC device nearby over Bluetooth LE. Experimental: tested against a simulated link, not against a real device. While connected this way the phone does not talk to the server.",
   "bleConnect": "Connect",
-  "bleDisconnect": "Disconnect"
+  "bleDisconnect": "Disconnect",
+  "pushTitle": "Notifications from the server",
+  "pushSubtitle": "Tells this phone when a job finishes or a global stop is issued. The server must have push notifications switched on.",
+  "pushDenied": "Notifications are not allowed for this app. Allow them in the iOS Settings.",
+  "pushServerOff": "This server has push notifications switched off.",
+  "pushFailed": "This phone could not be registered for notifications.",
+  "pushRegistered": "This phone is registered: the server will notify it."
 }

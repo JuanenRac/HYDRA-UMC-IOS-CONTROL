@@ -2,3 +2,5 @@
 "NSLocalNetworkUsageDescription" = "HYDRA-UMC Control si collega a un server HYDRA-UMC STUDIO della tua rete locale per controllare robot reali.";
 "NSFaceIDUsageDescription" = "HYDRA-UMC Control può usare Face ID per confermare che sei tu prima di riconnettersi a una sessione di server salvata.";
 "NSBluetoothAlwaysUsageDescription" = "HYDRA-UMC Control usa il Bluetooth per leggere lo stato di un dispositivo HYDRA-UMC vicino.";
+"ShortcutGlobalStopTitle" = "Arresto globale";
+"ShortcutGlobalStopDescription" = "Ferma tutti i robot del server HYDRA-UMC.";

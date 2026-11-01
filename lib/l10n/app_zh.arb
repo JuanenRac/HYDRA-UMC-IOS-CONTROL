@@ -361,5 +361,11 @@
   "bleTitle": "蓝牙（实验性）",
   "bleIntro": "通过蓝牙 LE 读取附近 HYDRA-UMC 设备的状态。实验性功能：已用模拟链路测试，未用真实设备测试。以这种方式连接时，手机不会与服务器通信。",
   "bleConnect": "连接",
-  "bleDisconnect": "断开"
+  "bleDisconnect": "断开",
+  "pushTitle": "来自服务器的通知",
+  "pushSubtitle": "作业完成或发出全局停止时通知此手机。服务器必须已开启推送通知。",
+  "pushDenied": "此应用未获通知权限。请在 iOS 设置中允许。",
+  "pushServerOff": "此服务器已关闭推送通知。",
+  "pushFailed": "无法为通知登记此手机。",
+  "pushRegistered": "此手机已登记:服务器会通知它。"
 }

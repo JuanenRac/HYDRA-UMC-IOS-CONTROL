@@ -2,3 +2,5 @@
 "NSLocalNetworkUsageDescription" = "HYDRA-UMC Control 会连接本地网络中的 HYDRA-UMC STUDIO 服务器，以控制真实的机器人。";
 "NSFaceIDUsageDescription" = "HYDRA-UMC Control 可以在重新连接已保存的服务器会话之前使用 Face ID 确认是您本人。";
 "NSBluetoothAlwaysUsageDescription" = "HYDRA-UMC Control 使用蓝牙读取附近 HYDRA-UMC 设备的状态。";
+"ShortcutGlobalStopTitle" = "全局停止";
+"ShortcutGlobalStopDescription" = "停止 HYDRA-UMC 服务器的所有机器人。";

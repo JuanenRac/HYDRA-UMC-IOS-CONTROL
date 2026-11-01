@@ -36,6 +36,8 @@ import '../network/ble_contract.dart';
 import '../network/ble_gatt.dart';
 import '../network/ble_gatt_fbp.dart';
 import '../network/hydra_ble_client.dart';
+import '../network/push_bridge.dart';
+import '../network/shortcut_bridge.dart';
 import '../network/biometric_helper.dart';
 import '../network/hydra_api_client.dart';
 import '../network/hydra_websocket.dart';
@@ -62,6 +64,9 @@ class SystemMetrics {
   });
 }
 
+/// What became of the registration of this phone for push notifications.
+enum PushState { off, registering, registered, denied, serverOff, failed }
+
 /// Why the audit record could not be read, for the sentence the screen shows.
 enum AuditFailure { forbidden, unavailable, session, network, other }
 
@@ -69,11 +74,15 @@ class RobotViewModel extends ChangeNotifier {
   // injectable so login / _attemptTokenRefresh / logout get real
   // test coverage against a fake AuthPrefs backed by a fake SecureTokenBackend,
   // the same pattern HYDRA-UMC-DSI's own RobotViewModel already uses.
-  RobotViewModel({AuthPrefs? authPrefs, BleScanner? bleScanner, BleGattConnector? bleConnector})
+  RobotViewModel({AuthPrefs? authPrefs, BleScanner? bleScanner, BleGattConnector? bleConnector, PushBridge? pushBridge, ShortcutBridge? shortcutBridge})
       : _authPrefs = authPrefs ?? AuthPrefs(),
+        _push = pushBridge ?? MethodChannelPushBridge(),
+        _shortcuts = shortcutBridge ?? MethodChannelShortcutBridge(),
         _bleScanner = bleScanner ?? FbpBleScanner(),
         _bleConnector = bleConnector ?? const FbpBleGattConnector();
 
+  final PushBridge _push;
+  final ShortcutBridge _shortcuts;
   final BleScanner _bleScanner;
   final BleGattConnector _bleConnector;
 
@@ -259,6 +268,7 @@ class RobotViewModel extends ChangeNotifier {
   Future<void> init({bool purgeStaleKeychain = false}) async {
     if (purgeStaleKeychain) await _authPrefs.purgeStaleKeychainOnFirstRun();
     languageOverride = await _languagePrefs.loadLocale();
+    _listenToShortcuts();
     // Real, if possibly stale, robot data on screen immediately rather than
     // an empty Dashboard/Control while the live connect() round-trip below
     // is still in flight - genuinely useful right after the phone comes
@@ -268,6 +278,7 @@ class RobotViewModel extends ChangeNotifier {
     TlsSettingsStore.current = tlsSettings;
     blockCommandsOnSavedData = await _clientPrefs.loadBlockCommandsOnSavedData();
     confirmPlay = await _clientPrefs.loadConfirmPlay();
+    pushNotifications = await _clientPrefs.loadPushNotifications();
     // The controller id of this installation: made once, kept, and adopted here.
     conditionalMode = ConditionalMode.fromKey(await _clientPrefs.loadConditionalMode());
     final storedControllerId = await _clientPrefs.loadControllerId();
@@ -373,6 +384,73 @@ class RobotViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ---- Push notifications ----
+  // The person turns them on in Settings (it needs their permission); the phone then registers its device token with the
+  // server, which sends a notification when a job finishes or a global stop is issued. Off on the server by default.
+
+  /// Whether the person wants push notifications from the server.
+  bool pushNotifications = false;
+
+  /// What became of the last attempt to register this phone with the server.
+  PushState pushState = PushState.off;
+  String? _pushToken;
+
+  Future<void> setPushNotifications(bool value) async {
+    pushNotifications = value;
+    await _clientPrefs.savePushNotifications(value);
+    if (value) {
+      await syncPushRegistration();
+    } else {
+      final client = apiClient;
+      final token = _pushToken;
+      _pushToken = null;
+      pushState = PushState.off;
+      notifyListeners();
+      if (client != null && token != null) {
+        try {
+          await client.deletePushDevice(token);
+        } catch (_) {
+          // The server forgets a dead token by itself.
+        }
+      }
+      await _push.unregister();
+    }
+  }
+
+  /// Registers this phone with the server when the person wants push notifications. Never raises an error on the
+  /// screen: the outcome is left in [pushState].
+  Future<void> syncPushRegistration() async {
+    final client = apiClient;
+    if (!pushNotifications || client == null || !isLoggedIn) return;
+    pushState = PushState.registering;
+    notifyListeners();
+    try {
+      if (!await _push.requestPermission()) {
+        pushState = PushState.denied;
+      } else {
+        final token = await _push.deviceToken();
+        if (token == null) {
+          pushState = PushState.failed;
+        } else {
+          final language = (languageOverride ?? PlatformDispatcher.instance.locale).languageCode;
+          await client.postPushDevice(token, language);
+          _pushToken = token;
+          pushState = PushState.registered;
+        }
+      }
+    } on HydraApiException catch (e) {
+      if (e.isNotFound) {
+        pushState = PushState.serverOff;
+      } else {
+        pushState = PushState.failed;
+        if (e.isSessionProblem) _forceLogout();
+      }
+    } catch (_) {
+      pushState = PushState.failed;
+    }
+    notifyListeners();
+  }
+
   Future<void> setConfirmPlay(bool value) async {
     confirmPlay = value;
     await _clientPrefs.saveConfirmPlay(value);
@@ -443,7 +521,7 @@ class RobotViewModel extends ChangeNotifier {
     isLoggedIn = false;
     _ws?.disconnect();
     _bleClient?.disconnect();
-    unawaited(_bleScanner.stop());
+    if (isBleScanning) unawaited(_bleScanner.stop());
     _metricsTimer?.cancel();
     _stateCacheTimer?.cancel();
     // A pending debounced command (a speed change) would otherwise be sent
@@ -458,6 +536,13 @@ class RobotViewModel extends ChangeNotifier {
     // Clear the bearer token from the live apiClient too, not just from
     // persisted storage.
     final client = apiClient;
+    final pushToken = _pushToken;
+    _pushToken = null;
+    pushState = PushState.off;
+    if (client != null && pushToken != null) {
+      // Before the bearer token is cleared: this phone must not keep receiving what this account is told.
+      unawaited(client.deletePushDevice(pushToken).catchError((Object _) {}));
+    }
     client?.authToken = null;
     _pendingLogout = _finishLogout(client);
     notifyListeners();
@@ -688,6 +773,9 @@ class RobotViewModel extends ChangeNotifier {
   static int _asInt(dynamic v) => v is num ? v.toInt() : 0;
 
   void _startMetricsLoop(HydraApiClient client) {
+    unawaited(syncPushRegistration());
+    _listenToShortcuts();
+    unawaited(_flushShortcutStop());
     _metricsTimer?.cancel();
     _metricsTimer = Timer.periodic(const Duration(seconds: 5), (_) async {
       try {
@@ -1253,6 +1341,41 @@ class RobotViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ---- The global stop asked for by a system shortcut ----
+  // The Shortcuts app, Siri, the Action button and the quick action of the icon leave a request (ios/Runner/
+  // GlobalStopShortcut.swift). It is served with the very same stopAll() the STOP button uses; one that cannot go out yet
+  // (not signed in, waiting for the biometric prompt) waits one minute for the session and is dropped after that.
+  DateTime? _pendingShortcutStopAt;
+  bool _shortcutListening = false;
+
+  /// How long a request of a shortcut waits for a session.
+  static const Duration shortcutStopMaxAge = Duration(seconds: 60);
+
+  void _listenToShortcuts() {
+    if (_shortcutListening) return;
+    _shortcutListening = true;
+    _shortcuts.onGlobalStopRequested(() => unawaited(serveShortcutStop()));
+    unawaited(serveShortcutStop());
+  }
+
+  /// Picks up the request of a shortcut, if one is waiting, and serves it or keeps it for the session.
+  Future<void> serveShortcutStop() async {
+    if (await _shortcuts.takeGlobalStop()) _pendingShortcutStopAt = DateTime.now();
+    await _flushShortcutStop();
+  }
+
+  Future<void> _flushShortcutStop() async {
+    final at = _pendingShortcutStopAt;
+    if (at == null) return;
+    if (DateTime.now().difference(at) > shortcutStopMaxAge) {
+      _pendingShortcutStopAt = null;
+      return;
+    }
+    if (!isLoggedIn || apiClient == null || needsBiometricUnlock) return;
+    _pendingShortcutStopAt = null;
+    await stopAll();
+  }
+
   /// Stops every robot at once. Never throws.
   Future<void> stopAll() async {
     _stopAllInFlight++;
@@ -1612,7 +1735,7 @@ class RobotViewModel extends ChangeNotifier {
   /// Connects to a device over Bluetooth LE. Like the Android app it replaces the Wi-Fi link: the state comes from the
   /// device and this phone does not talk to the server meanwhile.
   void connectBle(BleDevice device) {
-    unawaited(_bleScanner.stop());
+    if (isBleScanning) unawaited(_bleScanner.stop());
     isBleScanning = false;
     _ws?.disconnect();
     _bleClient?.disconnect();
@@ -1933,7 +2056,7 @@ class RobotViewModel extends ChangeNotifier {
     _disposed = true;
     _ws?.disconnect();
     _bleClient?.disconnect();
-    unawaited(_bleScanner.stop());
+    if (isBleScanning) unawaited(_bleScanner.stop());
     _metricsTimer?.cancel();
     _stateCacheTimer?.cancel();
     for (final timer in _debounceTimers.values) {

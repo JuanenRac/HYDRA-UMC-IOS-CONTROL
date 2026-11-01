@@ -21,7 +21,7 @@ void main() {
       final file = File('ios/Runner/$language.lproj/InfoPlist.strings');
       expect(file.existsSync(), isTrue, reason: 'ios/Runner/$language.lproj/InfoPlist.strings');
       final text = file.readAsStringSync();
-      for (final key in ['NSLocalNetworkUsageDescription', 'NSFaceIDUsageDescription', 'NSBluetoothAlwaysUsageDescription']) {
+      for (final key in ['NSLocalNetworkUsageDescription', 'NSFaceIDUsageDescription', 'NSBluetoothAlwaysUsageDescription', 'ShortcutGlobalStopTitle', 'ShortcutGlobalStopDescription']) {
         final match = RegExp('"$key" = "(.+)";').firstMatch(text);
         expect(match, isNotNull, reason: key);
         expect(match!.group(1)!.trim(), isNotEmpty);

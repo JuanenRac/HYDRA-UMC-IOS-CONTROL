@@ -19,7 +19,7 @@ GPL-3.0-or-later - see LICENSE
   <img src="https://img.shields.io/badge/Framework-Flutter-02569B.svg" alt="Framework">
   <img src="https://img.shields.io/badge/Language-Dart-0175C2.svg" alt="Language">
   <img src="https://img.shields.io/badge/Platform-iOS-000000.svg" alt="Platform">
-  <img src="https://img.shields.io/badge/Tests-313%20passing-2ea44f.svg" alt="Tests">
+  <img src="https://img.shields.io/badge/Tests-322%20passing-2ea44f.svg" alt="Tests">
   <img src="https://img.shields.io/badge/Version-0.2.9-0f6cbd.svg" alt="Version">
   <img src="https://img.shields.io/badge/Maturity-functional-0F6CBD.svg" alt="Maturity">
 </p>
@@ -38,7 +38,7 @@ Une application Flutter (Dart) multiplateforme qui contrôle un robot de la plat
 |---|---|
 | Version | `0.2.9` |
 | Maturité | Fonctionnel |
-| Tests | 313 (`flutter test`) |
+| Tests | 322 (`flutter test`) |
 | Technologie | Flutter 3.x / Dart |
 | Cible | Un iPhone ou un iPad |
 | Sur matériel réel | Pas encore : aucune exécution sur du matériel réel n'est consignée pour cette version |
@@ -54,7 +54,7 @@ Chaque ligne est une partie de ce dépôt et le feu dit où elle en est aujourd'
 | Domaine | État | Ce que cela veut dire ici |
 |---|---|---|
 | Logiciel | 🟡 | Fonctionne pour son usage principal ; la vérification d'honnêteté ci-dessus liste ce qui manque encore |
-| Tests | 🟢 | 313 tests automatiques, exécutés à chaque modification |
+| Tests | 🟢 | 322 tests automatiques, exécutés à chaque modification |
 | Matériel réel | 🔴 | Pas encore : aucune exécution sur du matériel réel n'est consignée pour cette version |
 | Documentation | 🟢 | README en huit langues, vérifié par rapport au manifeste à chaque modification |
 
@@ -93,6 +93,8 @@ Cette application cible iOS/iPadOS, mais elle est construite en **Flutter** plut
 - **Qui se connecte au serveur :** un bouton Connexions du panneau d'accès ouvre une liste simple des applications que le serveur a vues (type, utilisateur, version, réseau local ou extérieur, sessions ouvertes en ce moment, connexions réussies ou refusées, il y a combien de temps) et des dernières connexions, connexions refusées, déconnexions et sessions terminées, lues dans les routes de connexions du serveur. Un administrateur voit toutes les entrées, tout autre compte seulement les siennes ; aucune liste ne contient de mot de passe ni de jeton, et une adresse n'apparaît que si le serveur a reçu l'ordre de la conserver. L'application le dit clairement quand le serveur est trop ancien pour les offrir.
 - **Options d'accès du serveur dans les Réglages (administrateurs seulement) :** une entrée des Réglages ouvre neuf interrupteurs lus dans la configuration du serveur : la route de santé sans connexion, l'annonce de l'arrêt global, la conservation de l'adresse de chaque client dans l'historique des connexions, les images de caméra sans ticket, un jeton dans l'adresse du WebSocket, le masquage des secrets dans le journal, la signature d'une confirmation vocale, le mot de passe d'une caméra IP transmis par l'environnement de son processus et TLS activé par une nouvelle installation. Chacun montre d'où vient sa valeur (par défaut, enregistrée depuis un écran ou imposée par l'environnement du serveur, ce qui la verrouille), seul ce qui a changé est envoyé, tout changement qui abaisse la protection demande d'abord confirmation, et un serveur qui n'offre pas une option ne la montre pas.
 - **Bluetooth LE (GATT)** (`lib/network/hydra_ble_client.dart`, `lib/network/ble_contract.dart`, `lib/network/ble_gatt_fbp.dart`) - Un vrai client GATT qui suit un contrat documenté : recherche filtrée sur le service HYDRA, connexion avec négociation du MTU, vérification du service, notifications, messages découpés en trames dans les deux sens, une écriture à la fois, reconnexion automatique avec des délais croissants, l'autorisation Bluetooth d'iOS et un message clair dans la langue de l'utilisateur pour chaque échec. **Aucun appareil HYDRA-UMC n'implémente encore le côté périphérique :** le client n'est testé que contre un GATT simulé, la liaison Bluetooth n'a jamais tourné sur un iPhone et les commandes du robot ne passent pas par le Bluetooth.
+- **Notifications push** (`lib/network/push_bridge.dart`, `ios/Runner/AppDelegate.swift`, `lib/state/robot_view_model.dart`) - un interrupteur dans les Réglages, désactivé tant que la personne ne l'active pas : l'app demande l'autorisation, prend le jeton d'appareil auprès du système et l'enregistre sur le serveur (`POST /api/push/devices`, avec la langue de l'app), qui prévient ensuite le téléphone par le service push d'Apple quand un travail se termine ou qu'un arrêt global est émis ; le jeton est retiré du serveur quand on coupe l'interrupteur ou qu'on se déconnecte. Le serveur les a désactivées par défaut. Construit et testé contre un système simulé et un serveur local ; aucune notification n'a atteint un vrai iPhone, car cela demande le compte développeur Apple décrit dans la documentation du serveur.
+- **Arrêt global depuis l'extérieur de l'app** (`ios/Runner/GlobalStopShortcut.swift`, `lib/network/shortcut_bridge.dart`, `lib/state/robot_view_model.dart`) - un raccourci pour l'app Raccourcis, Siri, Spotlight et le bouton d'action, et une action rapide sur l'icône de l'app, dans les huit langues. Ils ouvrent l'app et font exactement le même arrêt global que le bouton STOP (`POST /api/stop-all` avec la session de la personne, et le repli robot par robot), donc le contrat et la gestion du jeton sont les mêmes ; une demande attend une session une minute au plus puis est abandonnée, si bien qu'un arrêt demandé il y a longtemps ne part jamais plus tard. Construit en CI, jamais exécuté sur un iPhone.
 - **Caméra** (`lib/ui/camera_screen.dart`, `lib/ui/widgets/mjpeg_view.dart`) - un petit analyseur de flux MJPEG écrit à la main (aucun paquet tiers), un état clair "Camera Disabled" au lieu d'un flux vide silencieux, et un interrupteur pour activer/désactiver le système de vision d'un robot directement depuis le serveur (la commande atomique `"vision"` propre de `server.ts`).
 - **Vue 3D** (`lib/ui/three_d_screen.dart`) - intègre le propre viewport 3D en temps réel de HYDRA-UMC-STUDIO dans une WebView (`?hideUI=true&robotId=#token=`), la même approche que l'application Android, pour la même raison (obtient gratuitement la vraie scène 3D actuellement en production). Se rabat sur un placeholder honnête sur les plateformes que `webview_flutter` ne prend pas en charge (la cible de bureau Windows de ce dépôt, utilisée pour la vérification de build).
 - **Métriques système** (`lib/state/robot_view_model.dart`) - `GET /api/system/metrics` interrogé toutes les 5s, la même cadence que les 2 autres clients, affiché dans le Dashboard.
@@ -150,7 +152,7 @@ flutter build ios --no-codesign  # a real iOS build; only on a Mac with Xcode
 
 ## 🧪 Tests
 
-313 tests automatiques s'exécutent avec `flutter test`. Ils n'ont besoin ni de matériel ni de rien en dehors de cette machine.
+322 tests automatiques s'exécutent avec `flutter test`. Ils n'ont besoin ni de matériel ni de rien en dehors de cette machine.
 
 La CI exécute `HYDRA_UMC_CI=1 python tools/ci_validate.py`, qui vérifie le manifeste, les documents, les huit README et les images.
 

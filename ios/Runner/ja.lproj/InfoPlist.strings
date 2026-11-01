@@ -2,3 +2,5 @@
 "NSLocalNetworkUsageDescription" = "HYDRA-UMC Control は、実際のロボットを制御するため、ローカルネットワーク上の HYDRA-UMC STUDIO サーバーに接続します。";
 "NSFaceIDUsageDescription" = "HYDRA-UMC Control は、保存済みのサーバーセッションに再接続する前に、Face ID で本人確認を行うことがあります。";
 "NSBluetoothAlwaysUsageDescription" = "HYDRA-UMC Control は、近くの HYDRA-UMC デバイスの状態を読み取るために Bluetooth を使用します。";
+"ShortcutGlobalStopTitle" = "グローバル停止";
+"ShortcutGlobalStopDescription" = "HYDRA-UMC サーバーのすべてのロボットを停止します。";

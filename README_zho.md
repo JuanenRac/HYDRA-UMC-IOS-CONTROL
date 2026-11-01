@@ -19,7 +19,7 @@ GPL-3.0-or-later - see LICENSE
   <img src="https://img.shields.io/badge/Framework-Flutter-02569B.svg" alt="Framework">
   <img src="https://img.shields.io/badge/Language-Dart-0175C2.svg" alt="Language">
   <img src="https://img.shields.io/badge/Platform-iOS-000000.svg" alt="Platform">
-  <img src="https://img.shields.io/badge/Tests-313%20passing-2ea44f.svg" alt="Tests">
+  <img src="https://img.shields.io/badge/Tests-322%20passing-2ea44f.svg" alt="Tests">
   <img src="https://img.shields.io/badge/Version-0.2.9-0f6cbd.svg" alt="Version">
   <img src="https://img.shields.io/badge/Maturity-functional-0F6CBD.svg" alt="Maturity">
 </p>
@@ -38,7 +38,7 @@ GPL-3.0-or-later - see LICENSE
 |---|---|
 | 版本 | `0.2.9` |
 | 成熟度 | 可用 |
-| 测试 | 313 (`flutter test`) |
+| 测试 | 322 (`flutter test`) |
 | 技术栈 | Flutter 3.x / Dart |
 | 目标 | iPhone 或 iPad |
 | 真实硬件 | 尚未：此版本没有在真实硬件上运行的记录 |
@@ -54,7 +54,7 @@ GPL-3.0-or-later - see LICENSE
 | 领域 | 状态 | 在这里的含义 |
 |---|---|---|
 | 软件 | 🟡 | 主要用途可用；上面的诚实性检查列出了仍然缺少的内容 |
-| 测试 | 🟢 | 313 项自动测试，每次变更都会运行 |
+| 测试 | 🟢 | 322 项自动测试，每次变更都会运行 |
 | 真实硬件 | 🔴 | 尚未：此版本没有在真实硬件上运行的记录 |
 | 文档 | 🟢 | 八种语言的 README，每次变更都会与清单核对 |
 
@@ -93,6 +93,8 @@ GPL-3.0-or-later - see LICENSE
 - **谁在连接服务器：** 访问面板中的“连接”按钮会打开一个简单列表，列出服务器见过的应用（类型、用户、版本、本地网络或外部、当前打开的会话、成功或被拒绝的登录、多久以前），以及最近的登录、被拒绝的登录、登出和已结束的会话，数据来自服务器的连接路由。管理员能看到全部条目，其他账号只能看到自己的；两个列表都不含密码或令牌，只有在告知服务器保存地址时才会显示地址。服务器太旧而无法提供时，应用会明确说明。
 - **设置中的服务器访问选项（仅管理员）：** 设置中的一个条目会打开九个从服务器配置读取的开关：无需登录的健康检查路由、全局停止的通告、在连接历史中保留每个客户端的地址、无需票据的摄像头画面、WebSocket 地址中的令牌、遮蔽日志中的机密、语音确认的签名、通过环境交给进程的 IP 摄像头密码，以及新安装自动开启 TLS。每个开关都显示其值的来源（默认、从界面保存，或由服务器环境固定并因此被锁定），只发送发生变化的部分，凡是降低保护的更改都会先询问，服务器不提供的选项不会显示。
 - **蓝牙 LE（GATT）**(`lib/network/hydra_ble_client.dart`, `lib/network/ble_contract.dart`, `lib/network/ble_gatt_fbp.dart`)- 遵循有文档约定的真实 GATT 客户端：按 HYDRA 服务过滤的扫描、协商 MTU 的连接、服务检查、通知、双向分帧消息、一次只写一条、等待时间递增的自动重连、iOS 的蓝牙权限，以及每种失败都用用户语言给出的清晰提示。**目前还没有任何 HYDRA-UMC 设备实现外设一侧：** 客户端只针对模拟的 GATT 做过测试，蓝牙链路从未在 iPhone 上运行过，机器人命令也不通过蓝牙发送。
+- **推送通知**(`lib/network/push_bridge.dart`、`ios/Runner/AppDelegate.swift`、`lib/state/robot_view_model.dart`)- 设置中的开关,用户打开之前保持关闭:应用请求权限,从系统获取设备令牌,并连同应用语言一起登记到服务器(`POST /api/push/devices`);之后在作业完成或发出全局停止时,服务器通过 Apple 推送服务通知这部手机;关闭开关或退出登录时,令牌会从服务器移除。服务器默认关闭推送。已针对模拟系统和本地服务器构建并测试;没有任何通知到达真实的 iPhone,因为那需要服务器文档中说明的 Apple 开发者账户。
+- **从应用外触发全局停止**(`ios/Runner/GlobalStopShortcut.swift`、`lib/network/shortcut_bridge.dart`、`lib/state/robot_view_model.dart`)- 面向快捷指令应用、Siri、Spotlight 和操作按钮的快捷指令,以及应用图标上的快速操作,支持八种语言。它们会打开应用,并执行与 STOP 按钮完全相同的全局停止(使用本人会话的 `POST /api/stop-all`,以及逐台机器人的回退),因此契约和令牌的处理方式相同;请求最多等待会话一分钟,之后即被丢弃,所以很久以前发出的停止绝不会在之后触发。已在 CI 中构建,从未在 iPhone 上运行。
 - **摄像头**（`lib/ui/camera_screen.dart`、`lib/ui/widgets/mjpeg_view.dart`）—— 一个小型的手写 MJPEG 流解析器（无第三方包）,一个明确的“摄像头已禁用”状态（而非静默显示空白画面）,以及一个可直接从服务器打开/关闭机器人视觉系统的开关（`server.ts` 的 `"vision"` 原子指令）。
 - **3D 视图**（`lib/ui/three_d_screen.dart`）—— 通过 WebView 嵌入 HYDRA-UMC-STUDIO 自身的实时 3D 视口（`?hideUI=true&robotId=#token=`）,与 Android 应用的方式相同,原因也相同（免费获得真实的、当前正在使用的 3D 场景）。在 `webview_flutter` 不支持的平台（本仓库用于构建验证的 Windows 桌面目标）上,会回退到一个诚实的占位符。
 - **系统指标**（`lib/state/robot_view_model.dart`）—— 每 5 秒轮询一次 `GET /api/system/metrics`,与其他 2 个客户端的节奏相同,显示在仪表盘中。
@@ -150,7 +152,7 @@ flutter build ios --no-codesign  # a real iOS build; only on a Mac with Xcode
 
 ## 🧪 测试
 
-运行 `flutter test` 会执行 313 个自动测试。 不需要硬件，也不需要这台机器以外的任何东西。
+运行 `flutter test` 会执行 322 个自动测试。 不需要硬件，也不需要这台机器以外的任何东西。
 
 CI 运行 `HYDRA_UMC_CI=1 python tools/ci_validate.py`，检查清单、文档、八个 README 和图片。
 

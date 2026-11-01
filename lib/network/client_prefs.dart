@@ -20,6 +20,7 @@ class ClientPrefs {
   static const _keyControllerId = 'hydra_controller_id';
   static const _keyConditionalMode = 'hydra_conditional_mode';
   static const _keyConfirmPlay = 'hydra_confirm_play';
+  static const _keyPush = 'hydra_push_notifications';
 
   Future<bool> loadBlockCommandsOnSavedData() async {
     final prefs = await SharedPreferences.getInstance();
@@ -51,6 +52,17 @@ class ClientPrefs {
   Future<void> saveConfirmPlay(bool value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keyConfirmPlay, value);
+  }
+
+  /// Whether this phone asks the server for push notifications. Off until the person turns it on: it needs their permission.
+  Future<bool> loadPushNotifications() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_keyPush) ?? false;
+  }
+
+  Future<void> savePushNotifications(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyPush, value);
   }
 
   /// The conditional-writes mode chosen in this app (`off`, `standard`, `strict`); null before any choice.

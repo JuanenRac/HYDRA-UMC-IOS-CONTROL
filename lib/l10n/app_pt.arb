@@ -360,5 +360,11 @@
   "bleTitle": "Bluetooth (experimental)",
   "bleIntro": "Lê o estado de um dispositivo HYDRA-UMC próximo por Bluetooth LE. Experimental: testado com uma ligação simulada, não com um dispositivo real. Enquanto estiver ligado assim, o telemóvel não fala com o servidor.",
   "bleConnect": "Ligar",
-  "bleDisconnect": "Desligar"
+  "bleDisconnect": "Desligar",
+  "pushTitle": "Notificações do servidor",
+  "pushSubtitle": "Avisa este telemóvel quando um trabalho termina ou é dada uma paragem global. O servidor tem de ter as notificações push ligadas.",
+  "pushDenied": "As notificações não estão permitidas para esta aplicação. Permita-as nas Definições do iOS.",
+  "pushServerOff": "Este servidor tem as notificações push desligadas.",
+  "pushFailed": "Não foi possível registar este telemóvel para as notificações.",
+  "pushRegistered": "Este telemóvel está registado: o servidor vai avisá-lo."
 }

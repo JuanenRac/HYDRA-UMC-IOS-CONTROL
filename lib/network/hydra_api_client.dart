@@ -458,6 +458,27 @@ class HydraApiClient {
     return resp.body;
   }
 
+  /// Registers the device token of this phone for the push notifications of the server, with the language to write them
+  /// in (POST /api/push/devices). A server that has them switched off answers 404.
+  Future<void> postPushDevice(String token, String locale) async {
+    final resp = await _client
+        .post(
+          Uri.parse('$baseUrl/api/push/devices'),
+          headers: {'Content-Type': 'application/json', ..._clientHeaders, ..._authHeaders},
+          body: jsonEncode({'token': token, 'platform': 'ios', 'locale': locale}),
+        )
+        .timeout(const Duration(seconds: 10));
+    _throwForStatus(resp);
+  }
+
+  /// Takes the device token of this phone off the server (DELETE /api/push/devices/{token}).
+  Future<void> deletePushDevice(String token) async {
+    final resp = await _client
+        .delete(Uri.parse('$baseUrl/api/push/devices/$token'), headers: {..._clientHeaders, ..._authHeaders})
+        .timeout(const Duration(seconds: 10));
+    _throwForStatus(resp);
+  }
+
   /// Arms (true) or disarms (false) the jog of one robot; only demanded by the
   /// server when the administrator turned it on.
   Future<Map<String, dynamic>> postJogArm(dynamic robotId, bool armed) =>

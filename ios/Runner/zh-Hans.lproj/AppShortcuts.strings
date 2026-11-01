@@ -1,0 +1,3 @@
+/* Phrases of the shortcuts of the app, in the language of the device. */
+"Global stop in ${applicationName}" = "在${applicationName}中全局停止";
+"Stop all robots in ${applicationName}" = "在${applicationName}中停止所有机器人";

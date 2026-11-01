@@ -19,7 +19,7 @@ GPL-3.0-or-later - see LICENSE
   <img src="https://img.shields.io/badge/Framework-Flutter-02569B.svg" alt="Framework">
   <img src="https://img.shields.io/badge/Language-Dart-0175C2.svg" alt="Language">
   <img src="https://img.shields.io/badge/Platform-iOS-000000.svg" alt="Platform">
-  <img src="https://img.shields.io/badge/Tests-313%20passing-2ea44f.svg" alt="Tests">
+  <img src="https://img.shields.io/badge/Tests-322%20passing-2ea44f.svg" alt="Tests">
   <img src="https://img.shields.io/badge/Version-0.2.9-0f6cbd.svg" alt="Version">
   <img src="https://img.shields.io/badge/Maturity-functional-0F6CBD.svg" alt="Maturity">
 </p>
@@ -38,7 +38,7 @@ A cross-platform Flutter app (Dart) that controls a robot on the [HYDRA-UMC](htt
 |---|---|
 | Version | `0.2.9` |
 | Maturity | Functional |
-| Tests | 313 (`flutter test`) |
+| Tests | 322 (`flutter test`) |
 | Stack | Flutter 3.x / Dart |
 | Target | An iPhone or iPad |
 | On real hardware | Not yet: no run on real hardware is recorded for this version |
@@ -54,7 +54,7 @@ Each line is one part of this repository and the light says how far it is today.
 | Area | State | What it means here |
 |---|---|---|
 | Software | 🟡 | Works for its main purpose; the honesty check above lists what is still missing |
-| Tests | 🟢 | 313 automated tests, run on every change |
+| Tests | 🟢 | 322 automated tests, run on every change |
 | Real hardware | 🔴 | Not yet: no run on real hardware is recorded for this version |
 | Documentation | 🟢 | README in eight languages, checked against the manifest on every change |
 
@@ -93,6 +93,8 @@ This app targets iOS/iPadOS, but it is built in **Flutter** rather than Swift/Sw
 - **Who connects to the server:** a Connections button in the access panel opens a simple list of the apps the server has seen (kind, user, version, local network or from outside, the sessions open now, the sign-ins that worked or were refused, how long ago) and the latest sign-ins, refused sign-ins, sign-outs and ended sessions, read from the connection routes of the server. An administrator sees every entry and any other account only its own; no password or token is in either list, and an address appears only if the server was told to keep it. It says so plainly when the server is too old to offer them.
 - **Access options of the server in Settings (administrators only):** an entry of Settings opens nine switches read from the server configuration: the health route without a sign-in, the announcement of the global stop, keeping the address of each client in the history of connections, the camera pictures without a ticket, a token in the WebSocket address, the blanking of secrets in the log, the signature of a spoken confirmation, the password of an IP camera handed over through the environment of its process and TLS switched on by a new installation. Each shows where its value comes from (default, saved from a screen, or fixed by the environment of the server, which locks it), only what changed is sent, every change that lowers the protection asks first, and a server that does not offer an option does not show it.
 - **Bluetooth LE (GATT)** (`lib/network/hydra_ble_client.dart`, `lib/network/ble_contract.dart`, `lib/network/ble_gatt_fbp.dart`) - A real GATT client following a documented contract: scan filtered by the HYDRA service, connection with MTU negotiation, service check, notifications, framed messages in both directions, one write at a time, automatic reconnection with growing delays, the Bluetooth permission of iOS and a clear message in the user's language for every failure. **No HYDRA-UMC device implements the peripheral side yet:** the client is tested only against a simulated GATT, the Bluetooth link has never run on an iPhone, and robot commands are not sent over Bluetooth.
+- **Push notifications** (`lib/network/push_bridge.dart`, `ios/Runner/AppDelegate.swift`, `lib/state/robot_view_model.dart`) - a switch in Settings, off until the person turns it on: the app asks for permission, takes the device token from the system and registers it with the server (`POST /api/push/devices`, with the language of the app), which then tells the phone through the Apple push service when a job finishes or a global stop is issued; the token is taken off the server when the switch is turned off or the person signs out. The server has them off by default. Built and tested against a fake system and a local server; no notification has reached a real iPhone, because that needs the Apple developer account described in the server documentation.
+- **Global stop from outside the app** (`ios/Runner/GlobalStopShortcut.swift`, `lib/network/shortcut_bridge.dart`, `lib/state/robot_view_model.dart`) - a shortcut for the Shortcuts app, Siri, Spotlight and the Action button, and a quick action on the app icon, in the eight languages. They open the app and make the very same global stop as the STOP button (`POST /api/stop-all` with the session of the person, and the one-by-one fallback), so the contract and the handling of the token are the same; a request waits for a session for one minute at most and is dropped after that, so a stop asked for long ago never fires later. Built in CI, never run on an iPhone.
 - **Camera** (`lib/ui/camera_screen.dart`, `lib/ui/widgets/mjpeg_view.dart`) - a small hand-rolled MJPEG stream parser (no third-party package), a clear "Camera Disabled" state instead of a silently blank feed, and a switch to turn a robot's vision system on/off directly from the server (`server.ts`'s `"vision"` atomic command).
 - **3D View** (`lib/ui/three_d_screen.dart`) - embeds HYDRA-UMC-STUDIO's own real-time 3D viewport in a WebView (`?hideUI=true&robotId=#token=`), same approach as the Android app, for the same reason (gets the real, currently-shipping 3D scene for free). Falls back to an honest placeholder on platforms `webview_flutter` doesn't support (this repo's Windows desktop target, used for build verification).
 - **System metrics** (`lib/state/robot_view_model.dart`) - `GET /api/system/metrics` polled every 5s, same cadence as the other 2 clients, shown in the Dashboard.
@@ -150,7 +152,7 @@ flutter build ios --no-codesign  # a real iOS build; only on a Mac with Xcode
 
 ## 🧪 Testing
 
-313 automated tests run with `flutter test`. They need no hardware and nothing outside this machine.
+322 automated tests run with `flutter test`. They need no hardware and nothing outside this machine.
 
 The CI runs `HYDRA_UMC_CI=1 python tools/ci_validate.py`, which checks the manifest, the documents, the eight READMEs and the pictures.
 

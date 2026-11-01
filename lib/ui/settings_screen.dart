@@ -75,6 +75,20 @@ class SettingsScreen extends StatelessWidget {
           onChanged: (value) => vm.setConfirmPlay(value),
         ),
         const Divider(),
+        SwitchListTile(
+          key: const Key('settings-push'),
+          secondary: const Icon(Icons.notifications_outlined),
+          title: Text(l10n.pushTitle),
+          subtitle: Text(switch (vm.pushState) {
+            PushState.denied => l10n.pushDenied,
+            PushState.serverOff => l10n.pushServerOff,
+            PushState.failed => l10n.pushFailed,
+            PushState.registered => l10n.pushRegistered,
+            _ => l10n.pushSubtitle,
+          }),
+          value: vm.pushNotifications,
+          onChanged: (value) => vm.setPushNotifications(value),
+        ),
         ListTile(
           key: const Key('settings-security'),
           leading: const Icon(Icons.shield_outlined),
