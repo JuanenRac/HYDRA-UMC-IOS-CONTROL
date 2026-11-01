@@ -103,6 +103,7 @@ GPL-3.0-or-later - see LICENSE
 - **遥测**（`lib/ui/telemetry_screen.dart`）—— 一个终端风格、最新在前的日志，记录真实的连接/登录/指令生命周期事件，最多保留 50 条，并提供清除日志的操作——与 HYDRA-UMC-ANDROID-CONTROL 自身的遥测标签页相同的"Matrix 绿"配色约定。
 - **应用内语音助手**（`lib/ui/voice_assistant_dialog.dart`）—— 应用栏中的麦克风图标会打开一个对话框，可输入问题或指令,通过与 HYDRA-UMC-ANDROID-CONTROL 自身应用内语音按钮及其手表中继相同的真实 `POST /api/voice/turn` 路由发送给 `HYDRA-UMC-VOICE-UI`。绝不上传音频——目前仅支持文本输入,因为 iOS 原生语音识别需要 Speech 框架,而这个仅限 Windows 的开发环境无法针对真实设备/Xcode 进行编译或验证。回复绝不会直接发出机器人指令。
 - **命令通道与预约维护**（`lib/state/robot_command_repository.dart`、`lib/models/robot_command_contract.dart`、`lib/models/access.dart`）- 与 HYDRA-UMC-ANDROID-CONTROL 相同的划分：视图模型之外的一个仓库保存每台机器人的修订号，无人应答时重发停止命令，对旧服务器把 `table` 移动改为点动发送，统计传输中的点动，合并连续命令并测量每次应答；命令名称和上限由 `tools/gen_command_contract.py` 从 `docs/robot_command_contract.json`（与 Android 文件完全相同的副本）生成，并由校验检查。控制界面打开期间，本设备持有的预约会在到期前不久重新申请，长时间操作不会丢失机器人；退出登录时释放本设备持有的预约。每隔几秒读取一次的服务器负载只会重绘显示它的那一条，而不是每个界面。测试中针对模拟服务器构建；未在 iPhone 上运行。
+- **回零/复位 HOME/RESET**（`lib/ui/control_screen.dart`, `lib/util/home_reset.dart`, `lib/state/robot_view_model.dart`）- 通过服务器的 `reset` 命令将所选机器人移到零位的按钮。默认关闭：在“设置”中用开关打开，选择会被保存。在发送任何内容之前，需要在时限内按顺序确认两次。机器人正在运行轨迹、处于安全模式、离线或没有位置时，正在发送 STOP 或 STOP 未确认时，点动正在发送时，需要启用点动而未启用时，以及会话既不是操作员也不是管理员时，都会被拒绝并给出专门的提示（角色由服务器再次判定）。命令与点动一样带有递增编号；不认识 `reset` 的服务器会被识别并记住。默认值、确认步数和时限读取自 `docs/robot_command_contract.json`。已针对本地模拟服务器测试：不涉及任何机器人。
 
 ## 🔒 安全与防护
 

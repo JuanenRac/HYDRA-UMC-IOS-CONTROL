@@ -74,6 +74,15 @@ class SettingsScreen extends StatelessWidget {
           value: vm.confirmPlay,
           onChanged: (value) => vm.setConfirmPlay(value),
         ),
+        // HOME/RESET moves the real robot to zero: off by default, two confirmations when on.
+        SwitchListTile(
+          key: const Key('settings-home-reset'),
+          secondary: const Icon(Icons.home_outlined),
+          title: Text(l10n.homeResetSwitchLabel),
+          subtitle: Text(l10n.homeResetSwitchHint),
+          value: vm.homeResetEnabled,
+          onChanged: (value) => vm.setHomeResetEnabled(value),
+        ),
         const Divider(),
         SwitchListTile(
           key: const Key('settings-push'),

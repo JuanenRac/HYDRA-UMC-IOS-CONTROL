@@ -27,6 +27,7 @@ def dart_number(value: float) -> str:
 def render(contract: dict) -> str:
     commands = contract["commands"]
     limits = contract["limits"]
+    home = contract["homeReset"]
 
     def camel(constant: str) -> str:
         head, *rest = constant.lower().split("_")
@@ -65,6 +66,11 @@ def render(contract: dict) -> str:
         f"  static const double jogMaxAmount = {dart_number(limits['jogMaxAmount'])};",
         f"  static const double jogStepMax = {dart_number(limits['jogStepMax'])};",
         f"  static const int outputIndexMax = {int(limits['outputIndexMax'])};",
+        "",
+        "  /// HOME/RESET: off until the person turns it on; how many confirmations it asks and how long they stay valid.",
+        f"  static const bool homeResetEnabledByDefault = {'true' if home['enabledByDefault'] else 'false'};",
+        f"  static const int homeResetConfirmSteps = {int(home['confirmSteps'])};",
+        f"  static const int homeResetConfirmWindowMs = {int(home['confirmWindowMs'])};",
         "}",
         "",
     ]

@@ -124,6 +124,7 @@
         "lib/kinematics/parol6_kinematics.dart",
         "lib/models/connection_history.dart",
         "lib/models/server_security.dart",
+        "lib/util/home_reset.dart",
         "lib/util/play_confirmation.dart"
       ]
     },

@@ -20,6 +20,7 @@ class ClientPrefs {
   static const _keyControllerId = 'hydra_controller_id';
   static const _keyConditionalMode = 'hydra_conditional_mode';
   static const _keyConfirmPlay = 'hydra_confirm_play';
+  static const _keyHomeReset = 'hydra_home_reset_enabled';
   static const _keyPush = 'hydra_push_notifications';
 
   Future<bool> loadBlockCommandsOnSavedData() async {
@@ -40,6 +41,17 @@ class ClientPrefs {
   Future<void> saveSkipMobileAndVpnNetworks(bool value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keySkipMobileVpn, value);
+  }
+
+  /// Whether HOME/RESET is switched on; [defaultValue] (off in the contract) before any choice.
+  Future<bool> loadHomeReset(bool defaultValue) async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_keyHomeReset) ?? defaultValue;
+  }
+
+  Future<void> saveHomeReset(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyHomeReset, value);
   }
 
   /// Whether PLAY asks first (the robot, its points, the speed, who reserved it). On before any choice: a

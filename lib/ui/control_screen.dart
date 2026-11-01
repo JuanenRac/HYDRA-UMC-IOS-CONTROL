@@ -21,6 +21,7 @@ import '../models/hydra_state.dart';
 import '../models/robot_command_contract.dart';
 import '../models/access.dart';
 import '../state/robot_view_model.dart';
+import '../util/home_reset.dart';
 import '../util/play_confirmation.dart';
 import 'widgets/access_panel.dart';
 import 'widgets/digital_readout.dart';
@@ -135,6 +136,9 @@ class _ControlScreenState extends State<ControlScreen> {
                       vm.jogJ1(direction, robot.jogStepOr(_defaultJogStep, _jogSteps));
                     },
                   ),
+                  const SizedBox(height: 8),
+                  // HOME/RESET: drawn only when the person switched it on in the settings; two confirmations.
+                  if (vm.homeResetEnabled) _homeResetButton(vm, robot, l10n),
                   const SizedBox(height: 16),
                   _speedAccelSliders(vm, robot, l10n),
                   const SizedBox(height: 16),
@@ -252,6 +256,64 @@ class _ControlScreenState extends State<ControlScreen> {
           ),
       ],
     );
+  }
+
+  /// HOME/RESET: a reason not to send (safe mode, playing, no permission...) is shown as a phrase instead of opening
+  /// anything; otherwise the first confirmation opens, then the second, and only the second one sends the command.
+  Widget _homeResetButton(RobotViewModel vm, RobotView robot, AppLocalizations l10n) {
+    final block = vm.homeResetBlock(robot.id, _now);
+    return Column(
+      children: [
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton(
+            key: const Key('home-reset-button'),
+            onPressed: () => _homeReset(vm, robot, l10n),
+            child: Text(l10n.homeResetButton),
+          ),
+        ),
+        if (block != HomeResetBlock.none)
+          Text(homeResetBlockText(l10n, block), style: const TextStyle(color: Colors.grey, fontSize: 12)),
+      ],
+    );
+  }
+
+  Future<void> _homeReset(RobotViewModel vm, RobotView robot, AppLocalizations l10n) async {
+    final block = vm.homeResetBlock(robot.id, _now);
+    if (block != HomeResetBlock.none) {
+      vm.homeReset(); // says why it is not sent
+      return;
+    }
+    final confirmation = vm.homeResetConfirmation..cancel();
+    var step = 1;
+    while (mounted) {
+      final last = step >= RobotCommandContract.homeResetConfirmSteps;
+      final go = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: Text(last ? l10n.homeResetStep2Title : l10n.homeResetStep1Title(robot.name)),
+          content: Text(last ? l10n.homeResetStep2Message(robot.name) : l10n.homeResetStep1Message),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(dialogContext).pop(false), child: Text(l10n.playConfirmCancel)),
+            FilledButton(
+              key: Key(last ? 'home-reset-confirm-last' : 'home-reset-confirm-first'),
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: Text(last ? l10n.homeResetStep2Button : l10n.homeResetStep1Button),
+            ),
+          ],
+        ),
+      );
+      if (go != true) {
+        confirmation.cancel();
+        return;
+      }
+      final progress = confirmation.advance();
+      if (progress.isDone) {
+        if (mounted) vm.homeReset();
+        return;
+      }
+      step = progress.next!;
+    }
   }
 
   /// PLAY: asks first (what will run, at which speed, who has the robot reserved) unless the person turned that off.

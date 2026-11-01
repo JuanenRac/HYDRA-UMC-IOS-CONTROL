@@ -45,6 +45,7 @@ import '../network/hydra_websocket.dart';
 import '../network/client_prefs.dart';
 import '../network/state_cache.dart';
 import '../network/tls_settings.dart';
+import '../util/home_reset.dart';
 import 'hydra_error.dart';
 import 'robot_command_repository.dart';
 
@@ -104,6 +105,18 @@ class RobotViewModel extends ChangeNotifier {
 
   /// When on (it is, until the person turns it off), PLAY shows what it is about to start and asks first.
   bool confirmPlay = true;
+
+  /// HOME/RESET switch (see util/home_reset.dart); off until the person turns it on, the default comes from the contract.
+  bool homeResetEnabled = RobotCommandContract.homeResetEnabledByDefault;
+
+  /// False once the server answered that it does not know `reset`; the button then explains instead of sending.
+  bool homeResetServerSupports = true;
+
+  /// The confirmation in steps of the reset; shared so the second step must follow the first.
+  final HomeResetConfirmation homeResetConfirmation = HomeResetConfirmation(
+    steps: RobotCommandContract.homeResetConfirmSteps,
+    window: const Duration(milliseconds: RobotCommandContract.homeResetConfirmWindowMs),
+  );
 
   HydraState state = HydraState();
   HydraApiClient? apiClient;
@@ -284,6 +297,7 @@ class RobotViewModel extends ChangeNotifier {
     TlsSettingsStore.current = tlsSettings;
     blockCommandsOnSavedData = await _clientPrefs.loadBlockCommandsOnSavedData();
     confirmPlay = await _clientPrefs.loadConfirmPlay();
+    homeResetEnabled = await _clientPrefs.loadHomeReset(RobotCommandContract.homeResetEnabledByDefault);
     pushNotifications = await _clientPrefs.loadPushNotifications();
     // The controller id of this installation: made once, kept, and adopted here.
     conditionalMode = ConditionalMode.fromKey(await _clientPrefs.loadConditionalMode());
@@ -455,6 +469,53 @@ class RobotViewModel extends ChangeNotifier {
       pushState = PushState.failed;
     }
     notifyListeners();
+  }
+
+  /// Chooses whether HOME/RESET is offered, and keeps the choice. Switching it off also drops a confirmation under way.
+  Future<void> setHomeResetEnabled(bool value) async {
+    homeResetEnabled = value;
+    if (!value) homeResetConfirmation.cancel();
+    notifyListeners();
+    await _clientPrefs.saveHomeReset(value);
+  }
+
+  /// What stops HOME/RESET of [robotId] right now, from this app's view; [HomeResetBlock.none] when it may go on.
+  HomeResetBlock homeResetBlock([dynamic robotId, DateTime? now]) {
+    final id = robotId ?? selectedRobotId;
+    final robot = id == null ? null : state.robotById(id);
+    return homeResetBlockOf(HomeResetSituation(
+      switchedOn: homeResetEnabled,
+      connected: apiClient != null,
+      robotOnline: robot?.online == true,
+      robotEnabled: robot?.isEnabled ?? true,
+      robotPlaying: robot?.isPlaying == true,
+      jogInFlight: id != null && commands.hasJogInFlight(id),
+      stopInProgress: stopAllInFlight || stopAllUnconfirmed,
+      needsArming: id != null && jogNeedsArming(id, now),
+      role: jwtRole(apiClient?.authToken),
+      hasPose: robot?.raw['pos'] is Map,
+      serverSupports: homeResetServerSupports,
+    ));
+  }
+
+  /// Sends the reset (the selected robot to its zero position) once the confirmation in steps is complete. The
+  /// screen calls it only after the last step; the checks run again here, so a robot that started moving between
+  /// the steps is not reset. A refusal shows its own phrase and nothing goes out.
+  void homeReset() {
+    final id = selectedRobotId;
+    if (id == null) return;
+    final block = homeResetBlock(id);
+    if (block != HomeResetBlock.none) {
+      lastError = HydraError(HydraErrorKind.homeResetBlocked, {'block': block.name});
+      notifyListeners();
+      return;
+    }
+    // The pose is shown at zero at once; the server's answer (or a failure, which restores it) settles it.
+    _sendAtomicCommand(RobotCommandContract.reset, params: {'target': 'robot'}, localMutate: (r) {
+      for (final axis in const ['x', 'y', 'z', 'a', 'b', 'c']) {
+        r.setPosAxis(axis, 0.0);
+      }
+    });
   }
 
   Future<void> setConfirmPlay(bool value) async {
@@ -1076,6 +1137,10 @@ class RobotViewModel extends ChangeNotifier {
         // that never reached the robot.
         rollback();
         lastError = _commandError(command, e);
+        // An older server does not have `reset`: remember it, so the button explains instead of sending again.
+        if (command == RobotCommandContract.reset && e is HydraApiException && isUnknownCommandAnswer(e.statusCode, e.code, e.serverMessage)) {
+          homeResetServerSupports = false;
+        }
         // The robot changed since this app read it: read it again so the screen shows what it is now.
         if (e is HydraApiException && e.isRevisionMismatch) unawaited(_refreshRobot(robotId));
         // The arming ended (it times out, or a stop cleared it): the screen offers to arm again.
@@ -1200,6 +1265,12 @@ class RobotViewModel extends ChangeNotifier {
   // The user-facing error for a command that failed, by what the server said.
   HydraError _commandError(String command, Object e) {
     if (e is HydraApiException) {
+      if (command == RobotCommandContract.reset && isUnknownCommandAnswer(e.statusCode, e.code, e.serverMessage)) {
+        return HydraError(HydraErrorKind.homeResetBlocked, {'block': HomeResetBlock.notSupported.name});
+      }
+      if (command == RobotCommandContract.reset && e.isPermissionDenied) {
+        return HydraError(HydraErrorKind.homeResetBlocked, {'block': HomeResetBlock.role.name});
+      }
       if (e.isStaleSequence) return HydraError(HydraErrorKind.staleSequence, {'command': command});
       if (e.isRevisionMismatch) return HydraError(HydraErrorKind.revisionChanged, {'command': command});
       if (e.isJogNotArmed) return const HydraError(HydraErrorKind.jogNotArmed);

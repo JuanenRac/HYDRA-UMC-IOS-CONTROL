@@ -29,7 +29,7 @@ class RobotCommandContract {
   static const Set<String> all = {stop, play, pause, jog, table, reset, jogStep, tool, valve, pump, speed, vision, disable, enable};
 
   /// The commands the server orders by number (`seq`).
-  static const Set<String> numbered = {stop, jog, table};
+  static const Set<String> numbered = {stop, jog, table, reset};
 
   /// The commands sent over and over while a control is held; they carry no If-Match in the standard mode.
   static const Set<String> continuous = {jog, jogStep, speed};
@@ -39,4 +39,9 @@ class RobotCommandContract {
   static const double jogMaxAmount = 1000.0;
   static const double jogStepMax = 1000.0;
   static const int outputIndexMax = 7;
+
+  /// HOME/RESET: off until the person turns it on; how many confirmations it asks and how long they stay valid.
+  static const bool homeResetEnabledByDefault = false;
+  static const int homeResetConfirmSteps = 2;
+  static const int homeResetConfirmWindowMs = 20000;
 }

@@ -8,7 +8,7 @@
     {"name": "pause", "constant": "PAUSE", "numbered": false, "continuous": false},
     {"name": "jog", "constant": "JOG", "numbered": true, "continuous": true},
     {"name": "table", "constant": "TABLE", "numbered": true, "continuous": false},
-    {"name": "reset", "constant": "RESET", "numbered": false, "continuous": false},
+    {"name": "reset", "constant": "RESET", "numbered": true, "continuous": false},
     {"name": "jogStep", "constant": "JOG_STEP", "numbered": false, "continuous": true},
     {"name": "tool", "constant": "TOOL", "numbered": false, "continuous": false},
     {"name": "valve", "constant": "VALVE", "numbered": false, "continuous": false},
@@ -24,5 +24,10 @@
     "jogMaxAmount": 1000,
     "jogStepMax": 1000,
     "outputIndexMax": 7
+  },
+  "homeReset": {
+    "enabledByDefault": false,
+    "confirmSteps": 2,
+    "confirmWindowMs": 20000
   }
 }
