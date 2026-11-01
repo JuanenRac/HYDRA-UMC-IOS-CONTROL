@@ -1166,6 +1166,7 @@ class RobotViewModel extends ChangeNotifier {
   // The user-facing error for a command that failed, by what the server said.
   HydraError _commandError(String command, Object e) {
     if (e is HydraApiException) {
+      if (e.isStaleSequence) return HydraError(HydraErrorKind.staleSequence, {'command': command});
       if (e.isRevisionMismatch) return HydraError(HydraErrorKind.revisionChanged, {'command': command});
       if (e.isJogNotArmed) return const HydraError(HydraErrorKind.jogNotArmed);
       if (e.isRobotDisabled) return HydraError(HydraErrorKind.robotDisabled, {'command': command});

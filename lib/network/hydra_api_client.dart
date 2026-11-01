@@ -40,6 +40,7 @@ import '../app_version.dart';
 import '../models/access.dart';
 import '../models/contract_v2.dart';
 import '../models/assistant_reply.dart';
+import 'command_sequence.dart';
 import 'tls_settings.dart';
 
 class HydraApiException implements Exception {
@@ -73,6 +74,10 @@ class HydraApiException implements Exception {
 
   /// 409 `other-account`: another account holds the reservation.
   bool get isOtherAccount => statusCode == 409 && code == 'other-account';
+
+  /// 409 `stale-sequence`: a later numbered motion command of this controller already reached the robot, so this one
+  /// arrived out of order and was not applied.
+  bool get isStaleSequence => statusCode == 409 && code == 'stale-sequence';
 
   /// 409 `other-controller`: this account holds it from another controller
   /// (another phone, window or tab).
@@ -338,7 +343,7 @@ class HydraApiClient {
             ..._authHeaders,
             'If-Match': ?ifMatch,
           },
-          body: jsonEncode({...payload, 'controllerId': controllerId}),
+          body: jsonEncode({...CommandSequence.numbered(payload), 'controllerId': controllerId}),
         )
         .timeout(timeout);
     return _expectJson(resp);

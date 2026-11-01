@@ -356,5 +356,8 @@
   "serverOptionsInstallTlsLabel": "Let a new installation switch TLS on by itself",
   "serverOptionsInstallHelp": "Safe defaults: both on. The camera option applies the next time a camera process starts; the TLS option is only read at the first start of an installation. A value fixed by the server environment cannot be changed here.",
   "serverOptionsConfirmCameraCredentials": "The password of an IP camera will be on the command line of its process, where other users of the machine can read it.",
-  "serverOptionsConfirmInstallTls": "A new installation will no longer switch TLS on by itself."
+  "serverOptionsConfirmInstallTls": "A new installation will no longer switch TLS on by itself.",
+
+  "errStaleSequence": "A newer motion command from this phone had already reached the robot, so the {command} command was NOT applied because it arrived out of order. Repeat it if you still want it.",
+  "@errStaleSequence": {"placeholders": {"command": {"type": "String"}}}
 }

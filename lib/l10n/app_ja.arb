@@ -328,5 +328,7 @@
   "serverOptionsInstallTlsLabel": "新規インストールが自動的に TLS を有効にする",
   "serverOptionsInstallHelp": "安全な既定値：どちらもオン。カメラの設定は次にカメラのプロセスが起動するときに適用され、TLS の設定はインストールの初回起動時にのみ読み込まれます。サーバーの環境で固定された値はここでは変更できません。",
   "serverOptionsConfirmCameraCredentials": "IP カメラのパスワードが、同じマシンの他のユーザーが読めるプロセスのコマンドラインに載ります。",
-  "serverOptionsConfirmInstallTls": "新規インストールは自動的に TLS を有効にしなくなります。"
+  "serverOptionsConfirmInstallTls": "新規インストールは自動的に TLS を有効にしなくなります。",
+
+  "errStaleSequence": "このスマートフォンのより新しい動作コマンドがすでにロボットに届いていたため、順序が逆になった {command} コマンドは適用されませんでした。まだ必要な場合は、もう一度実行してください。"
 }

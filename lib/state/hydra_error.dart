@@ -50,6 +50,8 @@ enum HydraErrorKind {
   // named none, the jog is not armed, and a jog above the limit of the model
   // that was never sent.
   claimOtherController,
+  // A newer numbered motion command had already reached the robot: this one arrived out of order and was not applied.
+  staleSequence,
   claimControllerRequired,
   jogNotArmed,
   jogOverLimit,
@@ -111,6 +113,8 @@ class HydraError {
         return l10n.errStopNotConfirmed;
       case HydraErrorKind.claimOtherController:
         return l10n.errClaimOtherController(params['detail'] ?? '');
+      case HydraErrorKind.staleSequence:
+        return l10n.errStaleSequence(params['command'] ?? '');
       case HydraErrorKind.claimControllerRequired:
         return l10n.errClaimControllerRequired(params['detail'] ?? '');
       case HydraErrorKind.jogNotArmed:

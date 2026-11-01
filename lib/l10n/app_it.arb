@@ -328,5 +328,7 @@
   "serverOptionsInstallTlsLabel": "Lasciare che una nuova installazione attivi TLS da sola",
   "serverOptionsInstallHelp": "Valori sicuri: entrambe attive. L'opzione della telecamera vale dal prossimo avvio di un processo di telecamera; quella di TLS viene letta solo al primo avvio di un'installazione. Un valore fissato dall'ambiente del server non si può cambiare qui.",
   "serverOptionsConfirmCameraCredentials": "La password di una telecamera IP si troverà sulla riga di comando del suo processo, dove gli altri utenti della macchina possono leggerla.",
-  "serverOptionsConfirmInstallTls": "Una nuova installazione non attiverà più TLS da sola."
+  "serverOptionsConfirmInstallTls": "Una nuova installazione non attiverà più TLS da sola.",
+
+  "errStaleSequence": "Un comando di movimento più recente di questo telefono aveva già raggiunto il robot, quindi il comando {command} NON è stato applicato perché è arrivato fuori ordine. Ripetilo se lo vuoi ancora."
 }

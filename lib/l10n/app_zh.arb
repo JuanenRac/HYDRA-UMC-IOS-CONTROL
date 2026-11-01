@@ -328,5 +328,7 @@
   "serverOptionsInstallTlsLabel": "让新安装自行开启 TLS",
   "serverOptionsInstallHelp": "安全默认值：两项均开启。摄像头选项在下次启动摄像头进程时生效；TLS 选项仅在安装首次启动时读取。由服务器环境固定的值无法在此更改。",
   "serverOptionsConfirmCameraCredentials": "IP 摄像头的密码将出现在其进程的命令行中，本机的其他用户可以读取。",
-  "serverOptionsConfirmInstallTls": "新安装将不再自行开启 TLS。"
+  "serverOptionsConfirmInstallTls": "新安装将不再自行开启 TLS。",
+
+  "errStaleSequence": "此手机较新的运动指令已先到达机器人，因此乱序到达的 {command} 指令未被执行。如仍需要，请重新发送。"
 }

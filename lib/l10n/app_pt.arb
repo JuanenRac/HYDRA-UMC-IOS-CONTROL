@@ -327,5 +327,7 @@
   "serverOptionsInstallTlsLabel": "Deixar uma instalação nova ativar o TLS por si própria",
   "serverOptionsInstallHelp": "Valores seguros: ambas ativas. A opção da câmara aplica-se da próxima vez que um processo de câmara arrancar; a do TLS só é lida no primeiro arranque de uma instalação. Um valor fixado pelo ambiente do servidor não pode ser alterado aqui.",
   "serverOptionsConfirmCameraCredentials": "A palavra-passe de uma câmara IP ficará na linha de comandos do seu processo, onde os outros utilizadores da máquina a podem ler.",
-  "serverOptionsConfirmInstallTls": "Uma instalação nova deixa de ativar o TLS por si própria."
+  "serverOptionsConfirmInstallTls": "Uma instalação nova deixa de ativar o TLS por si própria.",
+
+  "errStaleSequence": "Um comando de movimento mais recente deste telemóvel já tinha chegado ao robô, por isso o comando {command} NÃO foi aplicado, porque chegou fora de ordem. Repita-o se ainda o quiser."
 }
