@@ -15,6 +15,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:hydra_umc_control/models/robot_command_contract.dart';
 import 'package:hydra_umc_control/util/live_activity_model.dart';
 
 String _read(String path) => File(path).readAsStringSync();
@@ -29,6 +30,7 @@ void main() {
     'hydra_umc/speech': 'SpeechBridge.swift',
     'hydra_umc/live_activity': 'LiveActivityBridge.swift',
     'hydra_umc/watch': 'WatchBridge.swift',
+    'hydra_umc/pairing': 'PairingBridge.swift',
   };
 
   for (final entry in halves.entries) {
@@ -48,7 +50,8 @@ void main() {
       'AlertsBridge.swift': ['requestPermission', 'show'],
       'SpeechBridge.swift': ['listen', 'cancel'],
       'LiveActivityBridge.swift': ['isAvailable', 'start', 'update', 'end'],
-      'WatchBridge.swift': ['isReachable', 'sendStatus', 'stopRequested'],
+      'WatchBridge.swift': ['isReachable', 'sendStatus', 'stopRequested', 'sendAlert', 'presence', 'voiceConfirm'],
+      'PairingBridge.swift': ['takePending', 'pairingLink'],
     };
     for (final entry in methods.entries) {
       final swift = _read('ios/Runner/${entry.key}');
@@ -87,6 +90,7 @@ void main() {
     expect(watch, contains('stopRequestedAt'));
     expect(watch, isNot(contains('URLSession')));
     expect(watch, isNot(contains('Authorization')));
+    expect(watch, contains('"alert"'), reason: 'the watch shows the alerts of the phone and does nothing else with them');
     expect(_read('ios/Runner/WatchBridge.swift'), contains('stopRequestedAt'));
   });
 
@@ -121,6 +125,33 @@ void main() {
     for (final key in ['NSMicrophoneUsageDescription', 'NSSpeechRecognitionUsageDescription', 'NSSupportsLiveActivities']) {
       expect(plist, contains('<key>$key</key>'));
     }
+  });
+
+  test('Info.plist declares the hydra-umc URL scheme of the pairing link and turns the deep links of Flutter off', () {
+    final plist = _read('ios/Runner/Info.plist');
+    expect(plist, contains('<key>CFBundleURLSchemes</key>'));
+    expect(plist, contains('<string>${RobotCommandContract.pairingScheme}</string>'));
+    expect(RegExp(r'<key>FlutterDeepLinkingEnabled</key>\s*<false/>').hasMatch(plist), isTrue);
+  });
+
+  test('the scene delegate hands every pairing link, at launch and while open, to the pairing channel and nothing else', () {
+    final scene = _read('ios/Runner/SceneDelegate.swift');
+    expect(scene, contains('connectionOptions.urlContexts'));
+    expect(scene, contains('openURLContexts'));
+    final pairing = _read('ios/Runner/PairingBridge.swift');
+    expect(pairing, contains('"${RobotCommandContract.pairingScheme}"'));
+    expect(pairing, contains('"${RobotCommandContract.pairingHost}"'));
+    // The Swift half only hands the text over: it neither reads the fields nor connects to anything.
+    expect(pairing, isNot(contains('URLSession')));
+    expect(pairing, isNot(contains('queryItems')));
+  });
+
+  test('the watch link never queues an alert and passes the relays to the Dart side', () {
+    final swift = _read('ios/Runner/WatchBridge.swift');
+    expect(swift, contains('session.isReachable'));
+    expect(swift, isNot(contains('transferUserInfo')));
+    expect(swift, contains('invokeMethod("presence"'));
+    expect(swift, contains('invokeMethod("voiceConfirm"'));
   });
 }
 

@@ -159,11 +159,25 @@ abstract class WatchBridge {
   /// The watch asked for the global stop; [requestedAt] is when the person pressed it. [onStop] answers whether the request
   /// was accepted (the option is on and the request is fresh); the answer goes back to the watch.
   void listenForStop(bool Function(DateTime requestedAt) onStop);
+
+  /// Pushes an alert (see util/watch_alerts.dart) to the watch as a message. A message is not stored: when the watch is not
+  /// reachable it is simply not delivered (false), and nothing is queued for later, because an old alert on the wrist is
+  /// worse than none.
+  Future<bool> sendAlert(Map<String, Object> alert);
+
+  /// The watch passes the presence of the operator and the second tap of a spoken order to the phone, which passes them on to
+  /// the server only behind their own switches (both off). [onVoiceConfirm] returns the assistant reply for the watch.
+  void listenForRelays({
+    required Future<void> Function(Map<dynamic, dynamic> heartbeat) onPresence,
+    required Future<Map<String, Object?>?> Function(Map<dynamic, dynamic> confirm) onVoiceConfirm,
+  });
 }
 
 class MethodChannelWatchBridge implements WatchBridge {
   static const MethodChannel _channel = MethodChannel('hydra_umc/watch');
   bool Function(DateTime requestedAt)? _onStop;
+  Future<void> Function(Map<dynamic, dynamic> heartbeat)? _onPresence;
+  Future<Map<String, Object?>?> Function(Map<dynamic, dynamic> confirm)? _onVoiceConfirm;
   bool _listening = false;
 
   void _listen() {
@@ -176,6 +190,13 @@ class MethodChannelWatchBridge implements WatchBridge {
               ? DateTime.fromMillisecondsSinceEpoch((call.arguments as num).toInt())
               : DateTime.now();
           return _onStop?.call(at) ?? false;
+        }
+        if (call.method == 'presence' && call.arguments is Map) {
+          await _onPresence?.call(call.arguments as Map<dynamic, dynamic>);
+          return null;
+        }
+        if (call.method == 'voiceConfirm' && call.arguments is Map) {
+          return _onVoiceConfirm?.call(call.arguments as Map<dynamic, dynamic>);
         }
         return null;
       });
@@ -199,6 +220,70 @@ class MethodChannelWatchBridge implements WatchBridge {
   @override
   void listenForStop(bool Function(DateTime requestedAt) onStop) {
     _onStop = onStop;
+    _listen();
+  }
+  @override
+  Future<bool> sendAlert(Map<String, Object> alert) async {
+    _listen();
+    return await _call<bool>(_channel, 'sendAlert', alert) ?? false;
+  }
+
+  @override
+  void listenForRelays({
+    required Future<void> Function(Map<dynamic, dynamic> heartbeat) onPresence,
+    required Future<Map<String, Object?>?> Function(Map<dynamic, dynamic> confirm) onVoiceConfirm,
+  }) {
+    _onPresence = onPresence;
+    _onVoiceConfirm = onVoiceConfirm;
+    _listen();
+  }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Pairing links
+// ---------------------------------------------------------------------------------------------------------------------
+
+/// Receives the pairing link (hydra-umc://pair?...) that the camera of the phone opened with this app. The link is only
+/// handed over as text; whether it is read at all (the switch is off by default) and what it says is up to the Dart side.
+abstract class PairingBridge {
+  /// The link that opened the app and was not taken yet, or null.
+  Future<String?> takePending();
+
+  /// [onLink] runs for every link that arrives while the app is open.
+  void listen(void Function(String link) onLink);
+}
+
+class MethodChannelPairingBridge implements PairingBridge {
+  static const MethodChannel _channel = MethodChannel('hydra_umc/pairing');
+  void Function(String link)? _onLink;
+  bool _listening = false;
+
+  void _listen() {
+    if (_listening) return;
+    _listening = true;
+    try {
+      _channel.setMethodCallHandler((call) async {
+        if (call.method == 'pairingLink' && call.arguments is String) _onLink?.call(call.arguments as String);
+        return null;
+      });
+    } catch (_) {
+      _listening = false; // no bindings (a test)
+    }
+  }
+
+  @override
+  Future<String?> takePending() async {
+    _listen();
+    try {
+      return await _call<String>(_channel, 'takePending');
+    } catch (_) {
+      return null; // no bindings yet (a test, a desktop build): there is no link waiting
+    }
+  }
+
+  @override
+  void listen(void Function(String link) onLink) {
+    _onLink = onLink;
     _listen();
   }
 }

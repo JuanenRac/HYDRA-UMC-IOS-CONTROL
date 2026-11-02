@@ -65,6 +65,22 @@
 		<true/>
 		<key>NSFaceIDUsageDescription</key>
 		<string>HYDRA-UMC Control can use Face ID to confirm it's you before reconnecting to a saved server session.</string>
+		<!-- Pairing link of the admin page of the server (hydra-umc://pair?...): the camera of the phone opens it with this app.
+		     Nothing is read while the pairing switch of the settings is off (the default), and the person is asked before
+		     anything is kept. Flutter's own handling of deep links is off: the link goes to ios/Runner/PairingBridge.swift. -->
+		<key>CFBundleURLTypes</key>
+		<array>
+			<dict>
+				<key>CFBundleURLName</key>
+				<string>com.hydraumc.hydraUmcControl.pairing</string>
+				<key>CFBundleURLSchemes</key>
+				<array>
+					<string>hydra-umc</string>
+				</array>
+			</dict>
+		</array>
+		<key>FlutterDeepLinkingEnabled</key>
+		<false/>
 		<key>CFBundleExecutable</key>
 		<string>$(EXECUTABLE_NAME)</string>
 		<key>CFBundleIdentifier</key>

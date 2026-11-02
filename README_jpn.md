@@ -19,7 +19,7 @@ GPL-3.0-or-later - see LICENSE
   <img src="https://img.shields.io/badge/Framework-Flutter-02569B.svg" alt="Framework">
   <img src="https://img.shields.io/badge/Language-Dart-0175C2.svg" alt="Language">
   <img src="https://img.shields.io/badge/Platform-iOS-000000.svg" alt="Platform">
-  <img src="https://img.shields.io/badge/Tests-322%20passing-2ea44f.svg" alt="Tests">
+  <img src="https://img.shields.io/badge/Tests-503%20passing-2ea44f.svg" alt="Tests">
   <img src="https://img.shields.io/badge/Version-0.3.0-0f6cbd.svg" alt="Version">
   <img src="https://img.shields.io/badge/Maturity-functional-0F6CBD.svg" alt="Maturity">
 </p>
@@ -38,7 +38,7 @@ Wi-Fi 経由で [HYDRA-UMC](https://github.com/JuanenRac/HYDRA-UMC) プラット
 |---|---|
 | バージョン | `0.3.0` |
 | 成熟度 | 機能する |
-| テスト | 322 (`flutter test`) |
+| テスト | 503 (`flutter test`) |
 | 技術 | Flutter 3.x / Dart |
 | 対象 | iPhone または iPad |
 | 実機での確認 | まだです：このバージョンについて実機での動作記録はありません |
@@ -54,7 +54,7 @@ Wi-Fi 経由で [HYDRA-UMC](https://github.com/JuanenRac/HYDRA-UMC) プラット
 | 領域 | 状態 | ここでの意味 |
 |---|---|---|
 | ソフトウェア | 🟡 | 主な目的では動作します。足りない点は上の正直さの確認に書かれています |
-| テスト | 🟢 | 自動テスト 322 件。変更のたびに実行されます |
+| テスト | 🟢 | 自動テスト 503 件。変更のたびに実行されます |
 | 実機 | 🔴 | まだです：このバージョンについて実機での動作記録はありません |
 | インターフェースとプロトコル | 🟡 | 提供するルートやメッセージは文書化され、クライアントで試験済みです。すべてのクライアントがまだ使ったわけではありません |
 | 連携 | 🟠 | メッセージとルートは SDK の共通契約に照らして検証されていますが、実機と一緒に動かしたことはありません |
@@ -111,6 +111,7 @@ Wi-Fi 経由で [HYDRA-UMC](https://github.com/JuanenRac/HYDRA-UMC) プラット
 - **エコシステムタブ、接続診断、アプリ外の表示**（`lib/ui/ecosystem_tab.dart`、`lib/ui/connection_diagnostics_dialog.dart`、`lib/state/external_surfaces.dart`）—— テレメトリ画面にエコシステムタブ（サーバーが見つけたプロジェクトのマニフェスト。サービスを宣言したものにだけランプ付き）があり、設定から接続診断（スキーム、証明書の信頼方法、バージョン、`GET /api/hydra-info` を数回読んだ遅延、接続の状態、パスワードやトークンを含まないコピー用レポート）を開けます。既定ですべてオフの3つのスイッチで、ローカル通知（ジョブ完了、ロボットのオフラインやセーフモード、接続断）、実行中の軌道の進捗を示す Live Activity、ペアリングした Apple Watch へのステータスと STOP 要求を有効にできます。Swift 部分と Live Activity・Watch アプリのソース（`ios/HydraLiveActivity`、`ios/HydraWatch`）は書かれていますが、Xcode でのコンパイルも iPhone や Watch での動作確認も未実施で、この2つの拡張にはまだ Xcode のターゲットが必要です。
 - **コマンド経路と予約の維持**（`lib/state/robot_command_repository.dart`、`lib/models/robot_command_contract.dart`、`lib/models/access.dart`）- HYDRA-UMC-ANDROID-CONTROL と同じ分担です。ビューモデルの外にある1つのリポジトリが各ロボットのリビジョンを保持し、応答がないときは停止を再送し、古いサーバーには `table` 移動をジョグとして送り、送信中のジョグを数え、連続コマンドをまとめ、各応答を測定します。コマンド名と上限は `tools/gen_command_contract.py` が `docs/robot_command_contract.json`（Android のファイルと同一のコピー）から生成し、検証がチェックします。操作画面を開いている間は、この端末が保持する予約を終了の少し前に再度要求するので、長い操作でもロボットを失いません。サインアウト時には端末が保持する予約を解放します。数秒ごとのサーバー負荷の読み取りは、それを表示するバーだけを再描画し、すべての画面は再構築しません。テストでは偽サーバーに対して実行し、iPhone では実行していません。
 - **HOME/RESET**（`lib/ui/control_screen.dart`, `lib/util/home_reset.dart`, `lib/state/robot_view_model.dart`）- サーバーの `reset` コマンドで、選択したロボットをゼロ位置へ移動するボタンです。初期設定ではオフで、設定のスイッチでオンにでき、選択は保存されます。何かを送る前に、順番どおり、制限時間内に2回確認します。ロボットが軌道を実行中、セーフモード、オフライン、位置なしの場合、STOPの送信中または未確認の間、ジョグの送信中、ジョグの有効化が必要でされていない場合、およびオペレーターでも管理者でもないセッションの場合は、専用の文言で拒否されます（役割はサーバーが再度判断します）。コマンドにはジョグと同じく増加する番号が付き、`reset` を知らないサーバーは見分けて記憶されます。既定値、確認の回数、制限時間は `docs/robot_command_contract.json` から読み込みます。ローカルの擬似サーバーでテスト済みで、ロボットは関与しません。
+- **連続ジョグ、リンクの状態、リンクによるペアリング、時計へのアラート、Work の選択**（`lib/util/dead_man_jog.dart`、`lib/network/dead_man_jog_runner.dart`、`lib/state/dead_man_jog_controller.dart`、`lib/util/pairing_link.dart`、`lib/util/watch_alerts.dart`、`lib/util/watch_relay.dart`、`lib/util/work_files.dart`）- Android アプリと同じで、数値はすべて `docs/robot_command_contract.json` から読みます。**連続ジョグ**（設定のスイッチ、既定ではオフ）はボタンを押している間だけ軸を動かします：`jogStart`、100 ms ごとのハートビート、`jogStop`。指を離したとき、STOP のとき、画面を離れたとき、接続が切れたとき、ハートビートが 2 回失敗したとき、30 秒経過したとき、リンクが悪いとき、サーバーがハートビートを拒否したときに、軸を停止します（STOP と同じ緊急度で送り、再試行します）。**リンクインジケーター**（既定ではオン）はサーバーの応答の速さを示し、2 つ目のスイッチ（既定ではオン）はリンクが遅い、または失われたときに連続ジョグをブロックします。**リンクによるペアリング**（既定ではオフ）は `hydra-umc://pair?host=..&port=..&fp=..&name=..` を、スマートフォンのカメラで開いたものやログイン画面・設定に貼り付けたものから読み、厳密に検証し、読み取った内容を表示して、何かを保存する前に確認します。証明書のフィンガープリントがある場合は TLS を必須にして固定します。**Apple Watch へのアラート**（接続の喪失と復旧、ロボットのオフラインやセーフモード、未確認または確認済みの STOP）は回数が制限され、Apple Watch のオプションも必要です。オペレーターの在席と音声指示の 2 段階確認の中継は既定ではオフで、サーバーにまだないエンドポイントを待っています。**Work セレクター**はロボットのフォルダーの作業ファイルを一覧にし、サーバーと同じ方法で点を検査したうえで `trajectory` コマンドで 1 つを読み込みます。再生は決して開始しません。Mac なしで書かれました：**Xcode でコンパイルされておらず、iPhone や時計でも試されていません**。ロジックは偽の時計・サーバー・ブリッジを使って Dart VM でテストされています。
 
 ## 🔒 セキュリティと安全
 
@@ -161,7 +162,7 @@ flutter build ios --no-codesign  # a real iOS build; only on a Mac with Xcode
 
 ## 🧪 テスト
 
-`flutter test` で自動テスト 322 件を実行します。 ハードウェアも、このマシンの外にあるものも必要ありません。
+`flutter test` で自動テスト 503 件を実行します。 ハードウェアも、このマシンの外にあるものも必要ありません。
 
 CI は `HYDRA_UMC_CI=1 python tools/ci_validate.py` を実行し、マニフェスト、文書、8 つの README、図を検査します。
 

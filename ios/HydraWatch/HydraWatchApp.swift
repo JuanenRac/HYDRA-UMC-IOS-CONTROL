@@ -1,11 +1,14 @@
 import SwiftUI
 import WatchConnectivity
+import WatchKit
 
 // The Apple Watch companion: the status of the running job that the phone sends, and a STOP button that asks the PHONE to
 // make the global stop with its own session (the watch holds no password and no token and never talks to the server).
 // The button says so plainly when the phone cannot be reached or did not accept the request; the real result is the status
 // that follows. This is the source of the watchOS app target "HydraWatch"; it is not part of the Xcode project yet (the
 // target has to be created in Xcode, with the strings of ios/HydraExtensions). The phone half is ios/Runner/WatchBridge.swift.
+// The phone also pushes alerts (a lost connection, a robot offline or in safe mode, a STOP that was not confirmed): a message that
+// is never queued, with the text already in the language of the phone, shown until the person taps it. Critical ones vibrate harder.
 
 @main
 struct HydraWatchApp: App {
@@ -26,6 +29,9 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
   @Published var total = 0
   /// What the last press of STOP came to: "", "sent", "refused" or "unreachable".
   @Published var stopResult = ""
+  /// The last alert of the phone (its text is already in the language of the phone) and how serious it is: "CRITICAL", "WARNING" or "INFO".
+  @Published var alertText = ""
+  @Published var alertSeverity = "INFO"
 
   override init() {
     super.init()
@@ -55,6 +61,20 @@ final class PhoneLink: NSObject, ObservableObject, WCSessionDelegate {
   func session(_ session: WCSession, didReceiveApplicationContext applicationContext: [String: Any]) {
     apply(applicationContext)
   }
+
+  // An alert pushed by the phone: {"alert": {"type": "alert", "severity": "...", "message": "..."}}.
+  func session(_ session: WCSession, didReceiveMessage message: [String: Any]) {
+    guard let alert = message["alert"] as? [String: Any], alert["type"] as? String == "alert",
+          let text = alert["message"] as? String, !text.isEmpty, text.count <= 280 else { return }
+    let severity = alert["severity"] as? String ?? "INFO"
+    DispatchQueue.main.async {
+      self.alertText = text
+      self.alertSeverity = severity
+      WKInterfaceDevice.current().play(severity == "CRITICAL" ? .failure : (severity == "WARNING" ? .notification : .click))
+    }
+  }
+
+  func dismissAlert() { alertText = "" }
 
   func requestStop() {
     let session = WCSession.default

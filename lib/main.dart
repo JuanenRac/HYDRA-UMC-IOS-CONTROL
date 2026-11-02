@@ -18,6 +18,7 @@ import 'ui/biometric_gate_screen.dart';
 import 'ui/login_screen.dart';
 import 'ui/main_screen.dart';
 import 'ui/startup_screen.dart';
+import 'ui/widgets/pairing_widgets.dart';
 
 /// Attached to MaterialApp's own `scaffoldMessengerKey` below - the only way
 /// _surfaceAsyncError() (errors caught outside Flutter's build/layout/paint
@@ -26,6 +27,9 @@ import 'ui/startup_screen.dart';
 /// is a release-build no-op invisible to a real operator with no debugger
 /// attached.
 final GlobalKey<ScaffoldMessengerState> _rootMessengerKey = GlobalKey<ScaffoldMessengerState>();
+
+/// The navigator of the app, so the question of a pairing link can open over any screen (also the sign-in).
+final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 
 void _surfaceAsyncError(Object error) {
   final context = _rootMessengerKey.currentContext;
@@ -167,6 +171,8 @@ class HydraUmcControlApp extends StatelessWidget {
         builder: (context, vm, _) => MaterialApp(
           title: 'HYDRA-UMC Control',
           scaffoldMessengerKey: _rootMessengerKey,
+          navigatorKey: _rootNavigatorKey,
+          builder: (context, child) => PairingDialogHost(vm: vm, navigatorKey: _rootNavigatorKey, child: child ?? const SizedBox.shrink()),
           debugShowCheckedModeBanner: false,
           localizationsDelegates: const [
             AppLocalizations.delegate,

@@ -13,6 +13,7 @@ import '../network/tls_settings.dart';
 import '../state/robot_view_model.dart';
 import 'connection_diagnostics_dialog.dart';
 import 'widgets/ble_dialog.dart';
+import 'widgets/pairing_widgets.dart';
 import 'widgets/security_dialog.dart';
 import 'widgets/server_options_dialog.dart';
 
@@ -84,6 +85,41 @@ class SettingsScreen extends StatelessWidget {
           value: vm.homeResetEnabled,
           onChanged: (value) => vm.setHomeResetEnabled(value),
         ),
+        // The continuous jog moves a real robot while a button is held: off by default. The link switches belong to it.
+        SwitchListTile(
+          key: const Key('settings-dead-man'),
+          secondary: const Icon(Icons.touch_app_outlined),
+          title: Text(l10n.deadManSwitchLabel),
+          subtitle: Text(l10n.deadManSwitchHint),
+          value: vm.deadMan.enabled,
+          onChanged: (value) => vm.setDeadManEnabled(value),
+        ),
+        SwitchListTile(
+          key: const Key('settings-link-block'),
+          secondary: const Icon(Icons.speed),
+          title: Text(l10n.linkBlockSwitchLabel),
+          subtitle: Text(l10n.linkBlockSwitchHint),
+          value: vm.deadMan.blockOnBadLink,
+          onChanged: (value) => vm.setLinkBlockOnBadLink(value),
+        ),
+        SwitchListTile(
+          key: const Key('settings-link-indicator'),
+          secondary: const Icon(Icons.network_ping),
+          title: Text(l10n.linkIndicatorSwitchLabel),
+          subtitle: Text(l10n.linkIndicatorSwitchHint),
+          value: vm.deadMan.indicator,
+          onChanged: (value) => vm.setLinkIndicator(value),
+        ),
+        // Pairing by link: off by default; the camera opens the link with this app or the person pastes it here.
+        SwitchListTile(
+          key: const Key('settings-pairing'),
+          secondary: const Icon(Icons.qr_code_scanner),
+          title: Text(l10n.pairingSwitchLabel),
+          subtitle: Text(l10n.pairingSwitchHint),
+          value: vm.pairingEnabled,
+          onChanged: (value) => vm.setPairingEnabled(value),
+        ),
+        PairingPasteBox(vm: vm),
         const Divider(),
         SwitchListTile(
           key: const Key('settings-push'),
@@ -127,6 +163,31 @@ class SettingsScreen extends StatelessWidget {
           subtitle: Text(l10n.watchSubtitle),
           value: vm.watchEnabled,
           onChanged: (value) => vm.setWatch(value),
+        ),
+        // What the phone tells the watch and passes on from it (the first needs the option above too; the two relays are off).
+        SwitchListTile(
+          key: const Key('settings-watch-alerts'),
+          secondary: const Icon(Icons.watch_later_outlined),
+          title: Text(l10n.watchAlertsSwitchLabel),
+          subtitle: Text(l10n.watchAlertsSwitchHint),
+          value: vm.watchAlertsEnabled,
+          onChanged: (value) => vm.setWatchAlertsEnabled(value),
+        ),
+        SwitchListTile(
+          key: const Key('settings-presence-relay'),
+          secondary: const Icon(Icons.person_pin_circle_outlined),
+          title: Text(l10n.presenceRelaySwitchLabel),
+          subtitle: Text(l10n.presenceRelaySwitchHint),
+          value: vm.presenceRelayEnabled,
+          onChanged: (value) => vm.setPresenceRelayEnabled(value),
+        ),
+        SwitchListTile(
+          key: const Key('settings-voice-confirm-relay'),
+          secondary: const Icon(Icons.record_voice_over_outlined),
+          title: Text(l10n.voiceConfirmSwitchLabel),
+          subtitle: Text(l10n.voiceConfirmSwitchHint),
+          value: vm.voiceConfirmRelayEnabled,
+          onChanged: (value) => vm.setVoiceConfirmRelayEnabled(value),
         ),
         SwitchListTile(
           key: const Key('settings-dictation'),

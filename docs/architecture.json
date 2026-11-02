@@ -125,6 +125,10 @@
         "lib/models/connection_history.dart",
         "lib/models/server_security.dart",
         "lib/util/home_reset.dart",
+        "lib/util/dead_man_jog.dart",
+        "lib/util/pairing_link.dart",
+        "lib/util/watch_alerts.dart",
+        "lib/util/work_files.dart",
         "lib/util/play_confirmation.dart"
       ]
     },

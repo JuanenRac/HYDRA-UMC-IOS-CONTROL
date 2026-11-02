@@ -27,7 +27,8 @@ Every file of the repository with a line on what it does: the annotated tree tha
 │   │   ├── ble_contract.dart, ble_commands.dart, ble_gatt.dart # Bluetooth LE contract, framing, commands and the link abstraction (experimental)
 │   │   ├── hydra_ble_client.dart    # The Bluetooth LE client state machine; ble_gatt_fbp.dart is the real link (flutter_blue_plus)
 │   │   ├── shortcut_bridge.dart     # The global stop asked for by a system shortcut (native half: ios/Runner/GlobalStopShortcut.swift)
-│   │   ├── native_bridges.dart      # The Dart side of the native halves that reach out of the app: local notifications, dictation, Live Activity, Apple Watch (Swift halves in ios/Runner)
+│   │   ├── native_bridges.dart      # The Dart side of the native halves that reach out of the app: local notifications, dictation, Live Activity, Apple Watch (alerts and relays), pairing links (Swift halves in ios/Runner)
+│   │   ├── dead_man_jog_runner.dart # The continuous jog: jogStart, a heartbeat every 100 ms, jogStop, and the urgent stop in every way a session ends (port of the Android DeadManJogRunner)
 │   │   ├── push_bridge.dart         # The bridge to the push notifications of the system (native half: ios/Runner/AppDelegate.swift)
 │   │   ├── command_sequence.dart    # The rising number (seq) on motion commands and on the stop
 │   │   ├── hydra_websocket.dart     # /ws live sync client
@@ -39,6 +40,7 @@ Every file of the repository with a line on what it does: the annotated tree tha
 │   ├── state/
 │   │   ├── robot_view_model.dart    # Single ChangeNotifier every screen listens to
 │   │   ├── external_surfaces.dart   # What is shown outside the app, each behind its own switch: notifications of a job, Live Activity, Apple Watch
+│   │   ├── dead_man_jog_controller.dart # What the screen sees of the continuous jog and the link health: the switches, the held controls, the probe of the link
 │   │   ├── robot_command_repository.dart # Every robot write: revisions, retry of a stop, table fallback, jogs on the wire, debounce, timings
 │   │   └── hydra_error.dart         # Typed error surface for RobotViewModel (no BuildContext of its own)
 │   ├── l10n/                        # Real generated localizations (8 languages) - see l10n.yaml at repo root
@@ -52,6 +54,11 @@ Every file of the repository with a line on what it does: the annotated tree tha
 │   │   ├── job_alerts.dart          # Which local notifications a change of the robots gives, rationed
 │   │   ├── live_activity_model.dart # What the Live Activity and the watch show, and when to start, update or end them
 │   │   ├── home_reset.dart          # HOME/RESET: when it is refused and the confirmation in steps
+│   │   ├── dead_man_jog.dart        # The rules of the continuous jog: when it refuses to start, the bounded speed, the watchdog of the heartbeat
+│   │   ├── pairing_link.dart        # Reads and validates hydra-umc://pair?host&port&fp&name; connects to nothing and keeps nothing
+│   │   ├── watch_alerts.dart        # Which alerts the watch gets (connection, robot offline or in safe mode, STOP) and how they are rationed
+│   │   ├── watch_relay.dart         # What the watch asks the phone to pass to the server: presence heartbeat and the second tap of a spoken order
+│   │   ├── work_files.dart          # The Work files (trajectories): folder, list, the points checked like the server, and when a Work may be loaded
 │   │   ├── play_confirmation.dart   # When PLAY asks first: the rules of the confirmation before a trajectory starts
 │   │   └── viewer_url.dart          # The address of the embedded 3D viewer: the access token goes in the fragment, which is never sent to the server
 │   └── ui/
@@ -74,13 +81,16 @@ Every file of the repository with a line on what it does: the annotated tree tha
 │           ├── audit_dialog.dart      # Audit record of the server (administrators), with the chain check
 │           ├── connections_dialog.dart # Who connects to the server (apps seen and latest sign-ins)
 │           ├── server_options_dialog.dart # Access options of the server (administrators), asked about before they lower the protection
+│           ├── dead_man_jog_control.dart # The continuous jog (hold a button) and the small link indicator
+│           ├── work_selector.dart    # The Work loaded in the robot and the list to pick another; it never starts the playback
+│           ├── pairing_widgets.dart  # Paste box and question of the pairing by link
 │           ├── joystick_pad.dart     # Jog D-pad (deliberately not an analog stick, see file header)
 │           ├── stop_all.dart            # the global STOP button and its result / "not confirmed" banner
 │           ├── digital_readout.dart, status_led.dart
 │           ├── mjpeg_view.dart       # Hand-rolled MJPEG stream parser
 │           └── hydra_mark.dart       # The HYDRA-UMC mark (a hexagon with an H and a stem) drawn in code
 ├── ios/                              # Xcode project (build only from macOS)
-│   ├── Runner/                       # AlertsBridge, SpeechBridge, LiveActivityBridge, WatchBridge and HydraJobAttributes: the Swift halves of lib/network/native_bridges.dart (not compiled in Xcode by the author)
+│   ├── Runner/                       # AlertsBridge, SpeechBridge, LiveActivityBridge, WatchBridge, PairingBridge and HydraJobAttributes: the Swift halves of lib/network/native_bridges.dart (not compiled in Xcode by the author)
 │   ├── HydraLiveActivity/            # Sources of the Live Activity widget (lock screen and Dynamic Island); its Xcode target is not created yet
 │   ├── HydraWatch/                   # Sources of the Apple Watch app (status and a STOP request to the phone); its Xcode target is not created yet
 │   └── HydraExtensions/              # The texts of the Live Activity and of the watch app in the eight languages
@@ -94,7 +104,7 @@ Every file of the repository with a line on what it does: the annotated tree tha
 ├── docs/ARCHITECTURE.md
 ├── docs/robot_command_contract.json  # Commands and limits shared with the Android app (identical copy)
 ├── docs/ios_feature_contract.json    # Settings of the features of this app: ecosystem, notifications, Live Activity, dictation, diagnostics, watch
-├── test/                             # widget_test, auth_prefs_test, discovery_interfaces_test, format_uptime_test, hostile_answers_test, hydra_error_test, hydra_websocket_reconnect_test, hydra_websocket_token_test, joystick_pad_test, localization_test, main_screen_cached_state_banner_test, mjpeg_lifecycle_test, home_reset_test, robot_view_model_home_reset_test, play_confirmation_test, robot_view_model_background_pause_test, parol6_kinematics_test, robot_view_model_parol6_jog_test, command_sequence_test, robot_view_model_push_test, robot_view_model_shortcut_test, ble_test, robot_view_model_ble_test, connection_history_test, server_security_test, robot_view_model_cached_state_test, robot_view_model_server_errors_test, robot_view_model_silent_refresh_test, robot_view_model_stop_all_test, saved_data_block_test, session_storage_test, state_cache_test, telemetry_log_test, voice_turn_test, websocket_uri_test
+├── test/                             # widget_test, auth_prefs_test, discovery_interfaces_test, format_uptime_test, hostile_answers_test, hydra_error_test, hydra_websocket_reconnect_test, hydra_websocket_token_test, joystick_pad_test, localization_test, main_screen_cached_state_banner_test, mjpeg_lifecycle_test, home_reset_test, robot_view_model_home_reset_test, play_confirmation_test, robot_view_model_background_pause_test, parol6_kinematics_test, dead_man_jog_test, dead_man_jog_controller_test, pairing_link_test, work_files_test, watch_alerts_test, robot_view_model_link_test, robot_view_model_parol6_jog_test, command_sequence_test, robot_view_model_push_test, robot_view_model_shortcut_test, ble_test, robot_view_model_ble_test, connection_history_test, server_security_test, robot_view_model_cached_state_test, robot_view_model_server_errors_test, robot_view_model_silent_refresh_test, robot_view_model_stop_all_test, saved_data_block_test, session_storage_test, state_cache_test, telemetry_log_test, voice_turn_test, websocket_uri_test
 ├── images/
 ├── pubspec.yaml / pubspec.lock / l10n.yaml / analysis_options.yaml # The Flutter package definition and its locked versions, the settings of the l10n generator and the lint rules
 ├── README.md                         # this file

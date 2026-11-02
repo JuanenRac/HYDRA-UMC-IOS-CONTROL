@@ -49,8 +49,22 @@ class RobotCommandContract {
   static const int homeResetConfirmSteps = 2;
   static const int homeResetConfirmWindowMs = 20000;
 
-  /// Link health: round-trip times (ms) that grade the link to the server, and how long without an answer counts as lost.
+  /// Continuous jog held by a dead-man: off until the person turns it on; the heartbeat, the time limits and the speed.
+  static const bool deadManEnabledByDefault = false;
+  static const int deadManHeartbeatMs = 100;
+  static const int deadManServerTimeoutMs = 300;
+  static const int deadManMaxMissedHeartbeats = 2;
+  static const int deadManMaxHoldMs = 30000;
+  static const int deadManStopAttempts = 3;
+  static const int deadManStopRetryPauseMs = 100;
+  static const int deadManStopTimeoutMs = 2000;
+  static const int deadManVelocityDefault = 20;
+  static const int deadManVelocityMin = 1;
+  static const int deadManVelocityMax = 100;
+
+  /// Health of the link to the server: how it is probed and the round-trip times that make it good, poor or bad.
   static const bool linkIndicatorEnabledByDefault = true;
+  static const bool linkBlockJogOnBadLinkDefault = true;
   static const int linkProbeIntervalMs = 2000;
   static const int linkProbeTimeoutMs = 1500;
   static const int linkSampleWindow = 8;
@@ -58,4 +72,41 @@ class RobotCommandContract {
   static const int linkPoorRttMs = 250;
   static const int linkBlockRttMs = 500;
   static const int linkLostAfterMs = 4000;
+
+  /// Pairing by link: off until the person turns it on, and the limits of what is accepted.
+  static const bool pairingEnabledByDefault = false;
+  static const String pairingScheme = 'hydra-umc';
+  static const String pairingHost = 'pair';
+  static const int pairingMaxPayloadChars = 600;
+  static const int pairingNameMax = 64;
+  static const int pairingPortMin = 1;
+  static const int pairingPortMax = 65535;
+
+  /// Alerts pushed to the watch and how they are rationed.
+  static const bool watchAlertsEnabledByDefault = true;
+  static const int watchAlertsMessageMax = 280;
+  static const int watchAlertsDedupeWindowMs = 30000;
+  static const int watchAlertsMinGapMs = 2000;
+  static const int watchAlertsMaxPerMinute = 6;
+  static const int watchAlertsConnectionLostAfterMs = 10000;
+  static const int watchAlertsSendTimeoutMs = 3000;
+
+  /// Relay of the presence heartbeat of the watch to the server.
+  static const bool presenceRelayEnabledByDefault = false;
+  static const String presenceRelayPath = '/api/operator/presence';
+  static const int presenceRelayTimeoutMs = 1500;
+  static const int presenceRelayGapIntervals = 3;
+
+  /// Relay of the two-step confirmation of a spoken order.
+  static const bool voiceConfirmEnabledByDefault = false;
+  static const String voiceConfirmPath = '/api/voice/confirm';
+  static const int voiceConfirmTimeoutMs = 15000;
+  static const int voiceConfirmTokenMax = 1024;
+  static const int voiceConfirmValidityMaxSeconds = 300;
+
+  /// Work files (trajectories) the server lists and serves.
+  static const int worksMaxPoints = 10000;
+  static const int worksFileMaxBytes = 2000000;
+  static const int worksFileNameMax = 128;
+  static const int worksFolderMax = 200;
 }

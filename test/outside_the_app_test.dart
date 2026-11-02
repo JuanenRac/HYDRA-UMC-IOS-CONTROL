@@ -89,6 +89,13 @@ class _FakeWatch implements WatchBridge {
   Future<void> sendStatus(Map<String, Object> status) async => sent.add(status);
   @override
   void listenForStop(bool Function(DateTime requestedAt) onStop) => this.onStop = onStop;
+  @override
+  Future<bool> sendAlert(Map<String, Object> alert) async => true;
+  @override
+  void listenForRelays({
+    required Future<void> Function(Map<dynamic, dynamic> heartbeat) onPresence,
+    required Future<Map<String, Object?>?> Function(Map<dynamic, dynamic> confirm) onVoiceConfirm,
+  }) {}
 }
 
 void main() {

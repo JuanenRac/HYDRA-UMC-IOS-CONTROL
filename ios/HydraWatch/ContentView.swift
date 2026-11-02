@@ -7,6 +7,17 @@ struct ContentView: View {
 
   var body: some View {
     VStack(spacing: 6) {
+      // The alert of the phone stays until it is tapped; the watch only shows it, it never acts on it.
+      if !link.alertText.isEmpty {
+        Text(link.alertText)
+          .font(.footnote)
+          .multilineTextAlignment(.center)
+          .padding(4)
+          .frame(maxWidth: .infinity)
+          .background(link.alertSeverity == "CRITICAL" ? Color.red : (link.alertSeverity == "WARNING" ? Color.orange : Color.gray))
+          .cornerRadius(6)
+          .onTapGesture { link.dismissAlert() }
+      }
       if !link.connected {
         Text(text("watch.waiting")).font(.footnote).multilineTextAlignment(.center)
       } else {

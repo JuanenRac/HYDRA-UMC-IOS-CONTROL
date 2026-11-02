@@ -72,6 +72,9 @@ import UserNotifications
     if let messenger = engineBridge.pluginRegistry.registrar(forPlugin: "HydraWatch")?.messenger() {
       WatchChannel.register(messenger: messenger)
     }
+    if let messenger = engineBridge.pluginRegistry.registrar(forPlugin: "HydraPairing")?.messenger() {
+      PairingChannel.register(messenger: messenger)
+    }
   }
 
   override func application(

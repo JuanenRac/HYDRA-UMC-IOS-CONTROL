@@ -14,6 +14,18 @@
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// The names of the switches kept with [ClientPrefs.loadFlag].
+class ClientFlags {
+  ClientFlags._();
+  static const String deadManJog = 'dead_man_jog';
+  static const String linkBlockJog = 'link_block_jog';
+  static const String linkIndicator = 'link_indicator';
+  static const String pairing = 'pairing';
+  static const String watchAlerts = 'watch_alerts';
+  static const String presenceRelay = 'presence_relay';
+  static const String voiceConfirmRelay = 'voice_confirm_relay';
+}
+
 class ClientPrefs {
   static const _keyBlockOnSavedData = 'hydra_block_commands_on_saved_data';
   static const _keySkipMobileVpn = 'hydra_scan_skip_mobile_vpn';
@@ -106,6 +118,13 @@ class ClientPrefs {
   Future<bool> loadWatch(bool defaultValue) async => (await SharedPreferences.getInstance()).getBool(_keyWatch) ?? defaultValue;
 
   Future<void> saveWatch(bool value) async => (await SharedPreferences.getInstance()).setBool(_keyWatch, value);
+
+  /// A switch of this app by its [name] (one of [ClientFlags]); [defaultValue] before any choice. The defaults live in the
+  /// command contract, so none is decided here.
+  Future<bool> loadFlag(String name, bool defaultValue) async =>
+      (await SharedPreferences.getInstance()).getBool('hydra_flag_$name') ?? defaultValue;
+
+  Future<void> saveFlag(String name, bool value) async => (await SharedPreferences.getInstance()).setBool('hydra_flag_$name', value);
 
   /// The conditional-writes mode chosen in this app (`off`, `standard`, `strict`); null before any choice.
   Future<String?> loadConditionalMode() async {

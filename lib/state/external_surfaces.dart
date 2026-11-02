@@ -112,6 +112,19 @@ class ExternalSurfaces {
     });
   }
 
+  /// Pushes one alert to the watch (see util/watch_alerts.dart). Only while the Apple Watch option is on; true when the watch took it.
+  Future<bool> sendWatchAlert(Map<String, Object> alert) async {
+    if (!_watchOn) return false;
+    return _watch.sendAlert(alert);
+  }
+
+  /// The presence and the second tap of a spoken order that the watch passes to the phone (see util/watch_relay.dart).
+  void listenForWatchRelays({
+    required Future<void> Function(Map<dynamic, dynamic> heartbeat) onPresence,
+    required Future<Map<String, Object?>?> Function(Map<dynamic, dynamic> confirm) onVoiceConfirm,
+  }) =>
+      _watch.listenForRelays(onPresence: onPresence, onVoiceConfirm: onVoiceConfirm);
+
   /// The view model calls this after every change of the state it holds.
   Future<void> onState(List<RobotSnapshot> robots, {required bool connected}) async {
     _connected = connected;

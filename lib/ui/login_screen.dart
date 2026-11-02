@@ -15,6 +15,7 @@ import '../network/client_prefs.dart';
 import '../network/discovery.dart';
 import '../state/robot_view_model.dart';
 import 'widgets/hydra_mark.dart';
+import 'widgets/pairing_widgets.dart';
 import 'widgets/security_dialog.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -36,6 +37,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   StreamSubscription<ServerInfo>? _scanSub;
   StreamSubscription<ServerInfo>? _mdnsSub;
+  int _pairedStamp = 0;
 
   @override
   void initState() {
@@ -227,6 +229,14 @@ class _LoginScreenState extends State<LoginScreen> {
     final vm = context.watch<RobotViewModel>();
     final l10n = AppLocalizations.of(context)!;
     final scheme = Theme.of(context).colorScheme;
+    // A pairing the person confirmed gives the address of the server: show it in the fields.
+    if (vm.pairedStamp != _pairedStamp) {
+      _pairedStamp = vm.pairedStamp;
+      if (vm.pairedHost != null && vm.pairedPort != null) {
+        _hostCtrl.text = vm.pairedHost!;
+        _portCtrl.text = '${vm.pairedPort}';
+      }
+    }
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -331,6 +341,17 @@ class _LoginScreenState extends State<LoginScreen> {
                                 _clientPrefs.saveSkipMobileAndVpnNetworks(v);
                               },
                             ),
+                            // Pairing by the link of the admin page of the server: off until switched on, asks before it keeps anything.
+                            SwitchListTile(
+                              key: const Key('login-pairing'),
+                              dense: true,
+                              contentPadding: EdgeInsets.zero,
+                              title: Text(l10n.pairingSwitchLabel),
+                              subtitle: Text(l10n.pairingSwitchHint, style: const TextStyle(fontSize: 11)),
+                              value: vm.pairingEnabled,
+                              onChanged: (value) => vm.setPairingEnabled(value),
+                            ),
+                            PairingPasteBox(vm: vm),
                             const SizedBox(height: 8),
                             TextField(
                               controller: _userCtrl,

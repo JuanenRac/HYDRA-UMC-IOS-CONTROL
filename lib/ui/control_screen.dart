@@ -24,9 +24,11 @@ import '../state/robot_view_model.dart';
 import '../util/home_reset.dart';
 import '../util/play_confirmation.dart';
 import 'widgets/access_panel.dart';
+import 'widgets/dead_man_jog_control.dart';
 import 'widgets/digital_readout.dart';
 import 'widgets/joystick_pad.dart';
 import 'widgets/stop_all.dart';
+import 'widgets/work_selector.dart';
 
 class ControlScreen extends StatefulWidget {
   const ControlScreen({super.key});
@@ -47,10 +49,12 @@ class _ControlScreenState extends State<ControlScreen> {
   Timer? _clockTimer;
   DateTime _now = DateTime.now();
   dynamic _accessRobotId;
+  RobotViewModel? _vm;
 
   @override
   void initState() {
     super.initState();
+    _vm = context.read<RobotViewModel>();
     _clockTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) setState(() => _now = DateTime.now());
     });
@@ -65,6 +69,8 @@ class _ControlScreenState extends State<ControlScreen> {
 
   @override
   void dispose() {
+    // Leaving the screen ends a held continuous jog.
+    _vm?.deadMan.interrupt();
     _accessTimer?.cancel();
     _clockTimer?.cancel();
     super.dispose();
@@ -139,6 +145,14 @@ class _ControlScreenState extends State<ControlScreen> {
                   const SizedBox(height: 8),
                   // HOME/RESET: drawn only when the person switched it on in the settings; two confirmations.
                   if (vm.homeResetEnabled) _homeResetButton(vm, robot, l10n),
+                  // The link to the server and the continuous jog held by a dead-man (the indicator is on, the jog off until
+                  // switched on in the settings).
+                  const SizedBox(height: 8),
+                  LinkHealthChip(controller: vm.deadMan),
+                  DeadManJogControl(controller: vm.deadMan, robot: robot, target: _jogTarget),
+                  // The Work (trajectory file) loaded in the robot, and the list to pick another from. It never starts the playback.
+                  const SizedBox(height: 8),
+                  WorkSelector(vm: vm, robot: robot),
                   const SizedBox(height: 16),
                   _speedAccelSliders(vm, robot, l10n),
                   const SizedBox(height: 16),

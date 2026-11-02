@@ -19,7 +19,7 @@ GPL-3.0-or-later - see LICENSE
   <img src="https://img.shields.io/badge/Framework-Flutter-02569B.svg" alt="Framework">
   <img src="https://img.shields.io/badge/Language-Dart-0175C2.svg" alt="Language">
   <img src="https://img.shields.io/badge/Platform-iOS-000000.svg" alt="Platform">
-  <img src="https://img.shields.io/badge/Tests-322%20passing-2ea44f.svg" alt="Tests">
+  <img src="https://img.shields.io/badge/Tests-503%20passing-2ea44f.svg" alt="Tests">
   <img src="https://img.shields.io/badge/Version-0.3.0-0f6cbd.svg" alt="Version">
   <img src="https://img.shields.io/badge/Maturity-functional-0F6CBD.svg" alt="Maturity">
 </p>
@@ -38,7 +38,7 @@ Une application Flutter (Dart) multiplateforme qui contrôle un robot de la plat
 |---|---|
 | Version | `0.3.0` |
 | Maturité | Fonctionnel |
-| Tests | 322 (`flutter test`) |
+| Tests | 503 (`flutter test`) |
 | Technologie | Flutter 3.x / Dart |
 | Cible | Un iPhone ou un iPad |
 | Sur matériel réel | Pas encore : aucune exécution sur du matériel réel n'est consignée pour cette version |
@@ -54,7 +54,7 @@ Chaque ligne est une partie de ce dépôt et le feu dit où elle en est aujourd'
 | Domaine | État | Ce que cela veut dire ici |
 |---|---|---|
 | Logiciel | 🟡 | Fonctionne pour son usage principal ; la vérification d'honnêteté ci-dessus liste ce qui manque encore |
-| Tests | 🟢 | 322 tests automatiques, exécutés à chaque modification |
+| Tests | 🟢 | 503 tests automatiques, exécutés à chaque modification |
 | Matériel réel | 🔴 | Pas encore : aucune exécution sur du matériel réel n'est consignée pour cette version |
 | Interface et protocoles | 🟡 | Les routes ou les messages proposés sont documentés et testés avec un client ; tous les clients ne les ont pas encore utilisés |
 | Intégration | 🟠 | Ses messages et ses routes sont vérifiés par rapport aux contrats partagés du SDK ; il n'a pas fonctionné avec l'équipement réel |
@@ -111,6 +111,7 @@ Cette application cible iOS/iPadOS, mais elle est construite en **Flutter** plut
 - **Onglet Écosystème, diagnostic de connexion et surfaces hors de l'application** (`lib/ui/ecosystem_tab.dart`, `lib/ui/connection_diagnostics_dialog.dart`, `lib/state/external_surfaces.dart`) - l'écran Télémétrie a un onglet Écosystème (les manifestes de projet que le serveur trouve, avec un voyant seulement pour les services qui en déclarent un) ; les Réglages ouvrent le diagnostic de connexion (schéma, manière dont le certificat est approuvé, versions, latence de quelques lectures de `GET /api/hydra-info`, qualité de la liaison et un rapport à copier sans mot de passe ni jeton) ; et trois interrupteurs, tous désactivés par défaut, activent des notifications locales (tâche terminée, robot hors ligne ou en mode sécurisé, connexion perdue), une Live Activity avec la progression de la trajectoire en cours et un état avec demande de STOP pour une Apple Watch jumelée. Les parties Swift et les sources de la Live Activity et de l'app de la montre (`ios/HydraLiveActivity`, `ios/HydraWatch`) sont écrites mais ni compilées dans Xcode ni essayées sur un iPhone ou une montre, et ces deux extensions attendent encore leurs cibles dans Xcode.
 - **Chemin des commandes et entretien de la réservation** (`lib/state/robot_command_repository.dart`, `lib/models/robot_command_contract.dart`, `lib/models/access.dart`) - le même découpage que HYDRA-UMC-ANDROID-CONTROL : un dépôt hors du view model garde la révision de chaque robot, répète un arrêt quand personne ne répond, envoie un mouvement `table` sous forme de jogs à un serveur plus ancien, compte les jogs en route, regroupe les commandes continues et mesure chaque réponse ; les noms et limites des commandes sont générés depuis `docs/robot_command_contract.json` (copie identique du fichier d'Android) par `tools/gen_command_contract.py`, vérifié par la validation. Tant que l'écran de Contrôle est ouvert, une réservation tenue par cet appareil est redemandée peu avant sa fin, pour qu'une longue session ne perde pas le robot, et les réservations de l'appareil sont libérées à la déconnexion. La lecture de la charge du serveur toutes les quelques secondes ne reconstruit que la barre qui l'affiche, pas chaque écran. Testé contre un faux serveur ; jamais exécuté sur un iPhone.
 - **HOME/RESET** (`lib/ui/control_screen.dart`, `lib/util/home_reset.dart`, `lib/state/robot_view_model.dart`) - un bouton qui amène le robot sélectionné à sa position zéro par la commande `reset` du serveur. Il est désactivé par défaut : un interrupteur dans les Réglages l'active et le choix est conservé. Il demande deux confirmations, dans l'ordre et dans un délai, avant d'envoyer quoi que ce soit. Il est refusé, avec une phrase propre, quand le robot joue une trajectoire, est en mode sécurisé, hors ligne ou sans position, pendant l'envoi d'un STOP ou tant qu'il n'est pas confirmé, pendant qu'un jog est en route, quand le jog doit être armé et ne l'est pas, et pour une session qui n'est ni opérateur ni administrateur (le serveur décide à nouveau du rôle). La commande porte un numéro croissant comme le jog, et un serveur qui ne connaît pas `reset` est reconnu et mémorisé. La valeur par défaut, le nombre d'étapes et le délai sont lus dans `docs/robot_command_contract.json`. Testé contre un faux serveur local : aucun robot n'intervient.
+- **Déplacement continu, qualité de la liaison, appairage par lien, alertes vers la montre et sélecteur de Work** (`lib/util/dead_man_jog.dart`, `lib/network/dead_man_jog_runner.dart`, `lib/state/dead_man_jog_controller.dart`, `lib/util/pairing_link.dart`, `lib/util/watch_alerts.dart`, `lib/util/watch_relay.dart`, `lib/util/work_files.dart`) - comme l'application Android, chaque nombre étant lu dans `docs/robot_command_contract.json`. Le **déplacement continu** (un interrupteur dans les Réglages, désactivé par défaut) déplace un axe tant qu'un bouton est maintenu : `jogStart`, un battement toutes les 100 ms et `jogStop` ; l'axe est arrêté (un arrêt envoyé avec l'urgence d'un ARRÊT, réessayé) au relâchement, avec ARRÊT, en quittant l'écran, à la perte de connexion, après deux battements manqués, après 30 secondes, avec une liaison mauvaise ou quand le serveur refuse un battement. Un **indicateur de liaison** (activé par défaut) montre la vitesse de réponse du serveur, et un second interrupteur (activé par défaut) bloque le déplacement continu sur une liaison lente ou perdue. L'**appairage par lien** (désactivé par défaut) lit `hydra-umc://pair?host=..&port=..&fp=..&name=..`, ouvert par l'appareil photo du téléphone ou collé dans la connexion ou les Réglages, le valide strictement, montre ce qu'il a lu et demande avant de rien conserver ; avec l'empreinte d'un certificat, il exige TLS et l'épingle. Les **alertes vers l'Apple Watch** (connexion perdue ou rétablie, robot hors ligne ou en mode sûr, un ARRÊT non confirmé ou confirmé) sont rationnées et demandent aussi l'option Apple Watch ; les relais de la présence de l'opérateur et de la confirmation en deux étapes d'un ordre vocal sont désactivés par défaut et attendent des points d'accès que le serveur n'a pas encore. Le **sélecteur de Work** liste les fichiers de travail du dossier du robot et en charge un avec la commande `trajectory` après avoir vérifié ses points comme le fait le serveur ; il ne lance jamais la lecture. Écrit sans Mac : **non compilé dans Xcode ni essayé sur un iPhone ou une montre** ; la logique est testée sur la VM Dart avec de fausses horloges, de faux serveurs et de faux ponts.
 
 ## 🔒 Sécurité et protection
 
@@ -161,7 +162,7 @@ flutter build ios --no-codesign  # a real iOS build; only on a Mac with Xcode
 
 ## 🧪 Tests
 
-322 tests automatiques s'exécutent avec `flutter test`. Ils n'ont besoin ni de matériel ni de rien en dehors de cette machine.
+503 tests automatiques s'exécutent avec `flutter test`. Ils n'ont besoin ni de matériel ni de rien en dehors de cette machine.
 
 La CI exécute `HYDRA_UMC_CI=1 python tools/ci_validate.py`, qui vérifie le manifeste, les documents, les huit README et les images.
 

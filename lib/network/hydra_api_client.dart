@@ -41,6 +41,7 @@ import '../models/access.dart';
 import '../models/contract_v2.dart';
 import '../models/assistant_reply.dart';
 import '../models/ecosystem.dart';
+import '../models/robot_command_contract.dart';
 import '../util/connection_diagnostics.dart' show InfoProbe;
 import 'command_sequence.dart';
 import 'tls_settings.dart';
@@ -578,6 +579,55 @@ class HydraApiClient {
     } catch (_) {
       return const InfoProbe();
     }
+  }
+
+  /// One small request to the server and how long it took, in milliseconds: the sample of the link health. It uses the
+  /// route every server answers; nothing is read from the body. A failure (no answer, an error status or the time limit)
+  /// is thrown.
+  Future<int> pingRoundTripMs(Duration timeout) async {
+    final probe = await probeInfo(timeout: timeout);
+    final rtt = probe.rttMs;
+    if (rtt == null) throw HydraApiException('No answer from $baseUrl in ${timeout.inMilliseconds} ms');
+    return rtt;
+  }
+
+  /// The names of the work files (trajectories) a folder of the server lists in its index.json; the folder is checked by
+  /// [WorkFiles.folderFor] before it gets here.
+  Future<String> getWorkIndexBody(String folder) => _getText('$baseUrl/$folder/index.json');
+
+  /// The content of one work file of a folder (a JSON list of points).
+  Future<String> getWorkFileBody(String folder, String file) => _getText('$baseUrl/$folder/$file');
+
+  Future<String> _getText(String url) async {
+    final resp = await _client.get(Uri.parse(url), headers: {..._clientHeaders, ..._authHeaders}).timeout(const Duration(seconds: 10));
+    _throwForStatus(resp);
+    return resp.body;
+  }
+
+  /// Passes the presence heartbeat of the watch to the server ([RobotCommandContract.presenceRelayPath]); the server
+  /// decides what a lost heartbeat means. A server that has no such route answers 404, and the caller remembers it.
+  Future<Map<String, dynamic>> postPresence(Map<String, dynamic> body) async {
+    final resp = await _client
+        .post(
+          Uri.parse('$baseUrl${RobotCommandContract.presenceRelayPath}'),
+          headers: {'Content-Type': 'application/json', ..._clientHeaders, ..._controllerHeaders, ..._authHeaders, 'X-Hydra-Client': 'watch'},
+          body: jsonEncode({...body, 'controllerId': controllerId}),
+        )
+        .timeout(const Duration(milliseconds: RobotCommandContract.presenceRelayTimeoutMs));
+    return _expectJson(resp);
+  }
+
+  /// Passes the two-step confirmation of a spoken order from the watch to the server ([RobotCommandContract.voiceConfirmPath]);
+  /// the answer is an assistant reply for the new request id. The server still requires the reservation of the robot.
+  Future<Map<String, dynamic>> postVoiceConfirm(Map<String, dynamic> body) async {
+    final resp = await _client
+        .post(
+          Uri.parse('$baseUrl${RobotCommandContract.voiceConfirmPath}'),
+          headers: {'Content-Type': 'application/json', ..._clientHeaders, ..._controllerHeaders, ..._authHeaders, 'X-Hydra-Client': 'watch'},
+          body: jsonEncode({...body, 'controllerId': controllerId}),
+        )
+        .timeout(const Duration(milliseconds: RobotCommandContract.voiceConfirmTimeoutMs));
+    return _expectJson(resp);
   }
 
   Map<String, dynamic> _expectJson(http.Response resp) {

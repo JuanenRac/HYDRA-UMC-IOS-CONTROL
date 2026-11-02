@@ -50,6 +50,13 @@ import '../network/client_prefs.dart';
 import '../network/state_cache.dart';
 import '../network/tls_settings.dart';
 import '../util/connection_diagnostics.dart';
+import '../util/dead_man_jog.dart';
+import '../util/pairing_link.dart';
+import '../util/watch_alerts.dart';
+import '../util/watch_relay.dart';
+import '../util/work_files.dart';
+import '../l10n/app_localizations.dart';
+import 'dead_man_jog_controller.dart';
 import '../util/home_reset.dart';
 import '../util/job_alerts.dart';
 import '../util/link_health.dart';
@@ -95,7 +102,9 @@ class RobotViewModel extends ChangeNotifier {
     LiveActivityBridge? liveActivityBridge,
     WatchBridge? watchBridge,
     SpeechBridge? speechBridge,
+    PairingBridge? pairingBridge,
   })  : _authPrefs = authPrefs ?? AuthPrefs(),
+        _pairing = pairingBridge ?? MethodChannelPairingBridge(),
         surfaces = ExternalSurfaces(alerts: alertsBridge, liveActivity: liveActivityBridge, watch: watchBridge),
         _speech = speechBridge ?? MethodChannelSpeechBridge(),
         _push = pushBridge ?? MethodChannelPushBridge(),
@@ -105,6 +114,7 @@ class RobotViewModel extends ChangeNotifier {
 
   final PushBridge _push;
   final SpeechBridge _speech;
+  final PairingBridge _pairing;
 
   /// The notifications of a job, the Live Activity and the Apple Watch (see state/external_surfaces.dart).
   final ExternalSurfaces surfaces;
@@ -322,10 +332,22 @@ class RobotViewModel extends ChangeNotifier {
     blockCommandsOnSavedData = await _clientPrefs.loadBlockCommandsOnSavedData();
     confirmPlay = await _clientPrefs.loadConfirmPlay();
     homeResetEnabled = await _clientPrefs.loadHomeReset(RobotCommandContract.homeResetEnabledByDefault);
+    deadMan.enabled = await _clientPrefs.loadFlag(ClientFlags.deadManJog, RobotCommandContract.deadManEnabledByDefault);
+    deadMan.blockOnBadLink = await _clientPrefs.loadFlag(ClientFlags.linkBlockJog, RobotCommandContract.linkBlockJogOnBadLinkDefault);
+    deadMan.indicator = await _clientPrefs.loadFlag(ClientFlags.linkIndicator, RobotCommandContract.linkIndicatorEnabledByDefault);
+    pairingEnabled = await _clientPrefs.loadFlag(ClientFlags.pairing, RobotCommandContract.pairingEnabledByDefault);
+    watchAlertsEnabled = await _clientPrefs.loadFlag(ClientFlags.watchAlerts, RobotCommandContract.watchAlertsEnabledByDefault);
+    presenceRelayEnabled = await _clientPrefs.loadFlag(ClientFlags.presenceRelay, RobotCommandContract.presenceRelayEnabledByDefault);
+    voiceConfirmRelayEnabled = await _clientPrefs.loadFlag(ClientFlags.voiceConfirmRelay, RobotCommandContract.voiceConfirmEnabledByDefault);
+    // A pairing link that opened the app, or that arrives while it is open: the switches above are read already.
+    _pairing.listen((link) => unawaited(receivePairing(link)));
+    final pendingLink = await _pairing.takePending();
+    if (pendingLink != null) await receivePairing(pendingLink);
     surfaces.restoreJobAlerts(await _clientPrefs.loadJobAlerts(JobAlertsContract.enabledByDefault));
     surfaces.restoreLiveActivity(await _clientPrefs.loadLiveActivity(LiveActivityContract.enabledByDefault));
     surfaces.restoreWatch(await _clientPrefs.loadWatch(WatchCompanionContract.enabledByDefault));
     surfaces.listenForWatchStop(() => unawaited(stopAll()));
+    surfaces.listenForWatchRelays(onPresence: relayPresence, onVoiceConfirm: relayVoiceConfirm);
     dictationEnabled = await _clientPrefs.loadDictation(VoiceContract.enabledByDefault);
     dictationOnline = await _clientPrefs.loadDictationOnline();
     pushNotifications = await _clientPrefs.loadPushNotifications();
@@ -602,6 +624,438 @@ class RobotViewModel extends ChangeNotifier {
     }
   }
 
+
+  // ---- Continuous jog with a dead-man, link health, pairing, alerts and relays of the watch, Work files ----
+  // The numbers live in docs/robot_command_contract.json (identical in HYDRA-UMC-ANDROID-CONTROL). Every one of these starts
+  // as the contract says: the continuous jog off, the link indicator and the block on a bad link on, the pairing off, the
+  // alerts to the watch on (they still need the Apple Watch option), the two relays of the watch off.
+
+  /// The continuous jog held by a dead-man and the health of the link to the server (see state/dead_man_jog_controller.dart).
+  late final DeadManJogController deadMan = DeadManJogController(
+    poster: _postCommand,
+    pinger: _pingServer,
+    situation: _deadManSituation,
+    say: (error) {
+      lastError = error;
+      notifyListeners();
+    },
+    link: link,
+  );
+
+  /// False while the app is not on the screen (the socket is closed then and no jog may go on).
+  bool _foreground = true;
+
+  Future<int> _pingServer() {
+    final client = apiClient;
+    if (client == null) throw HydraApiException('Not connected');
+    return client.pingRoundTripMs(const Duration(milliseconds: RobotCommandContract.linkProbeTimeoutMs));
+  }
+
+  bool _linkProbeActive() => connectionStatus == 'connected' && _foreground && isLoggedIn;
+
+  DeadManSituation _deadManSituation(
+    dynamic robotId, {
+    required bool switchedOn,
+    required bool alreadyRunning,
+    required bool linkBlocks,
+    required bool serverSupports,
+  }) {
+    final robot = state.robotById(robotId);
+    return DeadManSituation(
+      switchedOn: switchedOn,
+      connected: apiClient != null && connectionStatus == 'connected',
+      robotOnline: robot?.online == true,
+      robotEnabled: robot?.isEnabled ?? true,
+      robotPlaying: robot?.isPlaying == true,
+      stopInProgress: stopAllInFlight || stopAllUnconfirmed,
+      needsArming: jogNeedsArming(robotId),
+      role: jwtRole(apiClient?.authToken),
+      linkBlocks: linkBlocks,
+      alreadyRunning: alreadyRunning,
+      serverSupports: serverSupports,
+    );
+  }
+
+  Future<void> setDeadManEnabled(bool value) async {
+    deadMan.enabled = value;
+    if (!value) deadMan.interrupt();
+    deadMan.ensureProbe(_linkProbeActive);
+    notifyListeners();
+    await _clientPrefs.saveFlag(ClientFlags.deadManJog, value);
+  }
+
+  Future<void> setLinkBlockOnBadLink(bool value) async {
+    deadMan.blockOnBadLink = value;
+    notifyListeners();
+    await _clientPrefs.saveFlag(ClientFlags.linkBlockJog, value);
+  }
+
+  Future<void> setLinkIndicator(bool value) async {
+    deadMan.indicator = value;
+    deadMan.ensureProbe(_linkProbeActive);
+    notifyListeners();
+    await _clientPrefs.saveFlag(ClientFlags.linkIndicator, value);
+  }
+
+  // ---- pairing by link ----
+
+  /// Pairing by link: off until the person turns it on (see util/pairing_link.dart). [pairingOffer] waits for the answer.
+  bool pairingEnabled = RobotCommandContract.pairingEnabledByDefault;
+  PairingOffer? pairingOffer;
+
+  /// The address the last accepted pairing gave, for the sign-in screen to show; [pairedStamp] changes with every one.
+  String? pairedHost;
+  int? pairedPort;
+  int pairedStamp = 0;
+
+  Future<void> setPairingEnabled(bool value) async {
+    pairingEnabled = value;
+    if (!value) pairingOffer = null;
+    notifyListeners();
+    await _clientPrefs.saveFlag(ClientFlags.pairing, value);
+  }
+
+  /// A text that may be a pairing link (the camera opened one, or the person pasted it). False when it is not a pairing link at
+  /// all. While pairing is off nothing is read: the person is told. A valid offer is only SHOWN ([pairingOffer]); nothing is
+  /// kept before [confirmPairing].
+  Future<bool> receivePairing(String? text) async {
+    if (!PairingLink.looksLikePairing(text)) return false;
+    if (!pairingEnabled) {
+      lastError = const HydraError(HydraErrorKind.pairingOff);
+      notifyListeners();
+      return true;
+    }
+    final result = PairingLink.parse(text);
+    if (result.isOk) {
+      pairingOffer = result.offer;
+    } else {
+      lastError = HydraError(HydraErrorKind.pairingProblem, {'problem': result.problem!.name});
+    }
+    notifyListeners();
+    return true;
+  }
+
+  /// The text the person pasted: false (and a phrase on screen) when it is not a pairing link at all.
+  Future<bool> readPastedPairing(String text) async {
+    final taken = await receivePairing(text);
+    if (!taken) report(HydraError(HydraErrorKind.pairingProblem, {'problem': PairingProblem.notAPairingLink.name}));
+    return taken;
+  }
+
+  /// Puts a phrase on screen (the screens read [lastError]).
+  void report(HydraError error) {
+    lastError = error;
+    notifyListeners();
+  }
+
+  /// The person accepted the offer on screen: the address is handed to the sign-in screen and, when the link carries the fingerprint
+  /// of the certificate, the connection is set to require TLS and that certificate is pinned (replacing the one kept before).
+  Future<void> confirmPairing() async {
+    final offer = pairingOffer;
+    if (offer == null) return;
+    pairingOffer = null;
+    final fingerprint = offer.fingerprint;
+    if (fingerprint != null) {
+      await setTlsSettings(tlsSettings.copyWith(allowPlainHttp: false, allowPlainRemote: false, pinnedFingerprint: fingerprint));
+    }
+    pairedHost = offer.host;
+    pairedPort = offer.port;
+    pairedStamp++;
+    notifyListeners();
+  }
+
+  void dismissPairing() {
+    if (pairingOffer == null) return;
+    pairingOffer = null;
+    notifyListeners();
+  }
+
+  // ---- the watch: alerts and relays ----
+
+  /// Alerts pushed to the paired watch (on by default, rationed; they need the Apple Watch option too); the relays of the
+  /// presence and of the confirmation are off by default.
+  bool watchAlertsEnabled = RobotCommandContract.watchAlertsEnabledByDefault;
+  bool presenceRelayEnabled = RobotCommandContract.presenceRelayEnabledByDefault;
+  bool voiceConfirmRelayEnabled = RobotCommandContract.voiceConfirmEnabledByDefault;
+
+  final WatchAlertRules _watchAlertRules = WatchAlertRules();
+  final WatchPresenceTracker _presenceTracker = WatchPresenceTracker();
+  Timer? _watchAlertTimer;
+  bool _presenceUnsupported = false;
+
+  Future<void> setWatchAlertsEnabled(bool value) async {
+    watchAlertsEnabled = value;
+    if (value) {
+      _ensureWatchAlertLoop();
+    } else {
+      _stopWatchAlertLoop();
+    }
+    notifyListeners();
+    await _clientPrefs.saveFlag(ClientFlags.watchAlerts, value);
+  }
+
+  Future<void> setPresenceRelayEnabled(bool value) async {
+    presenceRelayEnabled = value;
+    if (!value) _presenceTracker.reset();
+    notifyListeners();
+    await _clientPrefs.saveFlag(ClientFlags.presenceRelay, value);
+  }
+
+  Future<void> setVoiceConfirmRelayEnabled(bool value) async {
+    voiceConfirmRelayEnabled = value;
+    notifyListeners();
+    await _clientPrefs.saveFlag(ClientFlags.voiceConfirmRelay, value);
+  }
+
+  AppLocalizations _alertTexts() {
+    final locale = languageOverride ?? PlatformDispatcher.instance.locale;
+    try {
+      return lookupAppLocalizations(locale);
+    } catch (_) {
+      return lookupAppLocalizations(const Locale('en'));
+    }
+  }
+
+  /// The sentence of an alert, in the language of the app.
+  String watchAlertText(WatchAlertEvent event) {
+    final l10n = _alertTexts();
+    final name = event.robotName ?? '';
+    return switch (event.kind) {
+      WatchAlertKind.connectionLost => l10n.watchAlertConnectionLost,
+      WatchAlertKind.connectionRestored => l10n.watchAlertConnectionRestored,
+      WatchAlertKind.robotOffline => l10n.watchAlertRobotOffline(name),
+      WatchAlertKind.robotSafeMode => l10n.watchAlertRobotSafeMode(name),
+      WatchAlertKind.stopNotConfirmed => l10n.watchAlertStopNotConfirmed,
+      WatchAlertKind.stopConfirmed => l10n.watchAlertStopConfirmed,
+    };
+  }
+
+  /// What the alert rules see of the plant right now.
+  WatchAlertInput watchAlertInput() => WatchAlertInput(
+        connected: connectionStatus == 'connected',
+        robots: [
+          for (final r in robots) WatchAlertRobot('${r.id}', r.name, r.online, r.isEnabled, r.isPlaying && !r.isPaused),
+        ],
+        stop: stopAllInFlight
+            ? WatchAlertStop.sending
+            : stopAllUnconfirmed
+                ? WatchAlertStop.notConfirmed
+                : stopAllResult != null
+                    ? WatchAlertStop.done
+                    : WatchAlertStop.none,
+      );
+
+  /// One look at the plant: the alerts that deserve the wrist are sent. A failure to deliver is not an error of the app.
+  Future<void> watchAlertsTick() async {
+    if (!watchAlertsEnabled || !surfaces.watchEnabled || !isLoggedIn) return;
+    for (final event in _watchAlertRules.observe(watchAlertInput())) {
+      await surfaces.sendWatchAlert(WatchAlert.of(event.severity, watchAlertText(event)).toMap());
+    }
+  }
+
+  void _ensureWatchAlertLoop() {
+    if (_watchAlertTimer != null || !watchAlertsEnabled || _disposed) return;
+    _watchAlertTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      watchAlertsTick().catchError((Object e) {
+        _logTelemetry('Watch alert failed: ${e.runtimeType}');
+      });
+    });
+  }
+
+  void _stopWatchAlertLoop() {
+    _watchAlertTimer?.cancel();
+    _watchAlertTimer = null;
+    _watchAlertRules.reset();
+  }
+
+  /// The presence heartbeat of the watch, passed on to the server only while the operator switched the relay on. A heartbeat is
+  /// never retried (the next one is the retry) and the server decides what a lost one means. A server without the route
+  /// answers 404: the relay then stays quiet until the app starts again. PENDING in HYDRA-UMC-SERVER: the endpoint.
+  Future<void> relayPresence(Map<dynamic, dynamic> message) async {
+    if (!presenceRelayEnabled || apiClient == null) return;
+    final WatchPresenceHeartbeat beat;
+    try {
+      beat = WatchPresenceHeartbeat.fromMap(message);
+    } on ArgumentError {
+      return;
+    }
+    final missed = _presenceTracker.onHeartbeat(beat);
+    if (_presenceUnsupported) return;
+    try {
+      await _authed((c) => c.postPresence(beat.toServerJson(missed)));
+    } on HydraApiException catch (e) {
+      if (e.isNotFound) _presenceUnsupported = true;
+      _logTelemetry('Presence relay refused: ${e.statusCode}');
+    } catch (e) {
+      _logTelemetry('Presence relay failed: ${e.runtimeType}');
+    }
+  }
+
+  /// The second tap of a spoken order. Only when the operator switched the relay on, with a session; the server answers with an
+  /// assistant reply for the new request id, which goes back to the watch. Nothing else can come out of the watch.
+  /// PENDING in HYDRA-UMC-SERVER: the endpoint.
+  Future<Map<String, Object?>?> relayVoiceConfirm(Map<dynamic, dynamic> message) async {
+    final WatchVoiceConfirm confirm;
+    try {
+      confirm = WatchVoiceConfirm.fromMap(message);
+    } on ArgumentError {
+      return null;
+    }
+    final l10n = _alertTexts();
+    Map<String, Object?> attention(String text, {bool speak = false, String? errorCode}) => {
+          'requestId': confirm.requestId,
+          'text': text,
+          'level': 'ATTENTION',
+          'speak': speak,
+          'requiresConfirmation': false,
+          'errorCode': ?errorCode,
+        };
+    if (!voiceConfirmRelayEnabled) return attention(l10n.watchConfirmRelayOff);
+    if (apiClient == null) return attention(l10n.watchRelayConnectionUnavailable, speak: true, errorCode: 'connection_unavailable');
+    try {
+      final reply = await _authed((c) => c.postVoiceConfirm(confirm.toServerJson()));
+      final token = reply['confirmationToken'];
+      final validity = reply['confirmationValiditySeconds'];
+      return {
+        'requestId': '${reply['requestId'] ?? confirm.requestId}',
+        'text': '${reply['text'] ?? ''}',
+        'level': '${reply['level'] ?? 'INFO'}',
+        'speak': reply['speak'] == true,
+        'requiresConfirmation': reply['requiresConfirmation'] == true,
+        // A token or validity the watch would refuse is dropped, not passed on: the reply itself still arrives.
+        if (token is String && WatchVoiceConfirm.isValidToken(token)) 'confirmationToken': token,
+        if (validity is num && validity >= 1 && validity <= RobotCommandContract.voiceConfirmValidityMaxSeconds)
+          'confirmationValiditySeconds': validity.toInt(),
+      };
+    } catch (e) {
+      _logTelemetry('Voice confirmation relay failed: ${e.runtimeType}');
+      return attention(l10n.watchRelayConnectionUnavailable, speak: true, errorCode: 'connection_unavailable');
+    }
+  }
+
+  // ---- Work files (trajectories) ----
+
+  /// The work files of the selected robot's folder; null before the list was read.
+  List<String>? workFiles;
+  bool workBusy = false;
+
+  /// False once the server answered that it does not know `trajectory`.
+  bool workServerSupports = true;
+
+  /// The folder of [robotId]'s work files on the server, or null when the configured folder is not a plain relative path.
+  String? workFolderOf(dynamic robotId) {
+    final robot = state.robotById(robotId);
+    if (robot == null) return null;
+    return WorkFiles.folderFor(state.raw['worksPaths'], robotId, robot.name);
+  }
+
+  WorkBlock workBlock(dynamic robotId, {bool tableMissing = false}) {
+    final robot = robotId == null ? null : state.robotById(robotId);
+    return WorkFiles.blockOf(WorkSituation(
+      connected: apiClient != null,
+      robotOnline: robot?.online == true,
+      robotEnabled: robot?.isEnabled ?? true,
+      robotPlaying: robot?.isPlaying == true,
+      stopInProgress: stopAllInFlight || stopAllUnconfirmed,
+      role: jwtRole(apiClient?.authToken),
+      tableMissing: tableMissing,
+      serverSupports: workServerSupports,
+    ));
+  }
+
+  /// The work loaded in [robotId] (the name the server keeps in `selectedWorkFile`), or an empty text.
+  String selectedWorkOf(dynamic robotId) {
+    final value = state.robotById(robotId)?.raw['selectedWorkFile'];
+    return value is String ? value : '';
+  }
+
+  /// Reads the names of the work files of [robotId]'s folder.
+  Future<void> loadWorkList(dynamic robotId) async {
+    if (apiClient == null) {
+      lastError = const HydraError(HydraErrorKind.notConnected);
+      notifyListeners();
+      return;
+    }
+    final folder = workFolderOf(robotId);
+    if (folder == null) {
+      lastError = const HydraError(HydraErrorKind.workLoadFailed);
+      notifyListeners();
+      return;
+    }
+    workBusy = true;
+    workFiles = null;
+    notifyListeners();
+    try {
+      final body = await _authed((c) => c.getWorkIndexBody(folder));
+      workFiles = WorkFiles.parseIndex(body) ?? const [];
+    } on HydraApiException catch (e) {
+      // A folder that does not exist yet is an empty list, not an error.
+      if (e.isNotFound) {
+        workFiles = const [];
+      } else {
+        lastError = const HydraError(HydraErrorKind.workLoadFailed);
+      }
+      if (e.isSessionProblem) _forceLogout();
+    } catch (_) {
+      lastError = const HydraError(HydraErrorKind.workLoadFailed);
+    } finally {
+      workBusy = false;
+      notifyListeners();
+    }
+  }
+
+  /// Loads the work file [file] into [robotId] with the `trajectory` command. It NEVER starts the playback. Nothing is read or
+  /// sent when a rule refuses (the robot is playing, in safe mode...); the file is checked here the way the server will check
+  /// it, so a bad file never goes out.
+  Future<void> selectWork(dynamic robotId, String file) async {
+    final client = apiClient;
+    if (client == null) {
+      lastError = const HydraError(HydraErrorKind.notConnected);
+      notifyListeners();
+      return;
+    }
+    final folder = workFolderOf(robotId);
+    if (folder == null || !WorkFiles.isSafeFileName(file)) {
+      lastError = const HydraError(HydraErrorKind.workLoadFailed);
+      notifyListeners();
+      return;
+    }
+    final early = workBlock(robotId);
+    if (early != WorkBlock.none) {
+      lastError = HydraError(HydraErrorKind.workBlocked, {'block': early.name});
+      notifyListeners();
+      return;
+    }
+    workBusy = true;
+    notifyListeners();
+    try {
+      final loaded = WorkFiles.parsePoints(await _authed((c) => c.getWorkFileBody(folder, file)));
+      if (!loaded.isOk) {
+        lastError = HydraError(HydraErrorKind.workInvalidFile, {'file': file});
+      } else {
+        final block = workBlock(robotId, tableMissing: loaded.usesTable && state.robotById(robotId)?.hasXYTable != true);
+        if (block != WorkBlock.none) {
+          lastError = HydraError(HydraErrorKind.workBlocked, {'block': block.name});
+        } else {
+          await _sendAtomicCommand(
+            RobotCommandContract.trajectory,
+            params: WorkFiles.trajectoryParams(loaded.points!, file),
+            robotIdOverride: robotId,
+            localMutate: (r) => r.raw['selectedWorkFile'] = file,
+          );
+        }
+      }
+    } on HydraApiException catch (e) {
+      lastError = const HydraError(HydraErrorKind.workLoadFailed);
+      if (e.isSessionProblem) _forceLogout();
+    } catch (_) {
+      lastError = const HydraError(HydraErrorKind.workLoadFailed);
+    } finally {
+      workBusy = false;
+      notifyListeners();
+    }
+  }
+
   // ---- Connection diagnostics ----
 
   /// The round-trip times towards the server, kept for the level of the link.
@@ -771,6 +1225,10 @@ class RobotViewModel extends ChangeNotifier {
     claims = const [];
     safetyByRobot.clear();
     jogArmedUntil.clear();
+    deadMan.interrupt();
+    deadMan.stopProbe();
+    _stopWatchAlertLoop();
+    workFiles = null;
     isLoggedIn = false;
     unawaited(surfaces.onSessionEnd());
     ecosystem = EcosystemStatus.unavailable;
@@ -916,6 +1374,7 @@ class RobotViewModel extends ChangeNotifier {
   /// the WS/metrics timer), but there's no reason to when nothing suggests
   /// the existing connection needs it.
   void reconnectIfNeeded() {
+    _foreground = true;
     if (!isLoggedIn || needsBiometricUnlock) return;
     if (connectionStatus == 'connected' || connectionStatus == 'connecting') return;
     unawaited(connect());
@@ -937,6 +1396,9 @@ class RobotViewModel extends ChangeNotifier {
   /// `connect()` (via `reconnectIfNeeded()` on resume) fully
   /// re-establishes both, so nothing here needs its own undo path.
   void pauseForBackground() {
+    _foreground = false;
+    // Leaving the screen ends a held continuous jog.
+    deadMan.interrupt();
     if (connectionStatus == 'disconnected') return;
     _ws?.disconnect();
     _metricsTimer?.cancel();
@@ -1001,6 +1463,14 @@ class RobotViewModel extends ChangeNotifier {
           WsStatus.connected => 'WebSocket connected',
           WsStatus.disconnected => 'WebSocket disconnected',
         });
+        if (status == WsStatus.connected) {
+          deadMan.ensureProbe(_linkProbeActive);
+          _ensureWatchAlertLoop();
+        } else if (status == WsStatus.disconnected) {
+          // A held jog must not outlive the connection: its axis is stopped (the server also stops it by itself).
+          deadMan.interrupt();
+          deadMan.stopProbe();
+        }
         notifyListeners();
       },
       onSettings: (payload) {
@@ -1189,6 +1659,8 @@ class RobotViewModel extends ChangeNotifier {
   }) async {
     final robotId = robotIdOverride ?? selectedRobotId;
     if (robotId == null) return;
+    // A stop (or safe mode) of the robot ends a continuous jog that is held.
+    if (command == RobotCommandContract.stop || command == RobotCommandContract.disable) deadMan.interrupt();
     if (blockCommandsOnSavedData && isShowingCachedState && command != 'stop') {
       lastError = const HydraError(HydraErrorKind.savedDataBlocked);
       notifyListeners();
@@ -1325,6 +1797,9 @@ class RobotViewModel extends ChangeNotifier {
         // An older server does not have `reset`: remember it, so the button explains instead of sending again.
         if (command == RobotCommandContract.reset && e is HydraApiException && isUnknownCommandAnswer(e.statusCode, e.code, e.serverMessage)) {
           homeResetServerSupports = false;
+        }
+        if (command == RobotCommandContract.trajectory && e is HydraApiException && isUnknownCommandAnswer(e.statusCode, e.code, e.serverMessage)) {
+          workServerSupports = false;
         }
         // The robot changed since this app read it: read it again so the screen shows what it is now.
         if (e is HydraApiException && e.isRevisionMismatch) unawaited(_refreshRobot(robotId));
@@ -1568,6 +2043,8 @@ class RobotViewModel extends ChangeNotifier {
 
   /// Stops every robot at once. Never throws.
   Future<void> stopAll() async {
+    // The global STOP ends any continuous jog first: its own stop goes out before and together with this one.
+    deadMan.interrupt();
     _stopAllInFlight++;
     notifyListeners();
     try {
@@ -2272,6 +2749,8 @@ class RobotViewModel extends ChangeNotifier {
     if (isBleScanning) unawaited(_bleScanner.stop());
     _metricsTimer?.cancel();
     _stateCacheTimer?.cancel();
+    _watchAlertTimer?.cancel();
+    deadMan.dispose();
     surfaces.dispose();
     commands.cancelAllPending();
     metricsListenable.dispose();

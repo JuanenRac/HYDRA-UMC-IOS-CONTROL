@@ -13,7 +13,10 @@
 // =============================================================================
 
 import '../l10n/app_localizations.dart';
+import '../util/dead_man_jog.dart';
 import '../util/home_reset.dart';
+import '../util/pairing_link.dart';
+import '../util/work_files.dart';
 
 enum HydraErrorKind {
   loginFailed,
@@ -75,6 +78,18 @@ enum HydraErrorKind {
   adminRequired,
   // HOME/RESET was not sent, or was refused: the reason (a HomeResetBlock name) is in the `block` parameter.
   homeResetBlocked,
+  // The continuous jog was not started (the reason, a DeadManBlock name, is in `block`), ended by itself (a DeadManEnd name in
+  // `reason`) or its stop was not confirmed.
+  deadManBlocked,
+  deadManEnded,
+  deadManStopNotConfirmed,
+  // A pairing link was read while the pairing switch is off, or it was not valid (a PairingProblem name in `problem`).
+  pairingOff,
+  pairingProblem,
+  // A Work could not be loaded: a rule refused it (a WorkBlock name in `block`), the server did not give it or it is not a valid file.
+  workBlocked,
+  workLoadFailed,
+  workInvalidFile,
 }
 
 class HydraError {
@@ -146,6 +161,68 @@ class HydraError {
         return l10n.errAdminRequired;
       case HydraErrorKind.homeResetBlocked:
         return homeResetBlockText(l10n, HomeResetBlock.values.asNameMap()[params['block']] ?? HomeResetBlock.notSupported);
+      case HydraErrorKind.deadManBlocked:
+        return deadManBlockText(l10n, DeadManBlock.values.asNameMap()[params['block']] ?? DeadManBlock.notSupported);
+      case HydraErrorKind.deadManEnded:
+        return deadManEndText(l10n, DeadManEnd.values.asNameMap()[params['reason']] ?? DeadManEnd.linkLost);
+      case HydraErrorKind.deadManStopNotConfirmed:
+        return l10n.deadManStopNotConfirmed;
+      case HydraErrorKind.pairingOff:
+        return l10n.pairingOff;
+      case HydraErrorKind.pairingProblem:
+        return pairingProblemText(l10n, PairingProblem.values.asNameMap()[params['problem']] ?? PairingProblem.notAPairingLink);
+      case HydraErrorKind.workBlocked:
+        return workBlockText(l10n, WorkBlock.values.asNameMap()[params['block']] ?? WorkBlock.notSupported);
+      case HydraErrorKind.workLoadFailed:
+        return l10n.workLoadFailed;
+      case HydraErrorKind.workInvalidFile:
+        return l10n.workInvalidFile(params['file'] ?? '');
     }
   }
 }
+
+/// The phrase for a reason the continuous jog does not start, in the language of [l10n].
+String deadManBlockText(AppLocalizations l10n, DeadManBlock block) => switch (block) {
+      DeadManBlock.none => '',
+      DeadManBlock.off => l10n.deadManBlockedOff,
+      DeadManBlock.notConnected => l10n.errNotConnected,
+      DeadManBlock.offline => l10n.deadManBlockedOffline,
+      DeadManBlock.safeMode => l10n.deadManBlockedSafeMode,
+      DeadManBlock.moving => l10n.deadManBlockedMoving,
+      DeadManBlock.stopPending => l10n.deadManBlockedStop,
+      DeadManBlock.notArmed => l10n.errJogNotArmed,
+      DeadManBlock.role => l10n.deadManBlockedRole,
+      DeadManBlock.badLink => l10n.deadManBlockedBadLink,
+      DeadManBlock.alreadyRunning => l10n.deadManBlockedAlready,
+      DeadManBlock.notSupported => l10n.deadManBlockedNotSupported,
+    };
+
+/// What to tell the person when a continuous jog ended on its own.
+String deadManEndText(AppLocalizations l10n, DeadManEnd reason) => switch (reason) {
+      DeadManEnd.released || DeadManEnd.interrupted => '',
+      DeadManEnd.linkLost => l10n.deadManEndedLinkLost,
+      DeadManEnd.tooLong => l10n.deadManEndedTooLong,
+      DeadManEnd.badLink => l10n.deadManEndedBadLink,
+      DeadManEnd.serverRefused => l10n.deadManEndedRefused,
+    };
+
+String pairingProblemText(AppLocalizations l10n, PairingProblem problem) => switch (problem) {
+      PairingProblem.badHost || PairingProblem.missingHost => l10n.pairingProblemHost,
+      PairingProblem.badPort => l10n.pairingProblemPort,
+      PairingProblem.badFingerprint => l10n.pairingProblemFingerprint,
+      PairingProblem.badName => l10n.pairingProblemName,
+      PairingProblem.notAPairingLink || PairingProblem.empty => l10n.pairingProblemNotLink,
+      _ => l10n.pairingProblemGeneric,
+    };
+
+String workBlockText(AppLocalizations l10n, WorkBlock block) => switch (block) {
+      WorkBlock.none => '',
+      WorkBlock.notConnected => l10n.errNotConnected,
+      WorkBlock.offline => l10n.workBlockedOffline,
+      WorkBlock.safeMode => l10n.workBlockedSafeMode,
+      WorkBlock.playing => l10n.workBlockedPlaying,
+      WorkBlock.stopPending => l10n.workBlockedStop,
+      WorkBlock.role => l10n.workBlockedRole,
+      WorkBlock.noTable => l10n.workBlockedNoTable,
+      WorkBlock.notSupported => l10n.workNotSupported,
+    };

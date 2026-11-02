@@ -26,11 +26,38 @@ def dart_number(value: float) -> str:
     return f"{float(value)}"
 
 
+# The sections of the shared contract that become constants: (key, prefix of the constant names, one line of documentation).
+SECTIONS = [
+    ("homeReset", "homeReset", "HOME/RESET: off until the person turns it on; how many confirmations it asks and how long they stay valid."),
+    ("deadManJog", "deadMan", "Continuous jog held by a dead-man: off until the person turns it on; the heartbeat, the time limits and the speed."),
+    ("linkHealth", "link", "Health of the link to the server: how it is probed and the round-trip times that make it good, poor or bad."),
+    ("pairing", "pairing", "Pairing by link: off until the person turns it on, and the limits of what is accepted."),
+    ("watchAlerts", "watchAlerts", "Alerts pushed to the watch and how they are rationed."),
+    ("presenceRelay", "presenceRelay", "Relay of the presence heartbeat of the watch to the server."),
+    ("voiceConfirmRelay", "voiceConfirm", "Relay of the two-step confirmation of a spoken order."),
+    ("works", "works", "Work files (trajectories) the server lists and serves."),
+]
+
+
+def constants(section: dict, prefix: str) -> list[str]:
+    """One Dart constant per setting of a section: bool, int or String."""
+    lines = []
+    for key, value in section.items():
+        if key == "note":
+            continue
+        name = prefix + key[0].upper() + key[1:]
+        if isinstance(value, bool):
+            lines.append(f"  static const bool {name} = {'true' if value else 'false'};")
+        elif isinstance(value, int):
+            lines.append(f"  static const int {name} = {value};")
+        else:
+            lines.append(f"  static const String {name} = '{value}';")
+    return lines
+
+
 def render(contract: dict) -> str:
     commands = contract["commands"]
     limits = contract["limits"]
-    home = contract["homeReset"]
-    link = contract["linkHealth"]
 
     def camel(constant: str) -> str:
         head, *rest = constant.lower().split("_")
@@ -69,21 +96,10 @@ def render(contract: dict) -> str:
         f"  static const double jogMaxAmount = {dart_number(limits['jogMaxAmount'])};",
         f"  static const double jogStepMax = {dart_number(limits['jogStepMax'])};",
         f"  static const int outputIndexMax = {int(limits['outputIndexMax'])};",
-        "",
-        "  /// HOME/RESET: off until the person turns it on; how many confirmations it asks and how long they stay valid.",
-        f"  static const bool homeResetEnabledByDefault = {'true' if home['enabledByDefault'] else 'false'};",
-        f"  static const int homeResetConfirmSteps = {int(home['confirmSteps'])};",
-        f"  static const int homeResetConfirmWindowMs = {int(home['confirmWindowMs'])};",
-        "",
-        "  /// Link health: round-trip times (ms) that grade the link to the server, and how long without an answer counts as lost.",
-        f"  static const bool linkIndicatorEnabledByDefault = {'true' if link['indicatorEnabledByDefault'] else 'false'};",
-        f"  static const int linkProbeIntervalMs = {int(link['probeIntervalMs'])};",
-        f"  static const int linkProbeTimeoutMs = {int(link['probeTimeoutMs'])};",
-        f"  static const int linkSampleWindow = {int(link['sampleWindow'])};",
-        f"  static const int linkGoodRttMs = {int(link['goodRttMs'])};",
-        f"  static const int linkPoorRttMs = {int(link['poorRttMs'])};",
-        f"  static const int linkBlockRttMs = {int(link['blockRttMs'])};",
-        f"  static const int linkLostAfterMs = {int(link['lostAfterMs'])};",
+    ]
+    for section, prefix, doc in SECTIONS:
+        lines += ["", f"  /// {doc}"] + constants(contract[section], prefix)
+    lines += [
         "}",
         "",
     ]
