@@ -748,16 +748,13 @@ class RobotViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// The person accepted the offer on screen: the address is handed to the sign-in screen and, when the link carries the fingerprint
-  /// of the certificate, the connection is set to require TLS and that certificate is pinned (replacing the one kept before).
+  /// The person accepted the offer on screen: the address is handed to the sign-in screen and the link always carries the fingerprint
+  /// of the certificate, so the connection is set to require TLS and that certificate is pinned (replacing the one kept before).
   Future<void> confirmPairing() async {
     final offer = pairingOffer;
     if (offer == null) return;
     pairingOffer = null;
-    final fingerprint = offer.fingerprint;
-    if (fingerprint != null) {
-      await setTlsSettings(tlsSettings.copyWith(allowPlainHttp: false, allowPlainRemote: false, pinnedFingerprint: fingerprint));
-    }
+    await setTlsSettings(tlsSettings.copyWith(allowPlainHttp: false, allowPlainRemote: false, pinnedFingerprint: offer.fingerprint));
     pairedHost = offer.host;
     pairedPort = offer.port;
     pairedStamp++;

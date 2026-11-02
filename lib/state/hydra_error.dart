@@ -210,6 +210,7 @@ String pairingProblemText(AppLocalizations l10n, PairingProblem problem) => swit
       PairingProblem.badHost || PairingProblem.missingHost => l10n.pairingProblemHost,
       PairingProblem.badPort => l10n.pairingProblemPort,
       PairingProblem.badFingerprint => l10n.pairingProblemFingerprint,
+      PairingProblem.missingFingerprint => l10n.pairingProblemNoFingerprint,
       PairingProblem.badName => l10n.pairingProblemName,
       PairingProblem.notAPairingLink || PairingProblem.empty => l10n.pairingProblemNotLink,
       _ => l10n.pairingProblemGeneric,

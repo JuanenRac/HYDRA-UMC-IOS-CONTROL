@@ -9,6 +9,8 @@
 //
 //     hydra-umc://pair?host=192.168.0.180&port=3000&fp=<64 hex digits>&name=Workshop
 //
+// The fingerprint is required (unlike the Android app, which still accepts a link without one).
+//
 // This file only reads and checks the text; it connects to nothing and keeps nothing. The camera of the phone can open
 // such a link with this app, or the person pastes it; either way the app shows what it read and asks before it keeps
 // anything. The limits come from docs/robot_command_contract.json (generated RobotCommandContract).
@@ -17,16 +19,16 @@
 import '../models/robot_command_contract.dart';
 import '../network/tls_settings.dart';
 
-/// What a link offers. [fingerprint] is the canonical (lowercase, no separators) SHA-256 of the certificate, or null for
-/// a server without TLS.
+/// What a link offers. [fingerprint] is the canonical (lowercase, no separators) SHA-256 of the certificate; a link
+/// without one is never accepted (the first connection is always pinned, never trusted blindly).
 class PairingOffer {
   final String host;
   final int port;
-  final String? fingerprint;
+  final String fingerprint;
   final String name;
   const PairingOffer(this.host, this.port, this.fingerprint, this.name);
 
-  bool get usesPinning => fingerprint != null;
+  bool get usesPinning => true;
 }
 
 enum PairingProblem {
@@ -37,6 +39,7 @@ enum PairingProblem {
   badHost,
   badPort,
   badFingerprint,
+  missingFingerprint,
   badName,
   repeatedField,
   badEncoding,
@@ -101,11 +104,10 @@ class PairingLink {
       return const PairingResult.refused(PairingProblem.badPort);
     }
     final fpText = (fields['fp'] ?? '').trim();
-    String? fingerprint;
-    if (fpText.isNotEmpty) {
-      fingerprint = TlsFingerprint.normalize(fpText);
-      if (fingerprint == null) return const PairingResult.refused(PairingProblem.badFingerprint);
-    }
+    // The fingerprint is mandatory: without it the link is refused, there is no "pair anyway" mode.
+    if (fpText.isEmpty) return const PairingResult.refused(PairingProblem.missingFingerprint);
+    final fingerprint = TlsFingerprint.normalize(fpText);
+    if (fingerprint == null) return const PairingResult.refused(PairingProblem.badFingerprint);
     final name = (fields['name'] ?? '').trim();
     if (name.runes.length > RobotCommandContract.pairingNameMax || name.runes.any(_isControl)) {
       return const PairingResult.refused(PairingProblem.badName);

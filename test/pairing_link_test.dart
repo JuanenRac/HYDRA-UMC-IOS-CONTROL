@@ -37,19 +37,24 @@ void main() {
     expect(ok('hydra-umc://pair?host=hydra.local&port=443&fp=$spelled').fingerprint, fp);
   });
 
-  test('a link without fingerprint offers no pinning and the name is the host', () {
-    final offer = ok('hydra-umc://pair?host=hydra.local&port=3000');
-    expect(offer.fingerprint, isNull);
-    expect(offer.usesPinning, isFalse);
+  test('a link without name uses the host as name', () {
+    final offer = ok('hydra-umc://pair?host=hydra.local&port=3000&fp=$fp');
     expect(offer.name, 'hydra.local');
   });
 
+  test('a link without fingerprint is always refused', () {
+    expect(problem('hydra-umc://pair?host=hydra.local&port=3000'), PairingProblem.missingFingerprint);
+    expect(problem('hydra-umc://pair?host=hydra.local&port=3000&fp='), PairingProblem.missingFingerprint);
+    expect(problem('hydra-umc://pair?host=hydra.local&port=3000&fp=%20%20'), PairingProblem.missingFingerprint);
+    expect(problem('hydra-umc://pair?host=hydra.local&port=3000&name=Cell'), PairingProblem.missingFingerprint);
+  });
+
   test('the scheme and the host are not case sensitive and spaces around are ignored', () {
-    expect(ok('  HYDRA-UMC://PAIR?HOST=10.0.0.5&PORT=3000  ').port, 3000);
+    expect(ok('  HYDRA-UMC://PAIR?HOST=10.0.0.5&PORT=3000&FP=$fp  ').port, 3000);
   });
 
   test('an IPv6 address in brackets is read', () {
-    expect(ok('hydra-umc://pair?host=%5Bfe80::1%5D&port=3000').host, 'fe80::1');
+    expect(ok('hydra-umc://pair?host=%5Bfe80::1%5D&port=3000&fp=$fp').host, 'fe80::1');
   });
 
   test('other text is not a pairing link', () {
@@ -75,7 +80,7 @@ void main() {
     expect(problem('hydra-umc://pair?host=a.local&port=65536'), PairingProblem.badPort);
     expect(problem('hydra-umc://pair?host=a.local&port=-1'), PairingProblem.badPort);
     expect(problem('hydra-umc://pair?host=a.local&port=80x'), PairingProblem.badPort);
-    expect(ok('hydra-umc://pair?host=a.local&port=65535').port, 65535);
+    expect(ok('hydra-umc://pair?host=a.local&port=65535&fp=$fp').port, 65535);
   });
 
   test('a fingerprint that is not a SHA-256 is refused', () {
@@ -88,20 +93,20 @@ void main() {
   });
 
   test('unknown fields are ignored and never kept', () {
-    final offer = ok('hydra-umc://pair?host=a.local&port=1&token=secret&password=x');
+    final offer = ok('hydra-umc://pair?host=a.local&port=1&fp=$fp&token=secret&password=x');
     expect(offer.host, 'a.local');
     expect(offer.toString().contains('secret'), isFalse);
   });
 
   test('the name is bounded and has no control characters', () {
-    expect(problem('hydra-umc://pair?host=a.local&port=1&name=${'n' * (RobotCommandContract.pairingNameMax + 1)}'), PairingProblem.badName);
-    expect(problem('hydra-umc://pair?host=a.local&port=1&name=a%0Ab'), PairingProblem.badName);
-    expect(ok('hydra-umc://pair?host=a.local&port=1&name=${'n' * RobotCommandContract.pairingNameMax}').name.length, RobotCommandContract.pairingNameMax);
+    expect(problem('hydra-umc://pair?host=a.local&port=1&fp=$fp&name=${'n' * (RobotCommandContract.pairingNameMax + 1)}'), PairingProblem.badName);
+    expect(problem('hydra-umc://pair?host=a.local&port=1&fp=$fp&name=a%0Ab'), PairingProblem.badName);
+    expect(ok('hydra-umc://pair?host=a.local&port=1&fp=$fp&name=${'n' * RobotCommandContract.pairingNameMax}').name.length, RobotCommandContract.pairingNameMax);
   });
 
   test('a broken percent encoding and a too long text are refused', () {
     expect(problem('hydra-umc://pair?host=a%zz&port=1'), PairingProblem.badEncoding);
-    expect(problem('hydra-umc://pair?host=a.local&port=1&name=${'x' * RobotCommandContract.pairingMaxPayloadChars}'), PairingProblem.tooLong);
+    expect(problem('hydra-umc://pair?host=a.local&port=1&fp=$fp&name=${'x' * RobotCommandContract.pairingMaxPayloadChars}'), PairingProblem.tooLong);
   });
 
   test('pairing is off until the person turns it on', () {

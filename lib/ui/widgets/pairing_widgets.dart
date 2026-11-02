@@ -96,12 +96,9 @@ Future<void> showPairingDialog(BuildContext context, RobotViewModel vm) async {
           children: [
             Text(l10n.pairingDialogMessage(offer.name, offer.host, offer.port)),
             const SizedBox(height: 8),
-            if (offer.fingerprint != null) ...[
-              Text(l10n.pairingDialogFingerprint(TlsFingerprint.display(offer.fingerprint!)), style: const TextStyle(fontSize: 12)),
-              const SizedBox(height: 4),
-              Text(l10n.pairingDialogPinReplace, style: const TextStyle(fontSize: 12)),
-            ] else
-              Text(l10n.pairingDialogNoFingerprint, style: const TextStyle(fontSize: 12, color: Color(0xFFF59E0B))),
+            Text(l10n.pairingDialogFingerprint(TlsFingerprint.display(offer.fingerprint)), style: const TextStyle(fontSize: 12)),
+            const SizedBox(height: 4),
+            Text(l10n.pairingDialogPinReplace, style: const TextStyle(fontSize: 12)),
           ],
         ),
       ),

@@ -270,15 +270,18 @@ void main() {
       expect(vm.pairingOffer, isNull);
     });
 
-    test('a link without a fingerprint changes no TLS setting', () async {
+    test('a link without a fingerprint is refused: no offer, no TLS change, nothing paired', () async {
       SharedPreferences.setMockInitialValues({});
       final vm = RobotViewModel(authPrefs: AuthPrefs(secureBackend: _FakeSecureBackend()), pairingBridge: _FakePairing());
       addTearDown(vm.dispose);
       await vm.setPairingEnabled(true);
       await vm.receivePairing('hydra-umc://pair?host=hydra.local&port=3000');
+      expect(vm.pairingOffer, isNull);
+      expect(vm.lastError!.kind, HydraErrorKind.pairingProblem);
+      expect(vm.lastError!.params['problem'], 'missingFingerprint');
       await vm.confirmPairing();
       expect(vm.tlsSettings, const TlsSettings());
-      expect(vm.pairedPort, 3000);
+      expect(vm.pairedHost, isNull);
     });
 
     test('a bad link says why and offers nothing', () async {
@@ -295,7 +298,7 @@ void main() {
 
     test('the link that opened the app is read once the switches are loaded', () async {
       SharedPreferences.setMockInitialValues({'hydra_flag_pairing': true});
-      final bridge = _FakePairing()..pending = 'hydra-umc://pair?host=hydra.local&port=3000';
+      final bridge = _FakePairing()..pending = 'hydra-umc://pair?host=hydra.local&port=3000&fp=$fp';
       final vm = RobotViewModel(authPrefs: AuthPrefs(secureBackend: _FakeSecureBackend()), pairingBridge: bridge);
       addTearDown(vm.dispose);
       await vm.init();
