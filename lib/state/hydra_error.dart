@@ -53,6 +53,8 @@ enum HydraErrorKind {
   claimOtherController,
   // A newer numbered motion command had already reached the robot: this one arrived out of order and was not applied.
   staleSequence,
+  // The server refused to send the robot home (the pose is not the home pose of its model, or a joint would leave its range).
+  homeRejected,
   // A jog whose target is outside the reach of the arm: nothing was sent.
   jogOutOfReach,
   claimControllerRequired,
@@ -120,6 +122,8 @@ class HydraError {
         return l10n.errClaimOtherController(params['detail'] ?? '');
       case HydraErrorKind.jogOutOfReach:
         return l10n.errJogOutOfReach;
+      case HydraErrorKind.homeRejected:
+        return l10n.errHomeRejected(params['command'] ?? '');
       case HydraErrorKind.staleSequence:
         return l10n.errStaleSequence(params['command'] ?? '');
       case HydraErrorKind.claimControllerRequired:

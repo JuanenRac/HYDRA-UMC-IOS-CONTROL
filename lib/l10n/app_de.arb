@@ -289,7 +289,7 @@
   "connectionsActionSessionEnded": "Sitzung beendet",
   "connectionsActionSessionExpired": "Sitzung abgelaufen",
   "connectionsFailureUnavailable": "Dieser Server bietet den Verbindungsverlauf noch nicht an.",
-  "connectionsFailureSession": "Ihre Sitzung ist beendet. Bitte melden Sie sich neu an.",
+  "connectionsFailureSession": "Ihre Sitzung ist beendet. Melden Sie sich erneut an.",
   "connectionsFailureNetwork": "Der Server ist nicht erreichbar.",
   "connectionsFailureOther": "Der Server hat den Verbindungsverlauf nicht geliefert.",
   "serverOptionsTitle": "Zugriffsoptionen des Servers",
@@ -331,6 +331,7 @@
   "serverOptionsConfirmInstallTls": "Eine neue Installation schaltet TLS nicht mehr selbst ein.",
 
   "errStaleSequence": "Ein neuerer Bewegungsbefehl dieses Telefons hatte den Roboter bereits erreicht, daher wurde der Befehl {command} NICHT angewendet, weil er außer der Reihe eintraf. Wiederholen Sie ihn, wenn Sie ihn noch möchten.",
+  "errHomeRejected": "Der Server hat den Befehl {command} abgelehnt und der Roboter hat sich nicht bewegt: Die Stellung ist nicht die Grundstellung seines Modells, oder ein Gelenk würde seinen Bereich verlassen.",
 
   "errJogOutOfReach": "Diese Bewegung liegt außerhalb der Reichweite des Roboters: Es wurde nichts gesendet.",
   "jogRotateLeft": "Basis nach links drehen (J1)",

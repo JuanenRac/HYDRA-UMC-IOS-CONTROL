@@ -91,6 +91,10 @@ class HydraApiException implements Exception {
   /// and it is not.
   bool get isJogNotArmed => statusCode == 403 && code == 'jog-not-armed';
 
+  /// 400 `home-pose-mismatch` or 422 `home-out-of-limits`: the server refused to send the robot home (the pose is not the home
+  /// pose of its model, or a joint would leave its range); the robot did not move.
+  bool get isHomeRejected => (statusCode == 400 && code == 'home-pose-mismatch') || (statusCode == 422 && code == 'home-out-of-limits');
+
   /// 423 `robot-disabled`: the robot is in safe mode; only STOP, disable and enable work on it.
   bool get isRobotDisabled => statusCode == 423 || code == 'robot-disabled';
 

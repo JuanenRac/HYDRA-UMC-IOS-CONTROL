@@ -153,7 +153,7 @@
   "@accessTakeOverMessage": {"placeholders": {"owner": {"type": "String"}}},
   "accessTakeOverConfirm": "Assumir o controlo",
   "accessTakeOverCancel": "Cancelar",
-  "jogArm": "Armar o jog",
+  "jogArm": "Armar jog",
   "jogDisarm": "Desarmar o jog",
   "jogArmed": "Jog armado: faltam {seconds} s",
   "@jogArmed": {"placeholders": {"seconds": {"type": "int"}}},
@@ -297,7 +297,7 @@
   "serverOptionsSaved": "Opções do servidor guardadas.",
   "serverOptionsNone": "Este servidor ainda não oferece estas opções.",
   "serverOptionsFailureUnavailable": "Este servidor ainda não oferece as opções de acesso.",
-  "serverOptionsFailureSession": "A sua sessão terminou. Inicie sessão novamente.",
+  "serverOptionsFailureSession": "A sua sessão terminou. Inicie sessão de novo.",
   "serverOptionsFailureForbidden": "Só um administrador pode ler ou alterar estas opções.",
   "serverOptionsFailureNetwork": "Não foi possível contactar o servidor.",
   "serverOptionsFailureOther": "O servidor não aceitou o pedido.",
@@ -330,6 +330,7 @@
   "serverOptionsConfirmInstallTls": "Uma instalação nova deixa de ativar o TLS por si própria.",
 
   "errStaleSequence": "Um comando de movimento mais recente deste telemóvel já tinha chegado ao robô, por isso o comando {command} NÃO foi aplicado, porque chegou fora de ordem. Repita-o se ainda o quiser.",
+  "errHomeRejected": "O servidor recusou o comando {command} e o robô não se moveu: a pose não é a pose de casa do seu modelo, ou uma articulação sairia do seu intervalo.",
 
   "errJogOutOfReach": "Este movimento está fora do alcance do robô: não foi enviado nada.",
   "jogRotateLeft": "Rodar a base para a esquerda (J1)",

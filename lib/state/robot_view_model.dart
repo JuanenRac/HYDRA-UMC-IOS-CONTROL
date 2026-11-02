@@ -1272,6 +1272,7 @@ class RobotViewModel extends ChangeNotifier {
         return HydraError(HydraErrorKind.homeResetBlocked, {'block': HomeResetBlock.role.name});
       }
       if (e.isStaleSequence) return HydraError(HydraErrorKind.staleSequence, {'command': command});
+      if (e.isHomeRejected) return HydraError(HydraErrorKind.homeRejected, {'command': command});
       if (e.isRevisionMismatch) return HydraError(HydraErrorKind.revisionChanged, {'command': command});
       if (e.isJogNotArmed) return const HydraError(HydraErrorKind.jogNotArmed);
       if (e.isRobotDisabled) return HydraError(HydraErrorKind.robotDisabled, {'command': command});

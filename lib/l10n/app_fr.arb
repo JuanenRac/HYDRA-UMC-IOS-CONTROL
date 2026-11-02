@@ -5,7 +5,7 @@
   "navControl": "Contrôle",
   "navCamera": "Caméra",
   "nav3d": "3D",
-  "navSettings": "Réglages",
+  "navSettings": "Paramètres",
   "navTelemetry": "Télémétrie",
   "telemetryTitle": "Télémétrie",
   "telemetryClearTooltip": "Effacer les journaux",
@@ -298,7 +298,7 @@
   "serverOptionsSaved": "Options du serveur enregistrées.",
   "serverOptionsNone": "Ce serveur ne propose pas encore ces options.",
   "serverOptionsFailureUnavailable": "Ce serveur ne propose pas encore les options d'accès.",
-  "serverOptionsFailureSession": "Votre session a pris fin. Reconnectez-vous.",
+  "serverOptionsFailureSession": "Votre session est terminée. Reconnectez-vous.",
   "serverOptionsFailureForbidden": "Seul un administrateur peut lire ou modifier ces options.",
   "serverOptionsFailureNetwork": "Le serveur est injoignable.",
   "serverOptionsFailureOther": "Le serveur n'a pas accepté la requête.",
@@ -331,6 +331,7 @@
   "serverOptionsConfirmInstallTls": "Une nouvelle installation n'activera plus TLS d'elle-même.",
 
   "errStaleSequence": "Une commande de mouvement plus récente de ce téléphone avait déjà atteint le robot : la commande {command} n’a PAS été appliquée, car elle est arrivée dans le désordre. Répétez-la si vous la voulez toujours.",
+  "errHomeRejected": "Le serveur a refusé la commande {command} et le robot n’a pas bougé : la pose n’est pas la pose d’origine de son modèle, ou une articulation sortirait de sa plage.",
 
   "errJogOutOfReach": "Ce mouvement est hors de portée du robot : rien n'a été envoyé.",
   "jogRotateLeft": "Tourner la base vers la gauche (J1)",

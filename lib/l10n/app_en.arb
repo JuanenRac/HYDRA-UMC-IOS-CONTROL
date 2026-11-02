@@ -360,6 +360,8 @@
 
   "errStaleSequence": "A newer motion command from this phone had already reached the robot, so the {command} command was NOT applied because it arrived out of order. Repeat it if you still want it.",
   "@errStaleSequence": {"placeholders": {"command": {"type": "String"}}},
+  "errHomeRejected": "The server refused the {command} command and the robot did not move: the pose is not the home pose of its model, or a joint would leave its range.",
+  "@errHomeRejected": {"placeholders": {"command": {"type": "String"}}},
 
   "errJogOutOfReach": "That move is outside the robot's reach: nothing was sent.",
   "jogRotateLeft": "Rotate the base left (J1)",

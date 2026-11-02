@@ -90,4 +90,22 @@ void main() {
       expect(text, contains('jog'), reason: code);
     }
   });
+
+  test('a refused home is its own answer, with its own wording in every language', () async {
+    for (final entry in {400: 'home-pose-mismatch', 422: 'home-out-of-limits'}.entries) {
+      status = entry.key;
+      answer = {'error': 'not the home pose', 'code': entry.value};
+      try {
+        await client.postRobotCommand(1, {'command': 'reset'});
+        fail('expected a HydraApiException');
+      } on HydraApiException catch (e) {
+        expect(e.isHomeRejected, isTrue, reason: entry.value);
+      }
+    }
+    for (final code in ['en', 'es', 'de', 'fr', 'it', 'ja', 'zh', 'pt']) {
+      final l10n = await AppLocalizations.delegate.load(Locale(code));
+      final text = const HydraError(HydraErrorKind.homeRejected, {'command': 'reset'}).localize(l10n);
+      expect(text, contains('reset'), reason: code);
+    }
+  });
 }
