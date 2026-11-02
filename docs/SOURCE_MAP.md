@@ -18,6 +18,8 @@ Every file of the repository with a line on what it does: the annotated tree tha
 │   │   ├── connection_history.dart # Who connects to the server: the clients seen and the history of sign-ins
 │   │   ├── server_security.dart   # The nine access options of the server an administrator can change
 │   │   ├── robot_command_contract.dart # Command names and limits, generated from docs/robot_command_contract.json (tools/gen_command_contract.py)
+│   │   ├── ecosystem.dart          # The answer of GET /api/ecosystem/status: the project manifests the server finds, with the live probe kept apart from "never probed"
+│   │   ├── ios_feature_contract.dart # Settings of the features of this app, generated from docs/ios_feature_contract.json (tools/gen_command_contract.py)
 │   │   ├── contract_v2.dart        # The server's second contract as pure rules: conditional writes by robot revision, the atomic table move and the audit record
 │   │   └── sha256.dart             # SHA-256 in plain Dart, for the chain check of the server's audit record
 │   ├── network/
@@ -25,6 +27,7 @@ Every file of the repository with a line on what it does: the annotated tree tha
 │   │   ├── ble_contract.dart, ble_commands.dart, ble_gatt.dart # Bluetooth LE contract, framing, commands and the link abstraction (experimental)
 │   │   ├── hydra_ble_client.dart    # The Bluetooth LE client state machine; ble_gatt_fbp.dart is the real link (flutter_blue_plus)
 │   │   ├── shortcut_bridge.dart     # The global stop asked for by a system shortcut (native half: ios/Runner/GlobalStopShortcut.swift)
+│   │   ├── native_bridges.dart      # The Dart side of the native halves that reach out of the app: local notifications, dictation, Live Activity, Apple Watch (Swift halves in ios/Runner)
 │   │   ├── push_bridge.dart         # The bridge to the push notifications of the system (native half: ios/Runner/AppDelegate.swift)
 │   │   ├── command_sequence.dart    # The rising number (seq) on motion commands and on the stop
 │   │   ├── hydra_websocket.dart     # /ws live sync client
@@ -35,6 +38,7 @@ Every file of the repository with a line on what it does: the annotated tree tha
 │   │   └── client_prefs.dart        # Small client-side preferences that are not secrets (today: the controller id of this installation)
 │   ├── state/
 │   │   ├── robot_view_model.dart    # Single ChangeNotifier every screen listens to
+│   │   ├── external_surfaces.dart   # What is shown outside the app, each behind its own switch: notifications of a job, Live Activity, Apple Watch
 │   │   ├── robot_command_repository.dart # Every robot write: revisions, retry of a stop, table fallback, jogs on the wire, debounce, timings
 │   │   └── hydra_error.dart         # Typed error surface for RobotViewModel (no BuildContext of its own)
 │   ├── l10n/                        # Real generated localizations (8 languages) - see l10n.yaml at repo root
@@ -43,6 +47,10 @@ Every file of the repository with a line on what it does: the annotated tree tha
 │   │   ├── app_localizations_en.dart, _es.dart, _it.dart, _fr.dart, _de.dart, _ja.dart, _zh.dart, _pt.dart
 │   │   └── language_prefs.dart      # Persisted language override (shared_preferences)
 │   ├── util/                    # Helpers without a screen of their own
+│   │   ├── link_health.dart         # Grade of the link to the server from the slowest recent round-trip times (port of the Android LinkHealth)
+│   │   ├── connection_diagnostics.dart # The facts of the connection diagnostics and its plain-text report, without secrets
+│   │   ├── job_alerts.dart          # Which local notifications a change of the robots gives, rationed
+│   │   ├── live_activity_model.dart # What the Live Activity and the watch show, and when to start, update or end them
 │   │   ├── home_reset.dart          # HOME/RESET: when it is refused and the confirmation in steps
 │   │   ├── play_confirmation.dart   # When PLAY asks first: the rules of the confirmation before a trajectory starts
 │   │   └── viewer_url.dart          # The address of the embedded 3D viewer: the access token goes in the fragment, which is never sent to the server
@@ -55,7 +63,9 @@ Every file of the repository with a line on what it does: the annotated tree tha
 │       ├── control_screen.dart      # Jog/speed/valve/pump/playback controls
 │       ├── camera_screen.dart       # MJPEG viewer + vision on/off switch
 │       ├── three_d_screen.dart      # Embeds STUDIO's own 3D viewport via WebView
-│       ├── telemetry_screen.dart    # Ported from Android's own TelemetryScreen.kt
+│       ├── telemetry_screen.dart    # Ported from Android's own TelemetryScreen.kt: the Logs tab and the Ecosystem tab
+│       ├── ecosystem_tab.dart       # The project manifests the server finds, by family, with a bulb only for the services that declare one
+│       ├── connection_diagnostics_dialog.dart # Address, trust, versions, latency and link grade, with a report to copy
 │       ├── voice_assistant_dialog.dart # In-app mic/text button to HYDRA-UMC-VOICE-UI
 │       ├── settings_screen.dart     # Connection info + sign out
 │       └── widgets/
@@ -70,6 +80,10 @@ Every file of the repository with a line on what it does: the annotated tree tha
 │           ├── mjpeg_view.dart       # Hand-rolled MJPEG stream parser
 │           └── hydra_mark.dart       # The HYDRA-UMC mark (a hexagon with an H and a stem) drawn in code
 ├── ios/                              # Xcode project (build only from macOS)
+│   ├── Runner/                       # AlertsBridge, SpeechBridge, LiveActivityBridge, WatchBridge and HydraJobAttributes: the Swift halves of lib/network/native_bridges.dart (not compiled in Xcode by the author)
+│   ├── HydraLiveActivity/            # Sources of the Live Activity widget (lock screen and Dynamic Island); its Xcode target is not created yet
+│   ├── HydraWatch/                   # Sources of the Apple Watch app (status and a STOP request to the phone); its Xcode target is not created yet
+│   └── HydraExtensions/              # The texts of the Live Activity and of the watch app in the eight languages
 ├── windows/                          # Windows desktop target - build verification without a Mac
 ├── tools/
 │   ├── build_test.py                     # Non-versioning build/compile check
@@ -78,6 +92,8 @@ Every file of the repository with a line on what it does: the annotated tree tha
 │   ├── _readme_parity.py                 # Check that the eight READMEs share one structure (a copy of HYDRA-UMC-SDK's, kept in sync)
 │   └── hydra_project_tool.py             # The same commands in every repository: validate, test, ci, version, status, bump
 ├── docs/ARCHITECTURE.md
+├── docs/robot_command_contract.json  # Commands and limits shared with the Android app (identical copy)
+├── docs/ios_feature_contract.json    # Settings of the features of this app: ecosystem, notifications, Live Activity, dictation, diagnostics, watch
 ├── test/                             # widget_test, auth_prefs_test, discovery_interfaces_test, format_uptime_test, hostile_answers_test, hydra_error_test, hydra_websocket_reconnect_test, hydra_websocket_token_test, joystick_pad_test, localization_test, main_screen_cached_state_banner_test, mjpeg_lifecycle_test, home_reset_test, robot_view_model_home_reset_test, play_confirmation_test, robot_view_model_background_pause_test, parol6_kinematics_test, robot_view_model_parol6_jog_test, command_sequence_test, robot_view_model_push_test, robot_view_model_shortcut_test, ble_test, robot_view_model_ble_test, connection_history_test, server_security_test, robot_view_model_cached_state_test, robot_view_model_server_errors_test, robot_view_model_silent_refresh_test, robot_view_model_stop_all_test, saved_data_block_test, session_storage_test, state_cache_test, telemetry_log_test, voice_turn_test, websocket_uri_test
 ├── images/
 ├── pubspec.yaml / pubspec.lock / l10n.yaml / analysis_options.yaml # The Flutter package definition and its locked versions, the settings of the l10n generator and the lint rules

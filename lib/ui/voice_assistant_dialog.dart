@@ -23,6 +23,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../l10n/app_localizations.dart';
+import '../network/native_bridges.dart';
 import '../state/robot_view_model.dart';
 
 class VoiceAssistantDialog extends StatefulWidget {
@@ -34,6 +35,8 @@ class VoiceAssistantDialog extends StatefulWidget {
 
 class _VoiceAssistantDialogState extends State<VoiceAssistantDialog> {
   final _controller = TextEditingController();
+  bool _listening = false;
+  String? _dictationNote;
 
   @override
   void dispose() {
@@ -46,6 +49,39 @@ class _VoiceAssistantDialogState extends State<VoiceAssistantDialog> {
     if (text.isEmpty) return;
     vm.sendVoiceTurn(text);
     _controller.clear();
+  }
+
+  // Listens once and writes what was understood into the box. It never sends: the person reads it and presses Send.
+  Future<void> _dictate(RobotViewModel vm, AppLocalizations l10n) async {
+    if (_listening) {
+      await vm.cancelDictation();
+      return;
+    }
+    setState(() {
+      _listening = true;
+      _dictationNote = null;
+    });
+    final outcome = await vm.dictate();
+    if (!mounted) return;
+    setState(() {
+      _listening = false;
+      switch (outcome.status) {
+        case SpeechStatus.ok:
+          _controller.text = outcome.text;
+          _controller.selection = TextSelection.collapsed(offset: _controller.text.length);
+          _dictationNote = l10n.dictationReview;
+        case SpeechStatus.denied:
+          _dictationNote = l10n.dictationDenied;
+        case SpeechStatus.unavailable:
+          _dictationNote = l10n.dictationUnavailable;
+        case SpeechStatus.needsOnline:
+          _dictationNote = l10n.dictationNeedsOnline;
+        case SpeechStatus.empty:
+          _dictationNote = l10n.dictationEmpty;
+        case SpeechStatus.failed:
+          _dictationNote = l10n.dictationFailed;
+      }
+    });
   }
 
   @override
@@ -72,9 +108,23 @@ class _VoiceAssistantDialogState extends State<VoiceAssistantDialog> {
               decoration: InputDecoration(
                 labelText: l10n.voiceAssistantInputLabel,
                 border: const OutlineInputBorder(),
+                suffixIcon: vm.dictationEnabled
+                    ? IconButton(
+                        key: const Key('assistant-dictate'),
+                        icon: Icon(_listening ? Icons.stop_circle_outlined : Icons.mic),
+                        tooltip: _listening ? l10n.dictationStop : l10n.dictationMic,
+                        onPressed: busy ? null : () => _dictate(vm, l10n),
+                      )
+                    : null,
               ),
               onSubmitted: (_) => _send(vm),
             ),
+            if (_listening) Padding(padding: const EdgeInsets.only(top: 8), child: Text(l10n.dictationListening)),
+            if (_dictationNote != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(_dictationNote!, key: const Key('assistant-dictation-note'), style: Theme.of(context).textTheme.bodySmall),
+              ),
             if (busy) const Padding(padding: EdgeInsets.only(top: 12), child: LinearProgressIndicator()),
             if (reply != null) ...[
               const SizedBox(height: 16),

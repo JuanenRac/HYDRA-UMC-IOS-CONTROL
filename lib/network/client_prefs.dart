@@ -22,6 +22,11 @@ class ClientPrefs {
   static const _keyConfirmPlay = 'hydra_confirm_play';
   static const _keyHomeReset = 'hydra_home_reset_enabled';
   static const _keyPush = 'hydra_push_notifications';
+  static const _keyJobAlerts = 'hydra_job_alerts';
+  static const _keyLiveActivity = 'hydra_live_activity';
+  static const _keyDictation = 'hydra_dictation';
+  static const _keyDictationOnline = 'hydra_dictation_online';
+  static const _keyWatch = 'hydra_watch_companion';
 
   Future<bool> loadBlockCommandsOnSavedData() async {
     final prefs = await SharedPreferences.getInstance();
@@ -76,6 +81,31 @@ class ClientPrefs {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keyPush, value);
   }
+
+  /// Whether the notifications of a job, a robot or the connection are on; [defaultValue] (off in the contract) before any choice.
+  Future<bool> loadJobAlerts(bool defaultValue) async => (await SharedPreferences.getInstance()).getBool(_keyJobAlerts) ?? defaultValue;
+
+  Future<void> saveJobAlerts(bool value) async => (await SharedPreferences.getInstance()).setBool(_keyJobAlerts, value);
+
+  /// Whether the Live Activity of the running trajectory is on; off in the contract.
+  Future<bool> loadLiveActivity(bool defaultValue) async => (await SharedPreferences.getInstance()).getBool(_keyLiveActivity) ?? defaultValue;
+
+  Future<void> saveLiveActivity(bool value) async => (await SharedPreferences.getInstance()).setBool(_keyLiveActivity, value);
+
+  /// Whether the dictation button of the assistant is shown; off in the contract.
+  Future<bool> loadDictation(bool defaultValue) async => (await SharedPreferences.getInstance()).getBool(_keyDictation) ?? defaultValue;
+
+  Future<void> saveDictation(bool value) async => (await SharedPreferences.getInstance()).setBool(_keyDictation, value);
+
+  /// Whether dictation may use the online recognition of Apple when the language has none on the device. Off: the audio never leaves the phone.
+  Future<bool> loadDictationOnline() async => (await SharedPreferences.getInstance()).getBool(_keyDictationOnline) ?? false;
+
+  Future<void> saveDictationOnline(bool value) async => (await SharedPreferences.getInstance()).setBool(_keyDictationOnline, value);
+
+  /// Whether the status goes to the Apple Watch and the watch may ask for the global stop; off in the contract.
+  Future<bool> loadWatch(bool defaultValue) async => (await SharedPreferences.getInstance()).getBool(_keyWatch) ?? defaultValue;
+
+  Future<void> saveWatch(bool value) async => (await SharedPreferences.getInstance()).setBool(_keyWatch, value);
 
   /// The conditional-writes mode chosen in this app (`off`, `standard`, `strict`); null before any choice.
   Future<String?> loadConditionalMode() async {

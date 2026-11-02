@@ -4,3 +4,5 @@
 "NSBluetoothAlwaysUsageDescription" = "HYDRA-UMC Control 使用蓝牙读取附近 HYDRA-UMC 设备的状态。";
 "ShortcutGlobalStopTitle" = "全局停止";
 "ShortcutGlobalStopDescription" = "停止 HYDRA-UMC 服务器的所有机器人。";
+"NSMicrophoneUsageDescription" = "HYDRA-UMC Control 仅在您按住助手的麦克风按钮期间收听您的声音，并将您说的话写入文本框。";
+"NSSpeechRecognitionUsageDescription" = "HYDRA-UMC Control 会为助手将您说的话转换为文字。默认在 iPhone 本机上完成。";

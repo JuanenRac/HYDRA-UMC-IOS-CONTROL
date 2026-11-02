@@ -15,7 +15,11 @@ class RobotCommandContract {
   static const String play = 'play';
   static const String pause = 'pause';
   static const String jog = 'jog';
+  static const String jogStart = 'jogStart';
+  static const String jogHeartbeat = 'jogHeartbeat';
+  static const String jogStop = 'jogStop';
   static const String table = 'table';
+  static const String trajectory = 'trajectory';
   static const String reset = 'reset';
   static const String jogStep = 'jogStep';
   static const String tool = 'tool';
@@ -26,13 +30,13 @@ class RobotCommandContract {
   static const String disable = 'disable';
   static const String enable = 'enable';
 
-  static const Set<String> all = {stop, play, pause, jog, table, reset, jogStep, tool, valve, pump, speed, vision, disable, enable};
+  static const Set<String> all = {stop, play, pause, jog, jogStart, jogHeartbeat, jogStop, table, trajectory, reset, jogStep, tool, valve, pump, speed, vision, disable, enable};
 
   /// The commands the server orders by number (`seq`).
-  static const Set<String> numbered = {stop, jog, table, reset};
+  static const Set<String> numbered = {stop, jog, jogStart, jogStop, table, reset};
 
   /// The commands sent over and over while a control is held; they carry no If-Match in the standard mode.
-  static const Set<String> continuous = {jog, jogStep, speed};
+  static const Set<String> continuous = {jog, jogHeartbeat, jogStep, speed};
 
   static const double speedMin = 10.0;
   static const double speedMax = 500.0;
@@ -44,4 +48,14 @@ class RobotCommandContract {
   static const bool homeResetEnabledByDefault = false;
   static const int homeResetConfirmSteps = 2;
   static const int homeResetConfirmWindowMs = 20000;
+
+  /// Link health: round-trip times (ms) that grade the link to the server, and how long without an answer counts as lost.
+  static const bool linkIndicatorEnabledByDefault = true;
+  static const int linkProbeIntervalMs = 2000;
+  static const int linkProbeTimeoutMs = 1500;
+  static const int linkSampleWindow = 8;
+  static const int linkGoodRttMs = 100;
+  static const int linkPoorRttMs = 250;
+  static const int linkBlockRttMs = 500;
+  static const int linkLostAfterMs = 4000;
 }

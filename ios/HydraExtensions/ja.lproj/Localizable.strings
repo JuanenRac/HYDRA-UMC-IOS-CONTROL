@@ -1,0 +1,15 @@
+/* Texts of the Live Activity and of the Apple Watch app, in the language of the device. */
+"status.running" = "実行中";
+"status.paused" = "一時停止中";
+"status.finished" = "完了";
+"status.stopped" = "停止";
+"status.offline" = "オフライン";
+"status.safeMode" = "セーフモード";
+"status.idle" = "待機中";
+"step.of" = "ステップ %1$d / %2$d";
+"stop.button" = "STOP";
+"watch.waiting" = "iPhone を待っています";
+"watch.noJob" = "実行中のジョブはありません";
+"watch.stop.sent" = "STOP を要求しました";
+"watch.stop.refused" = "iPhone が STOP を受け付けませんでした";
+"watch.stop.unreachable" = "iPhone に接続できません。STOP は送信されていません。";

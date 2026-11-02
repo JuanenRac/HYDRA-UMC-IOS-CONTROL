@@ -7,7 +7,11 @@
     {"name": "play", "constant": "PLAY", "numbered": false, "continuous": false},
     {"name": "pause", "constant": "PAUSE", "numbered": false, "continuous": false},
     {"name": "jog", "constant": "JOG", "numbered": true, "continuous": true},
+    {"name": "jogStart", "constant": "JOG_START", "numbered": true, "continuous": false},
+    {"name": "jogHeartbeat", "constant": "JOG_HEARTBEAT", "numbered": false, "continuous": true},
+    {"name": "jogStop", "constant": "JOG_STOP", "numbered": true, "continuous": false},
     {"name": "table", "constant": "TABLE", "numbered": true, "continuous": false},
+    {"name": "trajectory", "constant": "TRAJECTORY", "numbered": false, "continuous": false},
     {"name": "reset", "constant": "RESET", "numbered": true, "continuous": false},
     {"name": "jogStep", "constant": "JOG_STEP", "numbered": false, "continuous": true},
     {"name": "tool", "constant": "TOOL", "numbered": false, "continuous": false},
@@ -29,5 +33,73 @@
     "enabledByDefault": false,
     "confirmSteps": 2,
     "confirmWindowMs": 20000
+  },
+  "deadManJog": {
+    "note": "Continuous jog held by a dead-man: jogStart, a heartbeat every heartbeatMs while the control is held, jogStop on release. The server stops the axis when no heartbeat arrives for serverTimeoutMs; the app also stops by itself after maxMissedHeartbeats failed heartbeats, after maxHoldMs, or when the link health blocks it. PENDING in HYDRA-UMC-SERVER: the three commands.",
+    "enabledByDefault": false,
+    "heartbeatMs": 100,
+    "serverTimeoutMs": 300,
+    "maxMissedHeartbeats": 2,
+    "maxHoldMs": 30000,
+    "stopAttempts": 3,
+    "stopRetryPauseMs": 100,
+    "stopTimeoutMs": 2000,
+    "velocityDefault": 20,
+    "velocityMin": 1,
+    "velocityMax": 100
+  },
+  "linkHealth": {
+    "note": "Round-trip time of the link to the server, measured with a small request; it blocks the continuous jog when the link is bad. PENDING in HYDRA-UMC-SERVER: a dedicated ping field.",
+    "indicatorEnabledByDefault": true,
+    "blockJogOnBadLinkDefault": true,
+    "probeIntervalMs": 2000,
+    "probeTimeoutMs": 1500,
+    "sampleWindow": 8,
+    "goodRttMs": 100,
+    "poorRttMs": 250,
+    "blockRttMs": 500,
+    "lostAfterMs": 4000
+  },
+  "pairing": {
+    "note": "Pairing by QR code or link made by the admin page of the server: hydra-umc://pair?host=..&port=..&fp=<sha256 hex of the TLS certificate>&name=.. . The app shows what it read and asks before it keeps anything. PENDING in HYDRA-UMC-SERVER: the admin page that draws the code.",
+    "enabledByDefault": false,
+    "scheme": "hydra-umc",
+    "host": "pair",
+    "maxPayloadChars": 600,
+    "nameMax": 64,
+    "portMin": 1,
+    "portMax": 65535
+  },
+  "watchAlerts": {
+    "note": "Alerts the phone pushes to the watch (path /hydra-umc/alert/v1 of the watch protocol), rationed so a burst never floods the wrist.",
+    "enabledByDefault": true,
+    "messageMax": 280,
+    "dedupeWindowMs": 30000,
+    "minGapMs": 2000,
+    "maxPerMinute": 6,
+    "connectionLostAfterMs": 10000,
+    "sendTimeoutMs": 3000
+  },
+  "presenceRelay": {
+    "note": "The phone passes the presence heartbeat of the watch to the server, which decides what a lost heartbeat means. PENDING in HYDRA-UMC-SERVER: the endpoint.",
+    "enabledByDefault": false,
+    "path": "/api/operator/presence",
+    "timeoutMs": 1500,
+    "gapIntervals": 3
+  },
+  "voiceConfirmRelay": {
+    "note": "The phone passes the two-step confirmation of a spoken order from the watch to the server; it needs a session and the reservation of the robot. PENDING in HYDRA-UMC-SERVER: the endpoint.",
+    "enabledByDefault": false,
+    "path": "/api/voice/confirm",
+    "timeoutMs": 15000,
+    "tokenMax": 1024,
+    "validityMaxSeconds": 300
+  },
+  "works": {
+    "note": "Work files (trajectories) the server lists in <folder>/index.json and serves as a JSON list of points; the `trajectory` command loads one into the robot.",
+    "maxPoints": 10000,
+    "fileMaxBytes": 2000000,
+    "fileNameMax": 128,
+    "folderMax": 200
   }
 }

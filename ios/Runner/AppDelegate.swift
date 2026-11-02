@@ -58,6 +58,20 @@ import UserNotifications
         DispatchQueue.main.async { channel?.invokeMethod("globalStopRequested", arguments: nil) }
       }
     }
+    // What reaches out of the app, each behind its own switch in the settings (all off at first): local notifications of a
+    // job, dictation for the assistant, the Live Activity and the Apple Watch. The Dart side is lib/network/native_bridges.dart.
+    if let messenger = engineBridge.pluginRegistry.registrar(forPlugin: "HydraAlerts")?.messenger() {
+      AlertsChannel.register(messenger: messenger)
+    }
+    if let messenger = engineBridge.pluginRegistry.registrar(forPlugin: "HydraSpeech")?.messenger() {
+      SpeechChannel.register(messenger: messenger)
+    }
+    if let messenger = engineBridge.pluginRegistry.registrar(forPlugin: "HydraLiveActivity")?.messenger() {
+      LiveActivityChannel.register(messenger: messenger)
+    }
+    if let messenger = engineBridge.pluginRegistry.registrar(forPlugin: "HydraWatch")?.messenger() {
+      WatchChannel.register(messenger: messenger)
+    }
   }
 
   override func application(

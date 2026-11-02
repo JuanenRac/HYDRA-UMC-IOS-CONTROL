@@ -11,6 +11,7 @@ import '../app_version.dart';
 import '../l10n/app_localizations.dart';
 import '../network/tls_settings.dart';
 import '../state/robot_view_model.dart';
+import 'connection_diagnostics_dialog.dart';
 import 'widgets/ble_dialog.dart';
 import 'widgets/security_dialog.dart';
 import 'widgets/server_options_dialog.dart';
@@ -97,6 +98,59 @@ class SettingsScreen extends StatelessWidget {
           }),
           value: vm.pushNotifications,
           onChanged: (value) => vm.setPushNotifications(value),
+        ),
+        // What reaches out of the app: every one starts off and has its own switch.
+        SwitchListTile(
+          key: const Key('settings-job-alerts'),
+          secondary: const Icon(Icons.notifications_active_outlined),
+          title: Text(l10n.jobAlertsTitle),
+          subtitle: Text(l10n.jobAlertsSubtitle),
+          value: vm.jobAlertsEnabled,
+          onChanged: (value) async {
+            final messenger = ScaffoldMessenger.maybeOf(context);
+            final on = await vm.setJobAlerts(value);
+            if (value && !on) messenger?.showSnackBar(SnackBar(content: Text(l10n.jobAlertsDenied)));
+          },
+        ),
+        SwitchListTile(
+          key: const Key('settings-live-activity'),
+          secondary: const Icon(Icons.lock_clock),
+          title: Text(l10n.liveActivityTitle),
+          subtitle: Text(vm.surfaces.liveActivityRefusedBySystem ? l10n.liveActivityRefused : l10n.liveActivitySubtitle),
+          value: vm.liveActivityEnabled,
+          onChanged: (value) => vm.setLiveActivity(value),
+        ),
+        SwitchListTile(
+          key: const Key('settings-watch'),
+          secondary: const Icon(Icons.watch_outlined),
+          title: Text(l10n.watchTitle),
+          subtitle: Text(l10n.watchSubtitle),
+          value: vm.watchEnabled,
+          onChanged: (value) => vm.setWatch(value),
+        ),
+        SwitchListTile(
+          key: const Key('settings-dictation'),
+          secondary: const Icon(Icons.mic_none),
+          title: Text(l10n.dictationTitle),
+          subtitle: Text(l10n.dictationSubtitle),
+          value: vm.dictationEnabled,
+          onChanged: (value) => vm.setDictation(value),
+        ),
+        if (vm.dictationEnabled)
+          SwitchListTile(
+            key: const Key('settings-dictation-online'),
+            secondary: const Icon(Icons.cloud_outlined),
+            title: Text(l10n.dictationOnlineTitle),
+            subtitle: Text(l10n.dictationOnlineSubtitle),
+            value: vm.dictationOnline,
+            onChanged: (value) => vm.setDictationOnline(value),
+          ),
+        ListTile(
+          key: const Key('settings-diagnostics'),
+          leading: const Icon(Icons.network_check),
+          title: Text(l10n.diagTitle),
+          subtitle: Text(l10n.diagIntro, maxLines: 2, overflow: TextOverflow.ellipsis),
+          onTap: () => showConnectionDiagnosticsDialog(context, vm),
         ),
         ListTile(
           key: const Key('settings-security'),

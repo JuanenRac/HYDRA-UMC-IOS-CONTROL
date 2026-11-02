@@ -40,6 +40,8 @@ import '../app_version.dart';
 import '../models/access.dart';
 import '../models/contract_v2.dart';
 import '../models/assistant_reply.dart';
+import '../models/ecosystem.dart';
+import '../util/connection_diagnostics.dart' show InfoProbe;
 import 'command_sequence.dart';
 import 'tls_settings.dart';
 
@@ -544,6 +546,38 @@ class HydraApiClient {
         .get(Uri.parse('$baseUrl/api/system/metrics'), headers: {..._clientHeaders, ..._authHeaders})
         .timeout(const Duration(seconds: 5));
     return _expectJson(resp);
+  }
+
+  /// The project manifests the server finds next to itself, with a live probe for the services they declare
+  /// (GET /api/ecosystem/status). A server that does not know the route answers 404: [HydraApiException].
+  Future<EcosystemStatus> getEcosystemStatus() async {
+    final resp = await _client
+        .get(Uri.parse('$baseUrl/api/ecosystem/status'), headers: {..._clientHeaders, ..._authHeaders})
+        .timeout(const Duration(seconds: 10));
+    return EcosystemStatus.fromJson(_expectJson(resp));
+  }
+
+  /// One timed read of GET /api/hydra-info on the current scheme, for the connection diagnostics: how long the answer
+  /// took and what the server says about its version. Never throws; a miss is an [InfoProbe] without a time. It does not
+  /// switch the scheme of the client.
+  Future<InfoProbe> probeInfo({Duration timeout = const Duration(milliseconds: 1500)}) async {
+    final watch = Stopwatch()..start();
+    try {
+      final resp = await _client.get(Uri.parse('$baseUrl/api/hydra-info'), headers: {..._clientHeaders, ..._authHeaders}).timeout(timeout);
+      watch.stop();
+      if (resp.statusCode != 200) return const InfoProbe();
+      final json = jsonDecode(resp.body);
+      if (json is! Map) return const InfoProbe();
+      final api = json['remoteApiVersion'];
+      final app = json['appVersion'];
+      return InfoProbe(
+        rttMs: watch.elapsedMilliseconds,
+        remoteApiVersion: api is num ? api.toInt() : null,
+        serverAppVersion: app is String && app.isNotEmpty ? app : null,
+      );
+    } catch (_) {
+      return const InfoProbe();
+    }
   }
 
   Map<String, dynamic> _expectJson(http.Response resp) {

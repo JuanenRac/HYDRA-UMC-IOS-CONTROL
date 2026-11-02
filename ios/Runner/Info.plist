@@ -56,6 +56,13 @@
 		     has Face ID. -->
 		<key>NSBluetoothAlwaysUsageDescription</key>
 		<string>HYDRA-UMC Control uses Bluetooth to read the state of a HYDRA-UMC device nearby.</string>
+		<key>NSMicrophoneUsageDescription</key>
+		<string>HYDRA-UMC Control listens to your voice only while you press the microphone button of the assistant, to write what you say into the text box.</string>
+		<key>NSSpeechRecognitionUsageDescription</key>
+		<string>HYDRA-UMC Control turns what you say into text for the assistant. By default this is done on the iPhone itself.</string>
+		<!-- The Live Activity of a running trajectory (lock screen and Dynamic Island); a switch in the settings, off at first. -->
+		<key>NSSupportsLiveActivities</key>
+		<true/>
 		<key>NSFaceIDUsageDescription</key>
 		<string>HYDRA-UMC Control can use Face ID to confirm it's you before reconnecting to a saved server session.</string>
 		<key>CFBundleExecutable</key>

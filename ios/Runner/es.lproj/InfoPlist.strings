@@ -4,3 +4,5 @@
 "NSBluetoothAlwaysUsageDescription" = "HYDRA-UMC Control usa Bluetooth para leer el estado de un dispositivo HYDRA-UMC cercano.";
 "ShortcutGlobalStopTitle" = "Parada global";
 "ShortcutGlobalStopDescription" = "Detiene todos los robots del servidor HYDRA-UMC.";
+"NSMicrophoneUsageDescription" = "HYDRA-UMC Control escucha tu voz solo mientras pulsas el botón de micrófono del asistente, para escribir lo que dices en el cuadro de texto.";
+"NSSpeechRecognitionUsageDescription" = "HYDRA-UMC Control convierte lo que dices en texto para el asistente. Por defecto se hace en el propio iPhone.";

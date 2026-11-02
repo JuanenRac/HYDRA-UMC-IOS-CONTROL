@@ -107,7 +107,8 @@ Wi-Fi 経由で [HYDRA-UMC](https://github.com/JuanenRac/HYDRA-UMC) プラット
 - **8言語対応UI**（`lib/l10n/`、標準の `flutter gen-l10n` パイプライン）—— 英語・スペイン語・フランス語・ドイツ語・イタリア語・日本語・中国語・ポルトガル語に対応し、このエコシステムの他のクライアントと同じです。`設定 > 言語` に保存される上書き設定はデフォルトでOSのロケールに従います。`RobotViewModel.lastError` は整形済みの英語テキストではなく型付きの `HydraError` になっているため、ビジネスロジック側のエラーメッセージ（サインイン・接続・コマンド失敗)も画面の静的なテキストと同様に正しくローカライズされます。
 - **オフライン状態キャッシュ**（`lib/network/state_cache.dart`）—— 最後に把握した設定ツリーを、実際に保存した時刻とともにディスクに保存します（1秒のデバウンス付き）。これにより、実際の `connect()` の往復通信がまだ進行中でも、ダッシュボード/操作画面が空の状態ではなく、多少古い可能性はあっても実際のロボットデータをすぐに表示します。その間は「HH:mm 時点のキャッシュデータ」という実際に見えるバナー(単なる無言の推測ではなく)が表示されます。実際の取得が成功した瞬間に置き換えられます。
 - **テレメトリ**（`lib/ui/telemetry_screen.dart`）—— 接続・サインイン・コマンドの実際のライフサイクルイベントを新しい順に表示するターミナル風のログで、最大50件まで保持し、ログを消去する操作も備えています。HYDRA-UMC-ANDROID-CONTROL 自身のテレメトリタブと同じ「マトリックスグリーン」の配色です。
-- **アプリ内音声アシスタント**（`lib/ui/voice_assistant_dialog.dart`）—— アプリバーのマイクアイコンをタップするとダイアログが開き、質問や指示を入力できます。これは HYDRA-UMC-ANDROID-CONTROL 自身のアプリ内音声ボタンや Watch リレーと同じ実際の `POST /api/voice/turn` ルートを経由して `HYDRA-UMC-VOICE-UI` に送信されます。音声がアップロードされることは一切なく、現時点ではテキスト入力のみです。iOS のネイティブ音声認識には Speech フレームワークが必要ですが、この Windows 専用の開発環境では実機/Xcode に対してビルドや検証を行うことができないためです。返信が直接ロボットコマンドを発行することもありません。
+- **アプリ内音声アシスタント**（`lib/ui/voice_assistant_dialog.dart`）—— アプリバーのマイクアイコンをタップするとダイアログが開き、質問や指示を入力できます。これは HYDRA-UMC-ANDROID-CONTROL 自身のアプリ内音声ボタンや Watch リレーと同じ実際の `POST /api/voice/turn` ルートを経由して `HYDRA-UMC-VOICE-UI` に送信されます。任意の音声入力（設定のスイッチ、既定ではオフ）は、iOS の Speech フレームワークで話した内容をテキスト欄に書き込みます。Apple のオンライン認識を許可しない限り iPhone 上で処理され、テキストが自動で送信されることはなく、サーバーに送られるのは音声ではなくテキストだけです。返信が直接ロボットコマンドを発行することもありません。
+- **エコシステムタブ、接続診断、アプリ外の表示**（`lib/ui/ecosystem_tab.dart`、`lib/ui/connection_diagnostics_dialog.dart`、`lib/state/external_surfaces.dart`）—— テレメトリ画面にエコシステムタブ（サーバーが見つけたプロジェクトのマニフェスト。サービスを宣言したものにだけランプ付き）があり、設定から接続診断（スキーム、証明書の信頼方法、バージョン、`GET /api/hydra-info` を数回読んだ遅延、接続の状態、パスワードやトークンを含まないコピー用レポート）を開けます。既定ですべてオフの3つのスイッチで、ローカル通知（ジョブ完了、ロボットのオフラインやセーフモード、接続断）、実行中の軌道の進捗を示す Live Activity、ペアリングした Apple Watch へのステータスと STOP 要求を有効にできます。Swift 部分と Live Activity・Watch アプリのソース（`ios/HydraLiveActivity`、`ios/HydraWatch`）は書かれていますが、Xcode でのコンパイルも iPhone や Watch での動作確認も未実施で、この2つの拡張にはまだ Xcode のターゲットが必要です。
 - **コマンド経路と予約の維持**（`lib/state/robot_command_repository.dart`、`lib/models/robot_command_contract.dart`、`lib/models/access.dart`）- HYDRA-UMC-ANDROID-CONTROL と同じ分担です。ビューモデルの外にある1つのリポジトリが各ロボットのリビジョンを保持し、応答がないときは停止を再送し、古いサーバーには `table` 移動をジョグとして送り、送信中のジョグを数え、連続コマンドをまとめ、各応答を測定します。コマンド名と上限は `tools/gen_command_contract.py` が `docs/robot_command_contract.json`（Android のファイルと同一のコピー）から生成し、検証がチェックします。操作画面を開いている間は、この端末が保持する予約を終了の少し前に再度要求するので、長い操作でもロボットを失いません。サインアウト時には端末が保持する予約を解放します。数秒ごとのサーバー負荷の読み取りは、それを表示するバーだけを再描画し、すべての画面は再構築しません。テストでは偽サーバーに対して実行し、iPhone では実行していません。
 - **HOME/RESET**（`lib/ui/control_screen.dart`, `lib/util/home_reset.dart`, `lib/state/robot_view_model.dart`）- サーバーの `reset` コマンドで、選択したロボットをゼロ位置へ移動するボタンです。初期設定ではオフで、設定のスイッチでオンにでき、選択は保存されます。何かを送る前に、順番どおり、制限時間内に2回確認します。ロボットが軌道を実行中、セーフモード、オフライン、位置なしの場合、STOPの送信中または未確認の間、ジョグの送信中、ジョグの有効化が必要でされていない場合、およびオペレーターでも管理者でもないセッションの場合は、専用の文言で拒否されます（役割はサーバーが再度判断します）。コマンドにはジョグと同じく増加する番号が付き、`reset` を知らないサーバーは見分けて記憶されます。既定値、確認の回数、制限時間は `docs/robot_command_contract.json` から読み込みます。ローカルの擬似サーバーでテスト済みで、ロボットは関与しません。
 
@@ -249,7 +250,7 @@ HYDRA-UMC-IOS-CONTROL/
 
 ## 🗺️ ロードマップと既知の制限
 
-CI には iPhone や iPad 向けのビルドがありません。`flutter build ios` には Mac 上の Xcode が必要なため、アプリは Windows でのみ実行・テストされています。Bonjour による探索には通常のビルドにはない権限が必要なので、実機の iPhone ではサブネットスキャンがサーバーを見つけます。端末上の音声認識はまだなく（音声アシスタントは入力したテキストを受け付けます）、TLS 設定も Bluetooth もありません。
+CI には iPhone や iPad 向けのビルドがありません。`flutter build ios` には Mac 上の Xcode が必要なため、アプリは Windows でのみ実行・テストされています。Bonjour による探索には通常のビルドにはない権限が必要なので、実機の iPhone ではサブネットスキャンがサーバーを見つけます。Swift 部分（音声入力、ローカル通知、Live Activity、Apple Watch との連携）は書かれていますが、Xcode でコンパイルされたことも、iPhone や Watch で動作したこともありません。Live Activity と Watch アプリは Xcode のターゲットを待っています。
 
 ## 🌍 言語
 
@@ -277,7 +278,7 @@ CI には iPhone や iPad 向けのビルドがありません。`flutter build 
 - **[HYDRA-UMC-BRIDGE-UAV](https://github.com/JuanenRac/HYDRA-UMC-BRIDGE-UAV)** — MAVLink コマンド送信機能を持つ、カメラ搭載 UAV の調整境界(エミュレーターに対してのみテスト済み)。
 
 **直接関連**
-- **[HYDRA-UMC-WATCH](https://github.com/JuanenRac/HYDRA-UMC-WATCH)** — 触覚アラートのパターンとペアリング済みスマートフォンへの音声リレーを備えた WearOS コンパニオンアプリ(物理的なウォッチではまだ実行していない)。HYDRA-UMC-ANDROID-CONTROL の手首用コンパニオン（WearOS のみ。この iOS アプリにはまだ対応する Apple Watch 版がない）。
+- **[HYDRA-UMC-WATCH](https://github.com/JuanenRac/HYDRA-UMC-WATCH)** — 触覚アラートのパターンとペアリング済みスマートフォンへの音声リレーを備えた WearOS コンパニオンアプリ(物理的なウォッチではまだ実行していない)。HYDRA-UMC-ANDROID-CONTROL の手首用コンパニオン（WearOS のみ。この iOS アプリの Apple Watch 版は書かれていますが、まだビルドされていません）。
 - **[HYDRA-UMC-HIL-BRIDGE](https://github.com/JuanenRac/HYDRA-UMC-HIL-BRIDGE)** — シミュレーションと実機の間にソフトウェアの衝突インターロックを備えたハードウェア・イン・ザ・ループのルーター(実機なしでテスト済み)。本アプリからデジタルツインをハードウェア・イン・ザ・ループでリモート制御できるブリッジ。
 
 **エコシステムの他のプロジェクト**

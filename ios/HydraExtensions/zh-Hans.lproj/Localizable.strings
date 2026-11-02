@@ -1,0 +1,15 @@
+/* Texts of the Live Activity and of the Apple Watch app, in the language of the device. */
+"status.running" = "运行中";
+"status.paused" = "已暂停";
+"status.finished" = "已完成";
+"status.stopped" = "已停止";
+"status.offline" = "离线";
+"status.safeMode" = "安全模式";
+"status.idle" = "空闲";
+"step.of" = "第 %1$d 步，共 %2$d 步";
+"stop.button" = "STOP";
+"watch.waiting" = "正在等待手机";
+"watch.noJob" = "没有正在运行的任务";
+"watch.stop.sent" = "已请求 STOP";
+"watch.stop.refused" = "手机未接受 STOP";
+"watch.stop.unreachable" = "无法连接手机。STOP 未发送。";

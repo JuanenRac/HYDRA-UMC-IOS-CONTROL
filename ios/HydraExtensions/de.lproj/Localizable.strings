@@ -1,0 +1,15 @@
+/* Texts of the Live Activity and of the Apple Watch app, in the language of the device. */
+"status.running" = "Läuft";
+"status.paused" = "Pausiert";
+"status.finished" = "Beendet";
+"status.stopped" = "Gestoppt";
+"status.offline" = "Offline";
+"status.safeMode" = "Sicherer Modus";
+"status.idle" = "Bereit";
+"step.of" = "Schritt %1$d von %2$d";
+"stop.button" = "STOPP";
+"watch.waiting" = "Warte auf das Telefon";
+"watch.noJob" = "Kein Auftrag aktiv";
+"watch.stop.sent" = "STOPP angefordert";
+"watch.stop.refused" = "Das Telefon hat den STOPP nicht angenommen";
+"watch.stop.unreachable" = "Telefon nicht erreichbar. STOPP wurde nicht gesendet.";

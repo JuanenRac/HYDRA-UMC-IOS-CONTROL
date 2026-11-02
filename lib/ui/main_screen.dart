@@ -4,11 +4,14 @@
 // GPL-3.0-or-later - see LICENSE
 // =============================================================================
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../l10n/app_localizations.dart';
 import '../state/hydra_error.dart';
+import '../util/job_alerts.dart';
 import '../state/robot_view_model.dart';
 import 'camera_screen.dart';
 import 'control_screen.dart';
@@ -30,6 +33,7 @@ class _MainScreenState extends State<MainScreen> {
   int _index = 0;
   RobotViewModel? _vm;
   HydraError? _lastShownError;
+  StreamSubscription<AlertEvent>? _alertSub;
 
   // The camera and the 3D viewer know whether their tab is the one shown:
   // all tabs stay alive side by side (IndexedStack), and a picture stream
@@ -49,13 +53,29 @@ class _MainScreenState extends State<MainScreen> {
     final vm = context.read<RobotViewModel>();
     if (!identical(_vm, vm)) {
       _vm?.removeListener(_onVmChanged);
+      _alertSub?.cancel();
       _vm = vm;
       _vm!.addListener(_onVmChanged);
+      _alertSub = vm.surfaces.alerts.listen(_showAlert);
     }
+  }
+
+  // A local notification is a sentence in the language of the app; the detector only says what happened.
+  void _showAlert(AlertEvent event) {
+    if (!mounted) return;
+    final l10n = AppLocalizations.of(context)!;
+    final (title, body) = switch (event.kind) {
+      AlertKind.jobFinished => (event.robotName ?? '', l10n.alertJobFinished),
+      AlertKind.robotOffline => (event.robotName ?? '', l10n.alertRobotOffline),
+      AlertKind.robotSafeMode => (event.robotName ?? '', l10n.alertRobotSafeMode),
+      AlertKind.connectionLost => (l10n.alertConnectionLostTitle, l10n.alertConnectionLost),
+    };
+    unawaited(_vm?.surfaces.showNotification(id: event.key, title: title, body: body));
   }
 
   @override
   void dispose() {
+    _alertSub?.cancel();
     _vm?.removeListener(_onVmChanged);
     super.dispose();
   }

@@ -1,0 +1,45 @@
+{
+  "contract": "ios-features",
+  "note": "Settings of the features HYDRA-UMC-IOS-CONTROL adds on top of robot_command_contract.json: the ecosystem tab, the notifications of a job, the Live Activity, the dictation, the connection diagnostics and the Apple Watch companion. Every option that reaches out of the app (a notification, a Live Activity, the watch, speech recognition) starts off. tools/gen_command_contract.py writes lib/models/ios_feature_contract.dart from this file and the validation fails when they differ. PENDING: move these sections into robot_command_contract.json (identical in HYDRA-UMC-ANDROID-CONTROL) when that app takes them.",
+  "ecosystem": {
+    "note": "GET /api/ecosystem/status is read on demand; this is the shortest gap between two reads.",
+    "refreshMinIntervalMs": 3000
+  },
+  "jobAlerts": {
+    "note": "Local notifications of the phone for a finished job, a robot that went offline or into safe mode and a lost connection, rationed so a burst never floods the lock screen.",
+    "enabledByDefault": false,
+    "dedupeWindowMs": 30000,
+    "minGapMs": 2000,
+    "maxPerMinute": 6,
+    "connectionLostAfterMs": 10000
+  },
+  "liveActivity": {
+    "note": "Progress of the running trajectory on the lock screen and in the Dynamic Island. The app sends a change at most once per minUpdateGapMs; a state older than staleAfterSeconds is shown as stale by the system and the activity ends endAfterFinishedSeconds after the job finished.",
+    "enabledByDefault": false,
+    "minUpdateGapMs": 2000,
+    "staleAfterSeconds": 120,
+    "endAfterFinishedSeconds": 300,
+    "nameMax": 32
+  },
+  "voice": {
+    "note": "Dictation into the text box of the assistant. The text is never sent by itself and never starts a movement: the person reads it and presses send, and the server asks for the confirmation of any order.",
+    "enabledByDefault": false,
+    "onDeviceOnly": true,
+    "listenTimeoutMs": 15000,
+    "maxTranscriptChars": 280
+  },
+  "diagnostics": {
+    "note": "Latency probes of GET /api/hydra-info for the connection diagnostics and the lines of the exported report.",
+    "probeCount": 3,
+    "probeGapMs": 200,
+    "probeTimeoutMs": 1500,
+    "reportMaxLines": 100
+  },
+  "watchCompanion": {
+    "note": "The Apple Watch app shows the state the phone sends and can ask the phone for the global stop; the phone sends the stop through its own session. PENDING in HYDRA-UMC-WATCH and HYDRA-UMC-SERVER: nothing is read from them.",
+    "enabledByDefault": false,
+    "statusMinGapMs": 1000,
+    "stopMaxAgeMs": 10000,
+    "nameMax": 32
+  }
+}

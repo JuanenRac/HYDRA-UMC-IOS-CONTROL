@@ -20,9 +20,29 @@ import 'package:provider/provider.dart';
 
 import '../l10n/app_localizations.dart';
 import '../state/robot_view_model.dart';
+import 'ecosystem_tab.dart';
 
+/// Two tabs, like the Android app: the log of the connection and the ecosystem the server reports.
 class TelemetryScreen extends StatelessWidget {
   const TelemetryScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return DefaultTabController(
+      length: 2,
+      child: Column(
+        children: [
+          TabBar(tabs: [Tab(text: l10n.telemetryTabLogs), Tab(text: l10n.ecosystemTab)]),
+          const Expanded(child: TabBarView(children: [_LogsTab(), EcosystemTab()])),
+        ],
+      ),
+    );
+  }
+}
+
+class _LogsTab extends StatelessWidget {
+  const _LogsTab();
 
   @override
   Widget build(BuildContext context) {

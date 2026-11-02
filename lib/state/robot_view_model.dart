@@ -22,12 +22,15 @@ import 'dart:ui';
 import 'package:flutter/foundation.dart';
 
 import '../kinematics/parol6_kinematics.dart';
+import '../app_version.dart';
 import '../l10n/language_prefs.dart';
 import '../models/access.dart';
 import '../models/assistant_reply.dart';
 import '../models/connection_history.dart';
+import '../models/ecosystem.dart';
 import '../models/contract_v2.dart';
 import '../models/hydra_state.dart';
+import '../models/ios_feature_contract.dart';
 import '../models/robot_command_contract.dart';
 import '../models/server_info.dart';
 import '../models/server_security.dart';
@@ -42,10 +45,15 @@ import '../network/shortcut_bridge.dart';
 import '../network/biometric_helper.dart';
 import '../network/hydra_api_client.dart';
 import '../network/hydra_websocket.dart';
+import '../network/native_bridges.dart';
 import '../network/client_prefs.dart';
 import '../network/state_cache.dart';
 import '../network/tls_settings.dart';
+import '../util/connection_diagnostics.dart';
 import '../util/home_reset.dart';
+import '../util/job_alerts.dart';
+import '../util/link_health.dart';
+import 'external_surfaces.dart';
 import 'hydra_error.dart';
 import 'robot_command_repository.dart';
 
@@ -77,14 +85,29 @@ class RobotViewModel extends ChangeNotifier {
   // injectable so login / _attemptTokenRefresh / logout get real
   // test coverage against a fake AuthPrefs backed by a fake SecureTokenBackend,
   // the same pattern HYDRA-UMC-DSI's own RobotViewModel already uses.
-  RobotViewModel({AuthPrefs? authPrefs, BleScanner? bleScanner, BleGattConnector? bleConnector, PushBridge? pushBridge, ShortcutBridge? shortcutBridge})
-      : _authPrefs = authPrefs ?? AuthPrefs(),
+  RobotViewModel({
+    AuthPrefs? authPrefs,
+    BleScanner? bleScanner,
+    BleGattConnector? bleConnector,
+    PushBridge? pushBridge,
+    ShortcutBridge? shortcutBridge,
+    AlertsBridge? alertsBridge,
+    LiveActivityBridge? liveActivityBridge,
+    WatchBridge? watchBridge,
+    SpeechBridge? speechBridge,
+  })  : _authPrefs = authPrefs ?? AuthPrefs(),
+        surfaces = ExternalSurfaces(alerts: alertsBridge, liveActivity: liveActivityBridge, watch: watchBridge),
+        _speech = speechBridge ?? MethodChannelSpeechBridge(),
         _push = pushBridge ?? MethodChannelPushBridge(),
         _shortcuts = shortcutBridge ?? MethodChannelShortcutBridge(),
         _bleScanner = bleScanner ?? FbpBleScanner(),
         _bleConnector = bleConnector ?? const FbpBleGattConnector();
 
   final PushBridge _push;
+  final SpeechBridge _speech;
+
+  /// The notifications of a job, the Live Activity and the Apple Watch (see state/external_surfaces.dart).
+  final ExternalSurfaces surfaces;
   final ShortcutBridge _shortcuts;
   final BleScanner _bleScanner;
   final BleGattConnector _bleConnector;
@@ -156,6 +179,7 @@ class RobotViewModel extends ChangeNotifier {
     if (_disposed) return;
     _scheduleCacheSave();
     super.notifyListeners();
+    _publishSurfaces();
   }
 
   // Per-command-name debounce for _sendAtomicCommand()'s own network send -
@@ -298,6 +322,12 @@ class RobotViewModel extends ChangeNotifier {
     blockCommandsOnSavedData = await _clientPrefs.loadBlockCommandsOnSavedData();
     confirmPlay = await _clientPrefs.loadConfirmPlay();
     homeResetEnabled = await _clientPrefs.loadHomeReset(RobotCommandContract.homeResetEnabledByDefault);
+    surfaces.restoreJobAlerts(await _clientPrefs.loadJobAlerts(JobAlertsContract.enabledByDefault));
+    surfaces.restoreLiveActivity(await _clientPrefs.loadLiveActivity(LiveActivityContract.enabledByDefault));
+    surfaces.restoreWatch(await _clientPrefs.loadWatch(WatchCompanionContract.enabledByDefault));
+    surfaces.listenForWatchStop(() => unawaited(stopAll()));
+    dictationEnabled = await _clientPrefs.loadDictation(VoiceContract.enabledByDefault);
+    dictationOnline = await _clientPrefs.loadDictationOnline();
     pushNotifications = await _clientPrefs.loadPushNotifications();
     // The controller id of this installation: made once, kept, and adopted here.
     conditionalMode = ConditionalMode.fromKey(await _clientPrefs.loadConditionalMode());
@@ -471,6 +501,157 @@ class RobotViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ---- Outside the app: notifications of a job, Live Activity, Apple Watch ----
+  // Each one is off until the person turns it on (see state/external_surfaces.dart and docs/ios_feature_contract.json).
+
+  /// Tells the surfaces outside the app what the state looks like now. Never raises: they are extras.
+  void _publishSurfaces() {
+    if (_disposed || !isLoggedIn) return;
+    if (!surfaces.jobAlertsEnabled && !surfaces.liveActivityEnabled && !surfaces.watchEnabled) return;
+    final robotsNow = [for (final r in robots) RobotSnapshot.of(r)];
+    unawaited(surfaces.onState(robotsNow, connected: connectionStatus == 'connected').catchError((Object _) {}));
+  }
+
+  bool get jobAlertsEnabled => surfaces.jobAlertsEnabled;
+  bool get liveActivityEnabled => surfaces.liveActivityEnabled;
+  bool get watchEnabled => surfaces.watchEnabled;
+
+  /// Turns the local notifications on (asks the system for permission; they stay off when it is refused) or off.
+  /// True when they are on afterwards.
+  Future<bool> setJobAlerts(bool value) async {
+    final on = await surfaces.setJobAlerts(value);
+    await _clientPrefs.saveJobAlerts(on);
+    notifyListeners();
+    return on;
+  }
+
+  Future<void> setLiveActivity(bool value) async {
+    await surfaces.setLiveActivity(value);
+    await _clientPrefs.saveLiveActivity(value);
+    notifyListeners();
+  }
+
+  Future<void> setWatch(bool value) async {
+    surfaces.setWatch(value);
+    await _clientPrefs.saveWatch(value);
+    notifyListeners();
+  }
+
+  // ---- Dictation for the assistant ----
+  // Speech recognition fills the text box; the person reads it and sends it. It is never sent by itself.
+
+  /// Whether the dictation button is shown in the assistant; off until the person turns it on.
+  bool dictationEnabled = VoiceContract.enabledByDefault;
+
+  /// Whether dictation may use the online recognition of Apple when the language has none on the device. Off by default.
+  bool dictationOnline = false;
+
+  Future<void> setDictation(bool value) async {
+    dictationEnabled = value;
+    await _clientPrefs.saveDictation(value);
+    notifyListeners();
+  }
+
+  Future<void> setDictationOnline(bool value) async {
+    dictationOnline = value;
+    await _clientPrefs.saveDictationOnline(value);
+    notifyListeners();
+  }
+
+  /// Listens once. The audio stays on the phone unless the person allowed the online recognition and the contract does
+  /// not force the device alone.
+  Future<SpeechOutcome> dictate() {
+    final tag = languageOverride?.toLanguageTag() ?? PlatformDispatcher.instance.locale.toLanguageTag();
+    return _speech.listen(
+      languageTag: tag,
+      onDeviceOnly: VoiceContract.onDeviceOnly && !dictationOnline,
+      timeoutMs: VoiceContract.listenTimeoutMs,
+    );
+  }
+
+  Future<void> cancelDictation() => _speech.cancel();
+
+  // ---- Ecosystem tab ----
+
+  EcosystemStatus ecosystem = EcosystemStatus.unavailable;
+  bool ecosystemLoading = false;
+  bool ecosystemLoaded = false;
+  DateTime? _ecosystemAt;
+
+  /// Reads GET /api/ecosystem/status. Called on entering the tab and by its refresh button, not polled; two reads are
+  /// never closer than the minimum gap of the contract.
+  Future<void> refreshEcosystem({DateTime? now}) async {
+    if (apiClient == null || ecosystemLoading) return;
+    final at = now ?? DateTime.now();
+    final last = _ecosystemAt;
+    if (last != null && at.difference(last).inMilliseconds < EcosystemContract.refreshMinIntervalMs) return;
+    _ecosystemAt = at;
+    ecosystemLoading = true;
+    notifyListeners();
+    try {
+      ecosystem = await _authed((c) => c.getEcosystemStatus());
+    } on HydraApiException catch (e) {
+      ecosystem = EcosystemStatus.unavailable;
+      if (e.isSessionProblem) _forceLogout();
+    } catch (_) {
+      ecosystem = EcosystemStatus.unavailable;
+    } finally {
+      ecosystemLoaded = true;
+      ecosystemLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // ---- Connection diagnostics ----
+
+  /// The round-trip times towards the server, kept for the level of the link.
+  final LinkHealth link = LinkHealth();
+
+  /// Sends the probes of the contract (a few small reads of GET /api/hydra-info), feeds [link] with the answers and
+  /// returns what the screen shows. Null before a server is chosen.
+  Future<ConnectionDiagnostics?> runDiagnostics() async {
+    final client = apiClient;
+    final server = activeServer;
+    if (client == null || server == null) return null;
+    final latencies = <int?>[];
+    int? api;
+    String? app;
+    for (var i = 0; i < DiagnosticsContract.probeCount; i++) {
+      final probe = await client.probeInfo(timeout: const Duration(milliseconds: DiagnosticsContract.probeTimeoutMs));
+      latencies.add(probe.rttMs);
+      if (probe.rttMs != null) {
+        link.record(probe.rttMs!);
+        api = probe.remoteApiVersion ?? api;
+        app = probe.serverAppVersion ?? app;
+      } else {
+        link.recordFailure();
+      }
+      if (i + 1 < DiagnosticsContract.probeCount) {
+        await Future<void>.delayed(const Duration(milliseconds: DiagnosticsContract.probeGapMs));
+      }
+    }
+    final scheme = client.usesTls ? 'https' : 'http';
+    return ConnectionDiagnostics(
+      scheme: scheme,
+      host: server.host,
+      port: server.port,
+      trust: ConnectionDiagnostics.trustFor(
+        scheme: scheme,
+        pinnedFingerprint: tlsSettings.pinnedFingerprint,
+        customCaPem: tlsSettings.customCaPem,
+      ),
+      pinnedFingerprint: tlsSettings.pinnedFingerprint,
+      remoteApiVersion: api,
+      serverAppVersion: app,
+      clientVersion: kAppVersion,
+      latenciesMs: latencies,
+      level: link.level,
+      websocket: connectionStatus,
+      role: jwtRole(client.authToken),
+      showingSavedData: isShowingCachedState,
+    );
+  }
+
   /// Chooses whether HOME/RESET is offered, and keeps the choice. Switching it off also drops a confirmation under way.
   Future<void> setHomeResetEnabled(bool value) async {
     homeResetEnabled = value;
@@ -591,6 +772,10 @@ class RobotViewModel extends ChangeNotifier {
     safetyByRobot.clear();
     jogArmedUntil.clear();
     isLoggedIn = false;
+    unawaited(surfaces.onSessionEnd());
+    ecosystem = EcosystemStatus.unavailable;
+    ecosystemLoaded = false;
+    link.reset();
     _ws?.disconnect();
     _bleClient?.disconnect();
     if (isBleScanning) unawaited(_bleScanner.stop());
@@ -2087,6 +2272,7 @@ class RobotViewModel extends ChangeNotifier {
     if (isBleScanning) unawaited(_bleScanner.stop());
     _metricsTimer?.cancel();
     _stateCacheTimer?.cancel();
+    surfaces.dispose();
     commands.cancelAllPending();
     metricsListenable.dispose();
     apiClient?.close();
