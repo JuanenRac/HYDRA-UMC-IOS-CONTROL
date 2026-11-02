@@ -63,6 +63,7 @@ import '../util/link_health.dart';
 import 'external_surfaces.dart';
 import 'hydra_error.dart';
 import 'robot_command_repository.dart';
+import 'session_manager.dart';
 
 class SystemMetrics {
   final int cpuLoad;
@@ -224,7 +225,7 @@ class RobotViewModel extends ChangeNotifier {
   // One session renewal at a time, however many requests and socket events
   // notice the expired token together: the refresh token is single-use, so a
   // second parallel refresh would be refused and end a session that was fine.
-  Future<bool>? _renewalInFlight;
+  late final SessionManager _session = SessionManager(client: () => apiClient, renew: _attemptTokenRefresh);
   bool _handlingWsAuthFailure = false;
 
   // The sign-out in progress (revoking the refresh token, erasing the stored
@@ -1315,31 +1316,11 @@ class RobotViewModel extends ChangeNotifier {
     }
   }
 
-  // The single entry to renewing the session: callers that arrive while a
-  // renewal is running share its result instead of starting their own.
-  Future<bool> _renewSession() {
-    final inFlight = _renewalInFlight;
-    if (inFlight != null) return inFlight;
-    final renewal = _attemptTokenRefresh().whenComplete(() => _renewalInFlight = null);
-    _renewalInFlight = renewal;
-    return renewal;
-  }
+  // Renewal and the repeat of a request after an expired token live in the
+  // SessionManager; these two names stay as the view model's entry to it.
+  Future<bool> _renewSession() => _session.renewSession();
 
-  // Runs [call] with the session's token. An expired or invalid token (a 403
-  // TOKEN_EXPIRED / TOKEN_INVALID, or a 401) renews the session once and
-  // repeats the call; any other answer, or a failed renewal, reaches the
-  // caller as it came.
-  Future<T> _authed<T>(Future<T> Function(HydraApiClient client) call) async {
-    final client = apiClient;
-    if (client == null) throw HydraApiException('Not connected');
-    try {
-      return await call(client);
-    } on HydraApiException catch (e) {
-      if (!e.isSessionProblem) rethrow;
-      if (!await _renewSession()) rethrow;
-      return await call(apiClient ?? client);
-    }
-  }
+  Future<T> _authed<T>(Future<T> Function(HydraApiClient client) call) => _session.authed(call);
 
   // The server closed (or announced it would close) the socket because the
   // token is dead: the error frame and the 1008 close that follows it about

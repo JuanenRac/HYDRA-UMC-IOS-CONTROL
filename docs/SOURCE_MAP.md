@@ -42,6 +42,7 @@ Every file of the repository with a line on what it does: the annotated tree tha
 │   │   ├── external_surfaces.dart   # What is shown outside the app, each behind its own switch: notifications of a job, Live Activity, Apple Watch
 │   │   ├── dead_man_jog_controller.dart # What the screen sees of the continuous jog and the link health: the switches, the held controls, the probe of the link
 │   │   ├── robot_command_repository.dart # Every robot write: revisions, retry of a stop, table fallback, jogs on the wire, debounce, timings
+│   │   ├── session_manager.dart # One renewal at a time of an expired session, and one repeat of the request
 │   │   └── hydra_error.dart         # Typed error surface for RobotViewModel (no BuildContext of its own)
 │   ├── l10n/                        # Real generated localizations (8 languages) - see l10n.yaml at repo root
 │   │   ├── app_*.arb                    # app_en.arb, app_es.arb, app_it.arb, app_fr.arb, app_de.arb, app_ja.arb, app_zh.arb, app_pt.arb: the phrases of each language (the generated classes below come from them)
