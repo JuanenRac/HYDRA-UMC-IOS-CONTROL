@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+## [0.3.1] - Bench test script: docs/BENCHTESTS.md lists the checks that need an iPhone, an iPad and an Apple Watch (lifecycle, 3D view, claim renewal, jog stop), all marked not executed. (and 19 more changes)
+
 - **Bench test script:** `docs/BENCH_TESTS.md` lists the checks that need an iPhone, an iPad and an Apple Watch (lifecycle, 3D view, claim renewal, jog stop), all marked not executed.
 
 - **The renewal of an expired session lives in its own class:** `lib/state/session_manager.dart` renews the session once however many requests and socket events notice the expired token together, repeats the request once, and leaves every other answer (a permission refusal, a server error, a failed renewal) as it came; the view model only says how a renewal is done. Same behaviour as before, now tested without the view model.
