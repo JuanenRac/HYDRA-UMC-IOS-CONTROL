@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **The code the two Flutter apps copied by hand comes from one package:** the SHA-256 of the audit chain, the result of the global STOP and the rules of the PLAY confirmation are read from `hydra_umc_app_common` (in the SDK, pinned to a commit) through the same file paths as before; a workflow now analyzes and tests the app on every push.
+
 - **The 3D view stops in the background:** when the app is backgrounded the embedded viewer is replaced by a blank page (its socket and render loop stop) and it loads again on return, as the camera image already did. A momentary `inactive` state (a system alert, the app switcher) keeps it.
 
 - **An expired session is renewed under the http client too:** `lib/network/renewing_client.dart` wraps the client of the server API; a request that carried a bearer token and was answered with a 401 or a 403 TOKEN_EXPIRED / TOKEN_INVALID asks the session for a new token (the same single-flight renewal) and is sent once more with it; login and refresh (no bearer token), role refusals and a failed renewal reach the caller untouched. 7 new tests.
