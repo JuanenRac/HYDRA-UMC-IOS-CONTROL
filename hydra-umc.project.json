@@ -19,5 +19,8 @@
   "native_version": {
     "file": "pubspec.yaml",
     "pattern": "^version:\\s*(\\d+)\\.(\\d+)\\.(\\d+)\\+\\d+"
-  }
+  },
+  "depends_on": [
+    "HYDRA-UMC-SERVER"
+  ]
 }
