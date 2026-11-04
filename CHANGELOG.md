@@ -6,6 +6,7 @@ All notable changes to this project are documented here.
 
 - **The 3D view stops in the background:** when the app is backgrounded the embedded viewer is replaced by a blank page (its socket and render loop stop) and it loads again on return, as the camera image already did. A momentary `inactive` state (a system alert, the app switcher) keeps it.
 
+- **An expired session is renewed under the http client too:** `lib/network/renewing_client.dart` wraps the client of the server API; a request that carried a bearer token and was answered with a 401 or a 403 TOKEN_EXPIRED / TOKEN_INVALID asks the session for a new token (the same single-flight renewal) and is sent once more with it; login and refresh (no bearer token), role refusals and a failed renewal reach the caller untouched. 7 new tests.
 - **The server routes the app calls are fixed and checked:** `tools/check_rest_routes.py` lists the `/api/...` routes found in the sources, compares them with `docs/rest_routes.json` (a route can only be added or dropped on purpose) and, when the shared contracts are next to the repository, fails if a route is not in the server contract. The CI validator runs it.
 
 ## [0.3.1] - Bench test script: docs/BENCHTESTS.md lists the checks that need an iPhone, an iPad and an Apple Watch (lifecycle, 3D view, claim renewal, jog stop), all marked not executed. (and 19 more changes)

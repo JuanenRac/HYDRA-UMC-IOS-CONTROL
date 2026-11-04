@@ -44,6 +44,7 @@ import '../models/ecosystem.dart';
 import '../models/robot_command_contract.dart';
 import '../util/connection_diagnostics.dart' show InfoProbe;
 import 'command_sequence.dart';
+import 'renewing_client.dart';
 import 'tls_settings.dart';
 
 class HydraApiException implements Exception {
@@ -130,7 +131,11 @@ class HydraApiClient {
   String baseUrl;
   bool get usesTls => baseUrl.startsWith('https://');
   String? authToken;
-  final http.Client _client;
+  late final http.Client _client;
+
+  /// Asked for a new bearer token when a request is answered with an expired
+  /// session; set by the owner of the session (null = no renewal here).
+  TokenRenewer? tokenRenewer;
 
   /// True once this server was seen answering over TLS (or was saved so).
   bool _tlsSeen;
@@ -148,7 +153,11 @@ class HydraApiClient {
   HydraApiClient(String host, int port, {http.Client? client, bool useTls = false})
       : baseUrl = '${useTls || !TlsPolicy.isLoopback(host) ? 'https' : 'http'}://$host:$port',
         _tlsSeen = useTls,
-        _client = client ?? createClient();
+        _inner = client ?? createClient() {
+    _client = RenewingClient(_inner, () => tokenRenewer);
+  }
+
+  final http.Client _inner;
 
   Map<String, String> get _authHeaders =>
       authToken != null ? {'Authorization': 'Bearer $authToken'} : const {};

@@ -380,6 +380,7 @@ class RobotViewModel extends ChangeNotifier {
       final useTls = await _authPrefs.loadUseTls();
       final client = HydraApiClient(host, port, useTls: useTls);
       client.authToken = token;
+      client.tokenRenewer = () => _renewedTokenOf(client);
       apiClient = client;
       activeServer = ServerInfo(host: host, port: port, useTls: useTls);
       isLoggedIn = token != null;
@@ -1173,6 +1174,7 @@ class RobotViewModel extends ChangeNotifier {
     // one on every re-login.
     apiClient?.close();
     final client = HydraApiClient(server.host, server.port);
+    client.tokenRenewer = () => _renewedTokenOf(client);
     apiClient = client;
     _logTelemetry('Logging in to ${server.host}:${server.port}...');
     try {
@@ -1319,6 +1321,15 @@ class RobotViewModel extends ChangeNotifier {
   // Renewal and the repeat of a request after an expired token live in the
   // SessionManager; these two names stay as the view model's entry to it.
   Future<bool> _renewSession() => _session.renewSession();
+
+  // The interceptor over the http client (network/renewing_client.dart) asks
+  // for a new token here when a request is answered with an expired session;
+  // the renewal is the same single-flight one, and a client that is no longer
+  // the live one is not renewed.
+  Future<String?> _renewedTokenOf(HydraApiClient client) async {
+    if (!identical(client, apiClient)) return null;
+    return await _renewSession() ? client.authToken : null;
+  }
 
   Future<T> _authed<T>(Future<T> Function(HydraApiClient client) call) => _session.authed(call);
 
