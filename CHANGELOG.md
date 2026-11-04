@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **The 3D view stops in the background:** when the app is backgrounded the embedded viewer is replaced by a blank page (its socket and render loop stop) and it loads again on return, as the camera image already did. A momentary `inactive` state (a system alert, the app switcher) keeps it.
+
 - **The server routes the app calls are fixed and checked:** `tools/check_rest_routes.py` lists the `/api/...` routes found in the sources, compares them with `docs/rest_routes.json` (a route can only be added or dropped on purpose) and, when the shared contracts are next to the repository, fails if a route is not in the server contract. The CI validator runs it.
 
 ## [0.3.1] - Bench test script: docs/BENCHTESTS.md lists the checks that need an iPhone, an iPad and an Apple Watch (lifecycle, 3D view, claim renewal, jog stop), all marked not executed. (and 19 more changes)

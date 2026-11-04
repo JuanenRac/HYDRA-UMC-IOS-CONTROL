@@ -26,6 +26,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 
 import '../l10n/app_localizations.dart';
 import '../state/robot_view_model.dart';
+import '../util/viewer_lifecycle.dart';
 import '../util/viewer_url.dart';
 
 class ThreeDScreen extends StatefulWidget {
@@ -38,9 +39,35 @@ class ThreeDScreen extends StatefulWidget {
   State<ThreeDScreen> createState() => _ThreeDScreenState();
 }
 
-class _ThreeDScreenState extends State<ThreeDScreen> {
+class _ThreeDScreenState extends State<ThreeDScreen> with WidgetsBindingObserver {
   WebViewController? _controller;
   String? _loadedUrl;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  /// A backgrounded app must not leave the viewer (its socket and render loop) running: a
+  /// blank page replaces it and build() loads the viewer again on return.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (ViewerLifecycle.mustStop(state)) {
+      if (_loadedUrl != null) {
+        _controller?.loadRequest(Uri.parse('about:blank'));
+        _loadedUrl = null;
+      }
+    } else if (state == AppLifecycleState.resumed && _controller != null && mounted) {
+      setState(() {});
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
