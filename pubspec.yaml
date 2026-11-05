@@ -32,7 +32,7 @@ dependencies:
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^1.0.8
+  cupertino_icons: ^2.0.0
   http: ^1.6.0
   # Code both Flutter apps used to copy by hand (SDK package, pinned to a commit).
   hydra_umc_app_common:
@@ -41,7 +41,7 @@ dependencies:
       ref: ee573ff002367bdef4f1d2415e829cab76ce995d
       path: clients/dart_app_common
   web_socket_channel: ^3.0.3
-  shared_preferences: ^2.5.5
+  shared_preferences: ^2.5.6
   webview_flutter: ^4.14.1
   provider: ^6.1.5+1
   multicast_dns: ^0.3.3+1
@@ -54,8 +54,8 @@ dependencies:
   # vault for the session token - Keychain on iOS, DPAPI-backed encrypted
   # storage on Windows. See network/auth_prefs.dart for the real,
   # no-regression fallback this app uses if a secure call ever fails.
-  flutter_secure_storage: ^11.0.0
-  flutter_blue_plus: ">=1.35.0 <2.0.0"
+  flutter_secure_storage: ^11.2.0
+  flutter_blue_plus: ^2.3.14
 
 dev_dependencies:
   flutter_test:
