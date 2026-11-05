@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **The build test of the repository compiles only on CI or when allowed:** for the stacks that compile (`rust`, `go`, `android`, `flutter`, `firmware-c`), `tools/build_test.py` prints `BUILD_TEST=SKIPPED` with exit status 2 on a plain PC, never a pass; `ALLOW_LOCAL_BUILD=1` allows it and a CI runner always may. The `python` and `node` stacks are not locked.
+
 ## [0.3.2] - The models are tested with the answers the SDK generates from the server inventory: test/serveranswerstest.dart replays a minimal and a full body of the server-information, stop-all, ecosystem-status and sign-in routes and a... (and 4 more changes)
 
 - **The models are tested with the answers the SDK generates from the server inventory:** `test/server_answers_test.dart` replays a minimal and a full body of the server-information, stop-all, ecosystem-status and sign-in routes and a refusal of the sign-in against the app's models; the vendored `test/fixtures/server-answers.json` is kept identical to the SDK file by `tools/sync_sdk_answers.py --check`, which the CI validator runs.
