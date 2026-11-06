@@ -19,7 +19,7 @@ GPL-3.0-or-later - see LICENSE
   <img src="https://img.shields.io/badge/Framework-Flutter-02569B.svg" alt="Framework">
   <img src="https://img.shields.io/badge/Language-Dart-0175C2.svg" alt="Language">
   <img src="https://img.shields.io/badge/Platform-iOS-000000.svg" alt="Platform">
-  <img src="https://img.shields.io/badge/Tests-512%20passing-2ea44f.svg" alt="Tests">
+  <img src="https://img.shields.io/badge/Tests-535%20passing-2ea44f.svg" alt="Tests">
   <img src="https://img.shields.io/badge/Version-0.3.3-0f6cbd.svg" alt="Version">
   <img src="https://img.shields.io/badge/Maturity-functional-0F6CBD.svg" alt="Maturity">
 </p>
@@ -38,7 +38,7 @@ Eine plattformübergreifende Flutter-App (Dart), die einen Roboter der [HYDRA-UM
 |---|---|
 | Version | `0.3.3` |
 | Reifegrad | Funktionsfähig |
-| Tests | 512 (`flutter test`) |
+| Tests | 535 (`flutter test`) |
 | Technik | Flutter 3.x / Dart |
 | Ziel | Ein iPhone oder iPad |
 | Auf echter Hardware | Noch nicht: für diese Version ist kein Lauf auf echter Hardware vermerkt |
@@ -54,7 +54,7 @@ Jede Zeile ist ein Teil dieses Repositorys, und die Ampel sagt, wie weit er heut
 | Bereich | Stand | Was das hier bedeutet |
 |---|---|---|
 | Software | 🟡 | Funktioniert für seinen Hauptzweck; die Ehrlichkeitsprüfung oben nennt, was noch fehlt |
-| Tests | 🟢 | 512 automatische Tests, bei jeder Änderung ausgeführt |
+| Tests | 🟢 | 535 automatische Tests, bei jeder Änderung ausgeführt |
 | Echte Hardware | 🔴 | Noch nicht: für diese Version ist kein Lauf auf echter Hardware vermerkt |
 | Schnittstelle und Protokolle | 🟡 | Die angebotenen Routen oder Nachrichten sind dokumentiert und mit einem Client getestet; noch nicht jeder Client hat sie benutzt |
 | Integration | 🟠 | Seine Nachrichten und Routen werden gegen die gemeinsamen Verträge des SDK geprüft; es lief noch nicht zusammen mit der echten Ausrüstung |
@@ -162,7 +162,7 @@ flutter build ios --no-codesign  # a real iOS build; only on a Mac with Xcode
 
 ## 🧪 Tests
 
-512 automatische Tests laufen mit `flutter test`. Sie brauchen weder Hardware noch etwas außerhalb dieses Rechners.
+535 automatische Tests laufen mit `flutter test`. Sie brauchen weder Hardware noch etwas außerhalb dieses Rechners.
 
 Die CI führt `HYDRA_UMC_CI=1 python tools/ci_validate.py` aus; das prüft das Manifest, die Dokumente, die acht READMEs und die Bilder.
 
