@@ -167,12 +167,14 @@ class HydraUmcControlApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => RobotViewModel()..init(purgeStaleKeychain: true),
-      child: Consumer<RobotViewModel>(
-        builder: (context, vm, _) => MaterialApp(
+      // Only the language the person chose rebuilds the whole app: a state or a socket message never does.
+      child: Selector<RobotViewModel, Locale?>(
+        selector: (_, vm) => vm.languageOverride,
+        builder: (context, languageOverride, _) => MaterialApp(
           title: 'HYDRA-UMC Control',
           scaffoldMessengerKey: _rootMessengerKey,
           navigatorKey: _rootNavigatorKey,
-          builder: (context, child) => PairingDialogHost(vm: vm, navigatorKey: _rootNavigatorKey, child: child ?? const SizedBox.shrink()),
+          builder: (context, child) => PairingDialogHost(vm: context.read<RobotViewModel>(), navigatorKey: _rootNavigatorKey, child: child ?? const SizedBox.shrink()),
           debugShowCheckedModeBanner: false,
           localizationsDelegates: const [
             AppLocalizations.delegate,
@@ -185,7 +187,7 @@ class HydraUmcControlApp extends StatelessWidget {
           // supportedLocales (falling back to English) - only set once the
           // user has made an explicit choice in ui/settings_screen.dart,
           // see state/robot_view_model.dart's own languageOverride.
-          locale: vm.languageOverride,
+          locale: languageOverride,
           theme: ThemeData(
             brightness: Brightness.dark,
             scaffoldBackgroundColor: const Color(0xFF07090C),
@@ -254,11 +256,12 @@ class _RootGateState extends State<_RootGate> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    final vm = context.watch<RobotViewModel>();
+    // Only the lock and the session decide this screen, not every change of the model.
+    final (needsUnlock, loggedIn) = context.select<RobotViewModel, (bool, bool)>((vm) => (vm.needsBiometricUnlock, vm.isLoggedIn));
     if (!_introDone) {
       return StartupScreen(onDone: () => setState(() => _introDone = true));
     }
-    if (vm.needsBiometricUnlock) return const BiometricGateScreen();
-    return vm.isLoggedIn ? const MainScreen() : const LoginScreen();
+    if (needsUnlock) return const BiometricGateScreen();
+    return loggedIn ? const MainScreen() : const LoginScreen();
   }
 }

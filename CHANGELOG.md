@@ -4,6 +4,10 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **The root of the app no longer redraws on every message of the model:** the application shell listens only to the language the person chose, and the gate between the unlock, sign-in and main screens only to the lock and the session.
+
+- **The reading of a pairing link comes from the shared package:** `util/pairing_link.dart` now re-exports `PairingLink`, `PairingOffer`, `PairingProblem` and `PairingResult` from the SDK package `hydra_umc_app_common` (pinned to a newer commit), the same code the DSI app uses; a test checks that the limits of the package are the ones of the generated command contract. Nothing changes for the user.
+
 ## [0.3.3] - A test signs in against the one stand-in server of the SDK: fakeserversessiontest.dart starts the vendored hydrafakeserver.py as a process (skipped without Python) and drives the real client through sign-in, a refused password... (and 2 more changes)
 
 - **A test signs in against the one stand-in server of the SDK:** `fake_server_session_test.dart` starts the vendored `hydra_fake_server.py` as a process (skipped without Python) and drives the real client through sign-in, a refused password and the global STOP; `tools/sync_sdk_answers.py` keeps the copy identical to the SDK.
