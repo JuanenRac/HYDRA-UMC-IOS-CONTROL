@@ -20,7 +20,7 @@ GPL-3.0-or-later - see LICENSE
   <img src="https://img.shields.io/badge/Language-Dart-0175C2.svg" alt="Language">
   <img src="https://img.shields.io/badge/Platform-iOS-000000.svg" alt="Platform">
   <img src="https://img.shields.io/badge/Tests-512%20passing-2ea44f.svg" alt="Tests">
-  <img src="https://img.shields.io/badge/Version-0.3.2-0f6cbd.svg" alt="Version">
+  <img src="https://img.shields.io/badge/Version-0.3.3-0f6cbd.svg" alt="Version">
   <img src="https://img.shields.io/badge/Maturity-functional-0F6CBD.svg" alt="Maturity">
 </p>
 
@@ -36,7 +36,7 @@ Un'app Flutter (Dart) multipiattaforma che controlla un robot sulla piattaforma 
 
 | | |
 |---|---|
-| Versione | `0.3.2` |
+| Versione | `0.3.3` |
 | Maturità | Funzionale |
 | Test | 512 (`flutter test`) |
 | Tecnologia | Flutter 3.x / Dart |
