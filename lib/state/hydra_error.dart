@@ -12,91 +12,18 @@
 // needs to show one - see ui/login_screen.dart and ui/main_screen.dart.
 // =============================================================================
 
+import 'package:hydra_umc_app_common/hydra_umc_app_common.dart' show HydraError, HydraErrorKind;
+
 import '../l10n/app_localizations.dart';
 import '../util/dead_man_jog.dart';
 import '../util/home_reset.dart';
 import '../util/pairing_link.dart';
 import '../util/work_files.dart';
 
-enum HydraErrorKind {
-  loginFailed,
-  loginError,
-  fetchFailed,
-  robotNotFound,
-  notConnected,
-  txError,
-  unknownCommand,
-  wsConnectionLost,
-  wsConnectFailed,
-  // The server closed the WebSocket upgrade with RFC 6455 code 1008
-  // (server.ts's own signal for a missing/invalid/expired token) - no
-  // server message frame ever arrives for this case (the connection is
-  // rejected before any data can flow), so it needs its own kind rather
-  // than reusing serverMessage below.
-  wsAuthRejected,
-  voiceAssistantFailed,
-  // Raw text relayed verbatim from the server's own {"error": "..."} WS
-  // frame (network/hydra_websocket.dart's _handleMessage()) - already
-  // resolved server-side, in whatever language the shared backend emits
-  // it in, so it is shown as-is rather than run through a template.
-  serverMessage,
-  // The server refused a command, and why: a robot reserved by another
-  // account (409), a command it does not know or a value it cannot take (400),
-  // a role without the permission (403), a 200 that carried warnings (nothing
-  // applied), and a STOP that never got an answer.
-  robotReserved,
-  permissionDenied,
-  commandRejected,
-  commandNotApplied,
-  stopNotConfirmed,
-  // Reservations and the jog (contract v2): the same account holds the robot
-  // from another controller, the reservation names a controller and the request
-  // named none, the jog is not armed, and a jog above the limit of the model
-  // that was never sent.
-  claimOtherController,
-  // A newer numbered motion command had already reached the robot: this one arrived out of order and was not applied.
-  staleSequence,
-  // The server refused to send the robot home (the pose is not the home pose of its model, or a joint would leave its range).
-  homeRejected,
-  // A jog whose target is outside the reach of the arm: nothing was sent.
-  jogOutOfReach,
-  claimControllerRequired,
-  jogNotArmed,
-  jogOverLimit,
-  // A command was held back because the screen shows saved data and the
-  // operator turned on the block for that case.
-  savedDataBlocked,
-  // A conditional write was refused (412): the robot changed since this app read it.
-  revisionChanged,
-  // No secure connection could be made (certificate not trusted, or the server
-  // does not speak TLS): the person is pointed to the security settings.
-  tlsFailed,
-  // Safe mode of a robot: it is disabled (every command but STOP is refused), the server option that allows enabling is
-  // off, or the account is not an administrator.
-  robotDisabled,
-  enableNotAllowed,
-  adminRequired,
-  // HOME/RESET was not sent, or was refused: the reason (a HomeResetBlock name) is in the `block` parameter.
-  homeResetBlocked,
-  // The continuous jog was not started (the reason, a DeadManBlock name, is in `block`), ended by itself (a DeadManEnd name in
-  // `reason`) or its stop was not confirmed.
-  deadManBlocked,
-  deadManEnded,
-  deadManStopNotConfirmed,
-  // A pairing link was read while the pairing switch is off, or it was not valid (a PairingProblem name in `problem`).
-  pairingOff,
-  pairingProblem,
-  // A Work could not be loaded: a rule refused it (a WorkBlock name in `block`), the server did not give it or it is not a valid file.
-  workBlocked,
-  workLoadFailed,
-  workInvalidFile,
-}
+/// The typed error (kind and raw parameters) is shared with the other app; the wording below is this app's own.
+export 'package:hydra_umc_app_common/hydra_umc_app_common.dart' show HydraError, HydraErrorKind;
 
-class HydraError {
-  final HydraErrorKind kind;
-  final Map<String, String> params;
-  const HydraError(this.kind, [this.params = const {}]);
-
+extension HydraErrorText on HydraError {
   String localize(AppLocalizations l10n) {
     switch (kind) {
       case HydraErrorKind.loginFailed:
@@ -177,6 +104,9 @@ class HydraError {
         return l10n.workLoadFailed;
       case HydraErrorKind.workInvalidFile:
         return l10n.workInvalidFile(params['file'] ?? '');
+      case HydraErrorKind.systemActionFailed:
+        // Only the DSI panel builds this kind; here it falls back to the server's own text.
+        return params['reason'] ?? '';
     }
   }
 }

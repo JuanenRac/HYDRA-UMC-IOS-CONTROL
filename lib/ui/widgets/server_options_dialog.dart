@@ -37,7 +37,7 @@ String protectionLoweringText(AppLocalizations l10n, ProtectionLowering lowering
 String optionSourceText(AppLocalizations l10n, OptionSource source) => switch (source) {
       OptionSource.env => l10n.serverOptionsSourceEnv,
       OptionSource.config => l10n.serverOptionsSourceConfig,
-      OptionSource.defaults => l10n.serverOptionsSourceDefault,
+      OptionSource.defaultValue => l10n.serverOptionsSourceDefault,
     };
 
 /// Opens the dialog; the caller shows it to an administrator only (the server refuses anyone else).

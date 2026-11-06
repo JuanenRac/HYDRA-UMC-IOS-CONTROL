@@ -12,7 +12,10 @@
 //     and VPN interfaces of the phone.
 // =============================================================================
 
+import 'package:hydra_umc_app_common/hydra_umc_app_common.dart' show ClientPrefsCore;
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'shared_preferences_store.dart';
 
 /// The names of the switches kept with [ClientPrefs.loadFlag].
 class ClientFlags {
@@ -26,13 +29,11 @@ class ClientFlags {
   static const String voiceConfirmRelay = 'voice_confirm_relay';
 }
 
-class ClientPrefs {
+class ClientPrefs extends ClientPrefsCore {
+  ClientPrefs() : super(SharedPreferencesPrefsStore());
+
   static const _keyBlockOnSavedData = 'hydra_block_commands_on_saved_data';
   static const _keySkipMobileVpn = 'hydra_scan_skip_mobile_vpn';
-  static const _keyControllerId = 'hydra_controller_id';
-  static const _keyConditionalMode = 'hydra_conditional_mode';
-  static const _keyConfirmPlay = 'hydra_confirm_play';
-  static const _keyHomeReset = 'hydra_home_reset_enabled';
   static const _keyPush = 'hydra_push_notifications';
   static const _keyJobAlerts = 'hydra_job_alerts';
   static const _keyLiveActivity = 'hydra_live_activity';
@@ -58,29 +59,6 @@ class ClientPrefs {
   Future<void> saveSkipMobileAndVpnNetworks(bool value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keySkipMobileVpn, value);
-  }
-
-  /// Whether HOME/RESET is switched on; [defaultValue] (off in the contract) before any choice.
-  Future<bool> loadHomeReset(bool defaultValue) async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(_keyHomeReset) ?? defaultValue;
-  }
-
-  Future<void> saveHomeReset(bool value) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_keyHomeReset, value);
-  }
-
-  /// Whether PLAY asks first (the robot, its points, the speed, who reserved it). On before any choice: a
-  /// safety question, so it is the person who turns it off.
-  Future<bool> loadConfirmPlay() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(_keyConfirmPlay) ?? true;
-  }
-
-  Future<void> saveConfirmPlay(bool value) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_keyConfirmPlay, value);
   }
 
   /// Whether this phone asks the server for push notifications. Off until the person turns it on: it needs their permission.
@@ -126,27 +104,4 @@ class ClientPrefs {
 
   Future<void> saveFlag(String name, bool value) async => (await SharedPreferences.getInstance()).setBool('hydra_flag_$name', value);
 
-  /// The conditional-writes mode chosen in this app (`off`, `standard`, `strict`); null before any choice.
-  Future<String?> loadConditionalMode() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_keyConditionalMode);
-  }
-
-  Future<void> saveConditionalMode(String mode) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_keyConditionalMode, mode);
-  }
-
-  /// The controller id kept for this installation, or null before the first one was saved.
-  Future<String?> loadControllerId() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_keyControllerId);
-  }
-
-  /// Keeps the controller id, so a reservation made from this device can still
-  /// be released after the app restarts.
-  Future<void> saveControllerId(String id) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_keyControllerId, id);
-  }
 }
