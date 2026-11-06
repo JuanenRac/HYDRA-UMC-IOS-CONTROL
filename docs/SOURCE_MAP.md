@@ -33,7 +33,7 @@ Every file of the repository with a line on what it does: the annotated tree tha
 │   │   ├── command_sequence.dart    # The rising number (seq) on motion commands and on the stop
 │   │   ├── hydra_websocket.dart     # /ws live sync client
 │   │   ├── discovery.dart           # Concurrent scan of this device's own real local subnet(s) against GET /api/hydra-info
-│   │   ├── auth_prefs.dart          # Persisted connection (shared_preferences) + token (Keychain)
+│   │   ├── auth_prefs.dart          # Persisted connection (shared_preferences) + token (Keychain), session rules from the shared package
 │   │   ├── biometric_helper.dart    # Thin wrapper over package:local_auth (Face ID/Touch ID gate)
 │   │   ├── state_cache.dart         # Ported from Android's own StateCache.kt - last-known-good state persisted across launches
 │   │   └── client_prefs.dart        # Small client-side preferences that are not secrets (today: the controller id of this installation)
