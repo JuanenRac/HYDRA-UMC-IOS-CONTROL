@@ -14,6 +14,7 @@ import '../models/server_info.dart';
 import '../network/client_prefs.dart';
 import '../network/discovery.dart';
 import '../state/robot_view_model.dart';
+import '../state/hydra_error.dart';
 import 'widgets/hydra_mark.dart';
 import 'widgets/pairing_widgets.dart';
 import 'widgets/security_dialog.dart';
