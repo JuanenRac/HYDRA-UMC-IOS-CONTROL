@@ -105,8 +105,8 @@ extension HydraErrorText on HydraError {
       case HydraErrorKind.workInvalidFile:
         return l10n.workInvalidFile(params['file'] ?? '');
       case HydraErrorKind.systemActionFailed:
-        // Only the DSI panel builds this kind; here it falls back to the server's own text.
-        return params['reason'] ?? '';
+        // Only the DSI panel builds this kind; here it falls back to the reason it was given.
+        return params['reason'] ?? kind.name;
     }
   }
 }
