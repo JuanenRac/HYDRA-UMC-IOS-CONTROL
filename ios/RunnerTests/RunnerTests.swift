@@ -1,5 +1,6 @@
 import Flutter
 import UIKit
+import WatchConnectivity
 import XCTest
 
 @testable import Runner
@@ -10,13 +11,29 @@ final class LoopbackMessenger: NSObject, FlutterBinaryMessenger {
   private var handlers: [String: FlutterBinaryMessageHandler] = [:]
   private(set) var sent: [(channel: String, message: Data?)] = []
 
+  /// What the Dart side answers when the NATIVE side calls it ("channel/method" -> answer). A call to a method listed here never reaches the native handler.
+  var dartSide: [String: Any?] = [:]
+  /// The calls the native side made to Dart: "channel/method" and its arguments.
+  private(set) var calledDart: [(name: String, arguments: Any?)] = []
+
   func send(onChannel channel: String, message: Data?) {
     sent.append((channel, message))
   }
 
   func send(onChannel channel: String, message: Data?, binaryReply callback: FlutterBinaryReply? = nil) {
     sent.append((channel, message))
-    if let handler = handlers[channel] {
+    let codec = FlutterStandardMethodCodec.sharedInstance()
+    var dartAnswer: Any??
+    if let message = message {
+      let call = codec.decodeMethodCall(message)
+      if let answer = dartSide["\(channel)/\(call.method)"] {
+        calledDart.append(("\(channel)/\(call.method)", call.arguments))
+        dartAnswer = .some(answer)
+      }
+    }
+    if let answer = dartAnswer {
+      callback?(codec.encodeSuccessEnvelope(answer))
+    } else if let handler = handlers[channel] {
       handler(message) { reply in callback?(reply) }
     } else {
       callback?(nil)
@@ -185,6 +202,113 @@ class RunnerTests: XCTestCase {
   func testTheLiveActivityStateRefusesAnIncompleteDocument() {
     let incomplete = Data("{\"robotName\":\"Arm 1\",\"status\":\"running\"}".utf8)
     XCTAssertThrowsError(try JSONDecoder().decode(HydraJobAttributes.ContentState.self, from: incomplete))
+  }
+
+  // MARK: the watch link
+
+  private func watchChannel() -> LoopbackMessenger {
+    let messenger = LoopbackMessenger()
+    WatchChannel.register(messenger: messenger)
+    return messenger
+  }
+
+  /// Hands a message of the watch to the real delegate method and waits for its reply (it answers from the main queue).
+  private func fromWatch(_ message: [String: Any]) -> [String: Any] {
+    let done = expectation(description: "the reply to the watch")
+    var reply: [String: Any] = [:]
+    WatchChannel.shared.session(WCSession.default, didReceiveMessage: message) { answer in
+      reply = answer
+      done.fulfill()
+    }
+    wait(for: [done], timeout: 5)
+    return reply
+  }
+
+  func testTheWatchChannelRefusesWhatItDoesNotKnow() {
+    let messenger = watchChannel()
+    if WCSession.isSupported() {
+      XCTAssertTrue((messenger.call("hydra_umc/watch", "somethingElse") as AnyObject) === FlutterMethodNotImplemented)
+    } else {
+      XCTAssertNil(messenger.call("hydra_umc/watch", "somethingElse"))
+    }
+  }
+
+  func testNoAlertIsQueuedWhenTheWatchCannotBeReached() {
+    let messenger = watchChannel()
+    // On a simulator no watch is paired: the alert is dropped and the answer says so (an old alert on the wrist is worse than none).
+    XCTAssertEqual(messenger.call("hydra_umc/watch", "sendAlert", arguments: ["title": "t", "body": "b"]) as? Bool, false)
+    XCTAssertEqual(messenger.call("hydra_umc/watch", "isReachable") as? Bool, false)
+  }
+
+  func testSendingTheStatusWithoutAWatchDoesNothingAndDoesNotFail() {
+    let messenger = watchChannel()
+    XCTAssertNil(messenger.call("hydra_umc/watch", "sendStatus", arguments: ["status": "running"]))
+  }
+
+  func testAMessageOfTheWatchWithoutAKnownKeyIsNotAccepted() {
+    _ = watchChannel()
+    for message in [[:], ["stopRequestedAt": "now"], ["stopRequestedAt": 1.5], ["other": 1]] as [[String: Any]] {
+      XCTAssertEqual(fromWatch(message)["accepted"] as? Bool, false, "\(message)")
+    }
+  }
+
+  func testAStopRequestOfTheWatchGoesToDartAndTheAnswerComesBack() {
+    for decision in [true, false] {
+      let messenger = watchChannel()
+      messenger.dartSide["hydra_umc/watch/stopRequested"] = decision
+      let reply = fromWatch(["stopRequestedAt": 1_700_000_000_000])
+      XCTAssertEqual(reply["accepted"] as? Bool, decision)
+      XCTAssertEqual(messenger.calledDart.count, 1)
+      XCTAssertEqual(messenger.calledDart.first?.name, "hydra_umc/watch/stopRequested")
+      XCTAssertEqual(messenger.calledDart.first?.arguments as? Int, 1_700_000_000_000)
+    }
+  }
+
+  func testTheWatchStopIsNotAcceptedWhenDartGivesAnythingButTrue() {
+    let messenger = watchChannel()
+    messenger.dartSide["hydra_umc/watch/stopRequested"] = "yes"
+    XCTAssertEqual(fromWatch(["stopRequestedAt": 1])["accepted"] as? Bool, false)
+  }
+
+  func testThePresenceOfTheOperatorIsPassedOnAndAcceptedAtOnce() {
+    let messenger = watchChannel()
+    let reply = fromWatch(["presence": ["at": 5]])
+    XCTAssertEqual(reply["accepted"] as? Bool, true)
+    let passed = expectation(description: "presence reaches Dart")
+    DispatchQueue.main.async { passed.fulfill() }
+    wait(for: [passed], timeout: 5)
+    XCTAssertTrue(messenger.sent.contains { $0.channel == "hydra_umc/watch" })
+  }
+
+  func testTheSecondTapOfASpokenOrderGetsTheAnswerOfDart() {
+    let messenger = watchChannel()
+    messenger.dartSide["hydra_umc/watch/voiceConfirm"] = ["ok": true]
+    let reply = fromWatch(["voiceConfirm": ["id": "abc"]])
+    XCTAssertEqual((reply["reply"] as? [String: Any])?["ok"] as? Bool, true)
+    XCTAssertEqual((messenger.calledDart.first?.arguments as? [String: Any])?["id"] as? String, "abc")
+  }
+
+  // MARK: the dictation
+
+  func testTheDictationRefusesACallWithoutArguments() {
+    let messenger = LoopbackMessenger()
+    SpeechChannel.register(messenger: messenger)
+    let answer = messenger.call("hydra_umc/speech", "listen", arguments: "text") as? [String: String]
+    XCTAssertEqual(answer?["status"], "failed")
+    XCTAssertEqual(answer?["text"], "")
+  }
+
+  func testCancellingWhenNothingListensIsHarmless() {
+    let messenger = LoopbackMessenger()
+    SpeechChannel.register(messenger: messenger)
+    XCTAssertNil(messenger.call("hydra_umc/speech", "cancel"))
+    XCTAssertNil(messenger.call("hydra_umc/speech", "cancel"))
+  }
+
+  func testTheDictationRefusesAnUnknownMethod() {
+    let messenger = LoopbackMessenger()
+    SpeechChannel.register(messenger: messenger)
+    XCTAssertTrue((messenger.call("hydra_umc/speech", "record") as AnyObject) === FlutterMethodNotImplemented)
   }
 
   // MARK: life cycle
