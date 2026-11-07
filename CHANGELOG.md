@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **The Swift side is built and tested on the iOS simulator by a manual workflow:** `ios-xcodebuild-test.yml` runs on a macOS runner of GitHub (no Mac of the owner), generates the iOS configuration without signing and runs `xcodebuild test` of the Runner scheme on an iPhone simulator. Nothing is signed or uploaded. Today the only Swift test is the template one, so it proves that the Runner, the widget extensions and the watch app build; real tests of the Swift code still have to be written, and a run on a phone stays pending.
+
 - **The HTTP client talks through the shared package of the SDK:** `HydraApiClient` extends the shared `HydraApiCore` (headers, bearer token, controller id, `If-Match`, the numbering of motion commands, the renewal of an expired session and the reading of error answers) over a small `PackageHttpTransport` adapter, and keeps its public API; the choice between http and https and the typed endpoints stay in the app. The error type (`HydraError`), the connection history, the server access options and the preferences (`ClientPrefs`, `AuthPrefs`) now come from the same package, with this app's own wording and storage adapters. The renewal tests go through the real client.
 
 ## [0.3.5] - The stored session follows the rules shared with the other mobile apps: AuthPrefs keeps the host, the port, the scheme and its other flags, and hands the token, the user name and the refresh token to SessionStore of the shared... (and 1 more changes)

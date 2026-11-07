@@ -1,0 +1,68 @@
+# =============================================================================
+# HYDRA-UMC-IOS-CONTROL - Swift tests on the iOS simulator (manual)
+# Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
+# GPL-3.0-or-later - see LICENSE
+# =============================================================================
+# Started by hand only (workflow_dispatch): it never runs on a push or a pull request, so it cannot turn the checks of a push red.
+#
+# Runs on a macOS runner of GitHub (free for a public repository), not on a Mac of the owner: sets up Flutter, generates the iOS configuration without signing
+# (`flutter build ios --config-only --no-codesign`) and runs `xcodebuild test` of the Runner scheme on an iPhone simulator that the runner has. Nothing is signed, nothing
+# is uploaded, no profile or certificate is used. It checks that the Swift code of the app and its tests build and pass on the simulator; it is not a phone.
+
+name: iOS tests on the simulator (manual)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-xcodebuild-test
+  cancel-in-progress: false
+
+jobs:
+  xcodebuild:
+    name: xcodebuild test
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Flutter
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --depth 1 --branch stable https://github.com/flutter/flutter.git "$RUNNER_TEMP/flutter"
+          echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
+
+      - name: Generate the iOS configuration without signing
+        shell: bash
+        run: |
+          set -euo pipefail
+          flutter --version
+          flutter pub get
+          flutter build ios --config-only --no-codesign
+
+      - name: Pick an iPhone simulator
+        id: simulator
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcrun simctl list devices available | grep -i "iPhone" | head -n 8
+          id="$(xcrun simctl list devices available -j | python3 -c "import json,sys; d=json.load(sys.stdin)['devices']; print(next(x['udid'] for k in sorted(d, reverse=True) if 'iOS' in k for x in d[k] if x['name'].startswith('iPhone') and x['isAvailable']))")"
+          echo "udid=$id" >> "$GITHUB_OUTPUT"
+          echo "simulator: $id"
+
+      - name: Run the tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild test -workspace ios/Runner.xcworkspace -scheme Runner \
+            -destination "platform=iOS Simulator,id=${{ steps.simulator.outputs.udid }}" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" 2>&1 | tee "$RUNNER_TEMP/xcodebuild.log" | tail -n 60
+          { echo "### xcodebuild test on the iOS simulator"; echo '```'; grep -E "Test Suite|Executed|TEST SUCCEEDED|TEST FAILED|error:" "$RUNNER_TEMP/xcodebuild.log" | tail -n 30; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          grep -q "TEST SUCCEEDED" "$RUNNER_TEMP/xcodebuild.log"
