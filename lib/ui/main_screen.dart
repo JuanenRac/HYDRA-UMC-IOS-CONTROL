@@ -22,6 +22,18 @@ import 'three_d_screen.dart';
 import 'voice_assistant_dialog.dart';
 import 'widgets/stop_all.dart';
 
+/// What the main screen draws from the view model, as one text: the title, the connection label and the saved-data
+/// banner. It is redrawn when this text changes and not for anything else. A field the screen starts to read must be
+/// added here (test/selector_rebuild_test.dart checks the fields it has now).
+String mainScreenShape(RobotViewModel vm) {
+  return [
+    vm.activeServer?.displayName,
+    vm.connectionStatus,
+    vm.isShowingCachedState,
+    vm.cachedStateSavedAt?.toIso8601String(),
+  ].join('|');
+}
+
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
 
@@ -117,7 +129,9 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final vm = context.watch<RobotViewModel>();
+    // Redrawn when something this screen draws changes (see mainScreenShape), not for the metrics tick.
+    context.select<RobotViewModel, String>(mainScreenShape);
+    final vm = context.read<RobotViewModel>();
     final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(

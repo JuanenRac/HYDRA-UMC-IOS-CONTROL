@@ -41,12 +41,18 @@ class TelemetryScreen extends StatelessWidget {
   }
 }
 
+/// The lines of the log, as one text: the tab is redrawn when a line is added or cleared and not for anything else the
+/// view model reports. A field the tab starts to read must be added here (test/selector_rebuild_test.dart).
+String telemetryLogShape(RobotViewModel vm) => vm.telemetryLog.join('\n');
+
 class _LogsTab extends StatelessWidget {
   const _LogsTab();
 
   @override
   Widget build(BuildContext context) {
-    final vm = context.watch<RobotViewModel>();
+    // Redrawn when the log changes (see telemetryLogShape), not for the metrics tick.
+    context.select<RobotViewModel, String>(telemetryLogShape);
+    final vm = context.read<RobotViewModel>();
     final l10n = AppLocalizations.of(context)!;
     final logs = vm.telemetryLog;
 

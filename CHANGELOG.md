@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **The dashboard, the log tab, the ecosystem tab and the main screen listen to the fields they draw, not to the whole view model:** each is redrawn when its robots, its log lines, its project list or its title, connection label and saved-data banner change, and no longer for the metrics tick or for a field that is not its own; `test/selector_rebuild_test.dart` checks both directions for each (5 more tests; 551 in all).
+
 - **The camera screen listens to the fields it draws, not to the whole view model:** it is redrawn when its robots, their cameras, the server address or the media headers change, and no longer for the metrics tick or for a field that is not its own; `test/selector_rebuild_test.dart` checks both directions (2 more tests).
 
 - **The global STOP is tested to be on screen where robots are driven:** `test/stop_presence_test.dart` (2 widget tests) checks that the Control tab carries the large global STOP once a robot is selected and that the main screen carries the one of its bar, with or without a robot.

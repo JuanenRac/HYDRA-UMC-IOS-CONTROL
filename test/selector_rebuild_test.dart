@@ -18,10 +18,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:hydra_umc_control/l10n/app_localizations.dart';
 import 'package:hydra_umc_control/models/access.dart';
+import 'package:hydra_umc_control/models/ecosystem.dart';
 import 'package:hydra_umc_control/network/auth_prefs.dart';
 import 'package:hydra_umc_control/state/robot_view_model.dart';
 import 'package:hydra_umc_control/ui/camera_screen.dart';
 import 'package:hydra_umc_control/ui/control_screen.dart';
+import 'package:hydra_umc_control/ui/dashboard_screen.dart';
+import 'package:hydra_umc_control/ui/ecosystem_tab.dart';
+import 'package:hydra_umc_control/ui/main_screen.dart';
+import 'package:hydra_umc_control/ui/telemetry_screen.dart';
 
 class _Backend implements SecureTokenBackend {
   @override
@@ -173,6 +178,119 @@ void main() {
         vm.poke();
       });
       expect(related, contains('CameraScreen'), reason: change.key);
+    }
+  });
+
+  testWidgets('the dashboard ignores what it does not show', (tester) async {
+    final vm = await _pump(tester, const DashboardScreen());
+    addTearDown(vm.dispose);
+    // An online robot's lamp animates for ever: wait a few frames instead of settling.
+    await tester.pump(const Duration(milliseconds: 200));
+    await tester.pump(const Duration(milliseconds: 200));
+    vm.poke();
+    await tester.pump();
+    final unrelated = await _rebuilt(tester, () async {
+      vm.connectionStatus = 'connected';
+      vm.isShowingCachedState = true;
+      vm.confirmPlay = !vm.confirmPlay;
+      vm.poke();
+    });
+    expect(unrelated, isNot(contains('DashboardScreen')));
+  });
+
+  testWidgets('the dashboard follows the robots it lists', (tester) async {
+    final vm = await _pump(tester, const DashboardScreen());
+    addTearDown(vm.dispose);
+    // An online robot's lamp animates for ever: wait a few frames instead of settling.
+    await tester.pump(const Duration(milliseconds: 200));
+    await tester.pump(const Duration(milliseconds: 200));
+    vm.poke();
+    await tester.pump();
+    final changes = <String, void Function()>{
+      'the robot moves': () => vm.selectedRobot!.raw['pos']['x'] = 99,
+      'the robot goes offline': () => vm.selectedRobot!.raw['online'] = false,
+      'the robot is renamed': () => vm.selectedRobot!.raw['name'] = 'ARM-2',
+    };
+    for (final change in changes.entries) {
+      final related = await _rebuilt(tester, () async {
+        change.value();
+        vm.poke();
+      });
+      expect(related, contains('DashboardScreen'), reason: change.key);
+    }
+  });
+
+  testWidgets('the log tab ignores what it does not show and follows the log', (tester) async {
+    final vm = await _pump(tester, const TelemetryScreen());
+    addTearDown(vm.dispose);
+    await tester.pumpAndSettle();
+    final unrelated = await _rebuilt(tester, () async {
+      vm.connectionStatus = 'connected';
+      vm.isShowingCachedState = true;
+      vm.poke();
+    });
+    expect(unrelated, isNot(contains('_LogsTab')));
+    final related = await _rebuilt(tester, () async {
+      vm.telemetryLog.insert(0, '[00:00] one more line');
+      vm.poke();
+    });
+    expect(related, contains('_LogsTab'));
+  });
+
+  testWidgets('the ecosystem tab ignores what it does not show and follows its list', (tester) async {
+    final vm = await _pump(tester, const EcosystemTab());
+    addTearDown(vm.dispose);
+    await tester.pumpAndSettle();
+    final unrelated = await _rebuilt(tester, () async {
+      vm.connectionStatus = 'connected';
+      vm.isShowingCachedState = true;
+      vm.poke();
+    });
+    expect(unrelated, isNot(contains('EcosystemTab')));
+    final changes = <String, void Function()>{
+      'a project is listed': () => vm.ecosystem = const EcosystemStatus(
+        available: true,
+        projects: [EcosystemProject(name: 'P1', family: 'F', live: false, servicePort: 1)],
+      ),
+      'a project goes live': () => vm.ecosystem = const EcosystemStatus(
+        available: true,
+        projects: [EcosystemProject(name: 'P1', family: 'F', live: true, servicePort: 1)],
+      ),
+      'a read is under way': () => vm.ecosystemLoading = true,
+    };
+    for (final change in changes.entries) {
+      final related = await _rebuilt(tester, () async {
+        change.value();
+        vm.poke();
+      });
+      expect(related, contains('EcosystemTab'), reason: change.key);
+    }
+  });
+
+  testWidgets('the main screen ignores what it does not show and follows its title and banner', (tester) async {
+    final vm = await _pump(tester, const MainScreen());
+    addTearDown(vm.dispose);
+    // An online robot's lamp animates for ever: wait a few frames instead of settling.
+    await tester.pump(const Duration(milliseconds: 200));
+    await tester.pump(const Duration(milliseconds: 200));
+    vm.poke();
+    await tester.pump();
+    final unrelated = await _rebuilt(tester, () async {
+      vm.confirmPlay = !vm.confirmPlay;
+      vm.homeResetEnabled = !vm.homeResetEnabled;
+      vm.poke();
+    });
+    expect(unrelated, isNot(contains('MainScreen')));
+    final changes = <String, void Function()>{
+      'the connection status changes': () => vm.connectionStatus = 'connected',
+      'the saved-data banner appears': () => vm.isShowingCachedState = true,
+    };
+    for (final change in changes.entries) {
+      final related = await _rebuilt(tester, () async {
+        change.value();
+        vm.poke();
+      });
+      expect(related, contains('MainScreen'), reason: change.key);
     }
   });
 }

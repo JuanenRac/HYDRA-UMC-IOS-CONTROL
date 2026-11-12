@@ -11,6 +11,8 @@
 // from this app.
 // =============================================================================
 
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -19,12 +21,21 @@ import '../models/hydra_state.dart';
 import '../state/robot_view_model.dart';
 import 'widgets/status_led.dart';
 
+/// Everything the dashboard draws from the view model, as one text: the cards are redrawn when this text changes and not
+/// when only the metrics or the connection state do. A field the screen starts to read must be added here
+/// (test/selector_rebuild_test.dart checks the fields it has now).
+String dashboardScreenShape(RobotViewModel vm) {
+  return jsonEncode(vm.robots.map((r) => r.raw).toList());
+}
+
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final vm = context.watch<RobotViewModel>();
+    // Redrawn when something this screen draws changes (see dashboardScreenShape), not for the metrics tick.
+    context.select<RobotViewModel, String>(dashboardScreenShape);
+    final vm = context.read<RobotViewModel>();
     final l10n = AppLocalizations.of(context)!;
     final robots = vm.robots;
 

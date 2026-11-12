@@ -9,12 +9,25 @@
 // opens and by the refresh button, never polled.
 // =============================================================================
 
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/ecosystem.dart';
 import '../state/robot_view_model.dart';
+
+/// Everything the ecosystem tab draws from the view model, as one text: the tab is redrawn when this text changes and
+/// not for anything else the view model reports. A field the tab starts to read must be added here
+/// (test/selector_rebuild_test.dart checks the fields it has now).
+String ecosystemTabShape(RobotViewModel vm) {
+  return jsonEncode([
+    vm.ecosystemLoading,
+    vm.ecosystem.available,
+    for (final p in vm.ecosystem.projects) [p.name, p.role, p.stack, p.maturity, p.family, p.version, p.servicePort, p.live],
+  ]);
+}
 
 class EcosystemTab extends StatefulWidget {
   const EcosystemTab({super.key});
@@ -34,7 +47,9 @@ class _EcosystemTabState extends State<EcosystemTab> {
 
   @override
   Widget build(BuildContext context) {
-    final vm = context.watch<RobotViewModel>();
+    // Redrawn when something this tab draws changes (see ecosystemTabShape).
+    context.select<RobotViewModel, String>(ecosystemTabShape);
+    final vm = context.read<RobotViewModel>();
     final l10n = AppLocalizations.of(context)!;
     final status = vm.ecosystem;
     return Padding(
