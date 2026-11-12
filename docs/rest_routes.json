@@ -10,6 +10,8 @@
   "/api/operator/presence",
   "/api/push/devices",
   "/api/push/devices/{p}",
+  "/api/push/live-activities",
+  "/api/push/live-activities/{p}",
   "/api/robot/{p}",
   "/api/safety-limits",
   "/api/voice/confirm",
