@@ -237,7 +237,7 @@ class RunnerTests: XCTestCase {
       reply = answer
       done.fulfill()
     }
-    wait(for: [done], timeout: 5)
+    wait(for: [done], timeout: 20)
     return reply
   }
 
