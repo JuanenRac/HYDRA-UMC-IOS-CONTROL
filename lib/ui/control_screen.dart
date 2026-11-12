@@ -127,6 +127,7 @@ class _ControlScreenState extends State<ControlScreen> {
       return Center(child: Text(l10n.controlNoRobots, style: const TextStyle(color: Colors.grey)));
     }
 
+    final listenOnly = vm.listenOnly;
     return Column(
       children: [
         if (vm.listenOnly)
@@ -171,7 +172,7 @@ class _ControlScreenState extends State<ControlScreen> {
                     // and a jog would both write the same setpoint.
                     // When the administrator requires it, the jog also waits for
                     // the explicit arming (AccessPanel).
-                    enabled: robot.online && !(robot.isPlaying && !robot.isPaused) && !vm.jogNeedsArming(robot.id, _now),
+                    enabled: !listenOnly && robot.online && !(robot.isPlaying && !robot.isPaused) && !vm.jogNeedsArming(robot.id, _now),
                     onJog: (dx, dy, dz) {
                       HapticFeedback.selectionClick();
                       vm.jogXYZ(_jogTarget, dx, dy, dz, robot.jogStepOr(_defaultJogStep, _jogSteps));
@@ -180,7 +181,8 @@ class _ControlScreenState extends State<ControlScreen> {
                   const SizedBox(height: 8),
                   // The base rotation (J1) alone, next to the jog pad; the table has no J1.
                   BaseRotationButtons(
-                    enabled: _jogTarget == 'robot' &&
+                    enabled: !listenOnly &&
+                        _jogTarget == 'robot' &&
                         robot.online &&
                         !(robot.isPlaying && !robot.isPaused) &&
                         !vm.jogNeedsArming(robot.id, _now),
@@ -191,7 +193,7 @@ class _ControlScreenState extends State<ControlScreen> {
                   ),
                   const SizedBox(height: 8),
                   // HOME/RESET: drawn only when the person switched it on in the settings; two confirmations.
-                  if (vm.homeResetEnabled) _homeResetButton(vm, robot, l10n),
+                  if (vm.homeResetEnabled && !listenOnly) _homeResetButton(vm, robot, l10n),
                   // The link to the server and the continuous jog held by a dead-man (the indicator is on, the jog off until
                   // switched on in the settings).
                   const SizedBox(height: 8),
@@ -201,9 +203,20 @@ class _ControlScreenState extends State<ControlScreen> {
                   const SizedBox(height: 8),
                   WorkSelector(vm: vm, robot: robot),
                   const SizedBox(height: 16),
-                  _speedAccelSliders(vm, robot, l10n),
-                  const SizedBox(height: 16),
-                  _ioRow(vm, robot, l10n),
+                  // Listen only: the sliders and the valves/pumps stay visible but dimmed and unresponsive (like the DSI).
+                  IgnorePointer(
+                    ignoring: listenOnly,
+                    child: Opacity(
+                      opacity: listenOnly ? 0.4 : 1,
+                      child: Column(
+                        children: [
+                          _speedAccelSliders(vm, robot, l10n),
+                          const SizedBox(height: 16),
+                          _ioRow(vm, robot, l10n),
+                        ],
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: 90),
                 ],
               ),
@@ -417,12 +430,12 @@ class _ControlScreenState extends State<ControlScreen> {
         children: [
           const StopAllButton(large: true),
           IconButton.filled(
-            onPressed: robot != null && robot.online ? () => _play(vm, robot, l10n) : null,
+            onPressed: !vm.listenOnly && robot != null && robot.online ? () => _play(vm, robot, l10n) : null,
             icon: const Icon(Icons.play_arrow),
             style: IconButton.styleFrom(backgroundColor: const Color(0xFF15803D)),
           ),
           IconButton.filled(
-            onPressed: robot != null && robot.online && robot.isPlaying ? () => vm.sendCommand('pause') : null,
+            onPressed: !vm.listenOnly && robot != null && robot.online && robot.isPlaying ? () => vm.sendCommand('pause') : null,
             icon: Icon(robot?.isPaused == true ? Icons.play_arrow : Icons.pause),
             style: IconButton.styleFrom(backgroundColor: const Color(0xFFB45309)),
           ),
@@ -431,7 +444,7 @@ class _ControlScreenState extends State<ControlScreen> {
             icon: robot?.isEnabled == false ? Icons.power_settings_new : Icons.power_off,
             tooltip: robot?.isEnabled == false ? l10n.controlEnableHold : l10n.controlDisableHold,
             // Anyone signed in can disable a robot (like a stop); only an administrator is offered the enable.
-            enabled: robot != null && (robot.isEnabled ? true : vm.isAdmin),
+            enabled: robot != null && (robot.isEnabled ? true : (vm.isAdmin && !vm.listenOnly)),
             onConfirm: () {
               HapticFeedback.mediumImpact();
               vm.sendCommand(robot?.isEnabled == false ? 'enable' : 'disable');
