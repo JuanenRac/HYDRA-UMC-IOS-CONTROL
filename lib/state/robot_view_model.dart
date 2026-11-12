@@ -29,6 +29,7 @@ import '../models/robot_command_contract.dart';
 import '../models/server_info.dart';
 import '../models/server_security.dart';
 import '../models/stop_all_result.dart';
+import '../network/listen_only_gate.dart';
 import '../network/auth_prefs.dart';
 import '../network/ble_contract.dart';
 import '../network/ble_gatt.dart';
@@ -143,6 +144,7 @@ class RobotViewModel extends ChangeNotifier {
   /// Switches listen-only mode, and keeps the choice. A jog that is held stops when it is switched on.
   Future<void> setListenOnly(bool value) async {
     listenOnly = value;
+    ListenOnlyGate.enabled = value;
     if (value) deadMan.interrupt();
     notifyListeners();
     await _clientPrefs.saveListenOnly(value);
@@ -290,6 +292,7 @@ class RobotViewModel extends ChangeNotifier {
     blockCommandsOnSavedData = await _clientPrefs.loadBlockCommandsOnSavedData();
     confirmPlay = await _clientPrefs.loadConfirmPlay();
     listenOnly = await _clientPrefs.loadListenOnly();
+    ListenOnlyGate.enabled = listenOnly;
     homeResetEnabled = await _clientPrefs.loadHomeReset(RobotCommandContract.homeResetEnabledByDefault);
     deadMan.enabled = await _clientPrefs.loadFlag(ClientFlags.deadManJog, RobotCommandContract.deadManEnabledByDefault);
     deadMan.blockOnBadLink = await _clientPrefs.loadFlag(ClientFlags.linkBlockJog, RobotCommandContract.linkBlockJogOnBadLinkDefault);
