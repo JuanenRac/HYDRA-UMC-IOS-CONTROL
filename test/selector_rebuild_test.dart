@@ -25,7 +25,11 @@ import 'package:hydra_umc_control/ui/camera_screen.dart';
 import 'package:hydra_umc_control/ui/control_screen.dart';
 import 'package:hydra_umc_control/ui/dashboard_screen.dart';
 import 'package:hydra_umc_control/ui/ecosystem_tab.dart';
+import 'package:hydra_umc_control/state/hydra_error.dart';
+import 'package:hydra_umc_control/ui/login_screen.dart';
 import 'package:hydra_umc_control/ui/main_screen.dart';
+import 'package:hydra_umc_control/ui/settings_screen.dart';
+import 'package:hydra_umc_control/ui/three_d_screen.dart';
 import 'package:hydra_umc_control/ui/telemetry_screen.dart';
 
 class _Backend implements SecureTokenBackend {
@@ -292,5 +296,81 @@ void main() {
       });
       expect(related, contains('MainScreen'), reason: change.key);
     }
+  });
+
+  testWidgets('the sign-in screen follows its errors and its pairing, and not the robots', (tester) async {
+    final vm = await _pump(tester, const LoginScreen());
+    addTearDown(vm.dispose);
+    await tester.pump(const Duration(milliseconds: 200));
+    vm.poke();
+    await tester.pump();
+    final unrelated = await _rebuilt(tester, () async {
+      vm.selectedRobot!.raw['pos']['x'] = 99;
+      vm.confirmPlay = !vm.confirmPlay;
+      vm.poke();
+    });
+    expect(unrelated, isNot(contains('LoginScreen')));
+    final changes = <String, void Function()>{
+      'a sign-in is refused': () => vm.lastError = const HydraError(HydraErrorKind.loginFailed),
+      'a pairing gives an address': () {
+        vm.pairedHost = 'hydra.local';
+        vm.pairedPort = 3443;
+        vm.pairedStamp++;
+      },
+    };
+    for (final change in changes.entries) {
+      final related = await _rebuilt(tester, () async {
+        change.value();
+        vm.poke();
+      });
+      expect(related, contains('LoginScreen'), reason: change.key);
+    }
+  });
+
+  testWidgets('the settings follow what they show and not the robots', (tester) async {
+    final vm = await _pump(tester, const SettingsScreen());
+    addTearDown(vm.dispose);
+    await tester.pump(const Duration(milliseconds: 200));
+    vm.poke();
+    await tester.pump();
+    final unrelated = await _rebuilt(tester, () async {
+      vm.selectedRobot!.raw['pos']['x'] = 99;
+      vm.selectedRobot!.raw['online'] = false;
+      vm.poke();
+    });
+    expect(unrelated, isNot(contains('SettingsScreen')));
+    final changes = <String, void Function()>{
+      'the connection status changes': () => vm.connectionStatus = 'connected',
+      'the question before PLAY changes': () => vm.confirmPlay = !vm.confirmPlay,
+      'the switch of the home reset changes': () => vm.homeResetEnabled = !vm.homeResetEnabled,
+      'the dictation is switched': () => vm.dictationEnabled = !vm.dictationEnabled,
+      'the pairing is switched': () => vm.pairingEnabled = !vm.pairingEnabled,
+    };
+    for (final change in changes.entries) {
+      final related = await _rebuilt(tester, () async {
+        change.value();
+        vm.poke();
+      });
+      expect(related, contains('SettingsScreen'), reason: change.key);
+    }
+  });
+
+  testWidgets('the 3D screen follows the robot and the sign-in, and not the robots moving', (tester) async {
+    final vm = await _pump(tester, const ThreeDScreen());
+    addTearDown(vm.dispose);
+    await tester.pump(const Duration(milliseconds: 200));
+    vm.poke();
+    await tester.pump();
+    final unrelated = await _rebuilt(tester, () async {
+      vm.selectedRobot!.raw['pos']['x'] = 99;
+      vm.connectionStatus = 'connected';
+      vm.poke();
+    });
+    expect(unrelated, isNot(contains('ThreeDScreen')));
+    final related = await _rebuilt(tester, () async {
+      vm.selectedRobotId = 2;
+      vm.poke();
+    });
+    expect(related, contains('ThreeDScreen'));
   });
 }

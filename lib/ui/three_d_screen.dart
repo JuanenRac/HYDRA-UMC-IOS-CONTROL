@@ -29,6 +29,20 @@ import '../state/robot_view_model.dart';
 import '../util/viewer_lifecycle.dart';
 import '../util/viewer_url.dart';
 
+/// Everything the 3D screen decides from the view model, as one text: the address of the viewer (server, robot and a
+/// digest of the session token, which is never kept in the text) and whether the person is signed in. The page is
+/// reloaded only when this text changes and not for the metrics tick or the robots moving.
+String threeDScreenShape(RobotViewModel vm) {
+  final server = vm.activeServer;
+  return [
+    vm.isLoggedIn,
+    server?.baseUrl,
+    vm.serverBaseUrl,
+    vm.selectedRobotId,
+    vm.apiClient?.authToken?.hashCode,
+  ].join('|');
+}
+
 class ThreeDScreen extends StatefulWidget {
   /// False until the tab is first shown: the viewer is a whole web page
   /// (Three.js) and is not loaded at start-up for a tab nobody opened.
@@ -71,7 +85,9 @@ class _ThreeDScreenState extends State<ThreeDScreen> with WidgetsBindingObserver
 
   @override
   Widget build(BuildContext context) {
-    final vm = context.watch<RobotViewModel>();
+    // Redrawn when the address of the viewer or the sign-in changes (see threeDScreenShape), not for the metrics tick.
+    context.select<RobotViewModel, String>(threeDScreenShape);
+    final vm = context.read<RobotViewModel>();
     final server = vm.activeServer;
     final robotId = vm.selectedRobotId;
     final token = vm.apiClient?.authToken;

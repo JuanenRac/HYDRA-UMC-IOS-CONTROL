@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **The settings, the sign-in screen and the 3D screen listen to the fields they draw, not to the whole view model:** the settings are redrawn when one of their switches, the server, the connection state, the pinned certificate, the role or the language change; the sign-in screen when the pairing or the last error change; the 3D screen only when the address of the viewer, the robot or the sign-in change (the page is no longer asked to rebuild for the metrics tick or for a robot that moves); `test/selector_rebuild_test.dart` checks both directions for each (3 more tests; 554 in all).
+
 - **The dashboard, the log tab, the ecosystem tab and the main screen listen to the fields they draw, not to the whole view model:** each is redrawn when its robots, its log lines, its project list or its title, connection label and saved-data banner change, and no longer for the metrics tick or for a field that is not its own; `test/selector_rebuild_test.dart` checks both directions for each (5 more tests; 551 in all).
 
 - **The camera screen listens to the fields it draws, not to the whole view model:** it is redrawn when its robots, their cameras, the server address or the media headers change, and no longer for the metrics tick or for a field that is not its own; `test/selector_rebuild_test.dart` checks both directions (2 more tests).

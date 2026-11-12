@@ -17,6 +17,44 @@ import 'widgets/pairing_widgets.dart';
 import 'widgets/security_dialog.dart';
 import 'widgets/server_options_dialog.dart';
 
+/// Everything the settings draw or decide from the view model, as one text: the list is redrawn when this text changes
+/// and not for the metrics tick or the robots. A field the screen starts to read must be added here
+/// (test/selector_rebuild_test.dart checks the fields it has now).
+String settingsScreenShape(RobotViewModel vm) {
+  final server = vm.activeServer;
+  return [
+    server?.displayName,
+    server?.host,
+    server?.port,
+    vm.connectionStatus,
+    vm.biometricAvailable,
+    vm.biometricEnabled,
+    vm.blockCommandsOnSavedData,
+    vm.confirmPlay,
+    vm.homeResetEnabled,
+    vm.deadMan.enabled,
+    vm.deadMan.blockOnBadLink,
+    vm.deadMan.indicator,
+    vm.pairingEnabled,
+    vm.pushState,
+    vm.pushNotifications,
+    vm.jobAlertsEnabled,
+    vm.surfaces.liveActivityRefusedBySystem,
+    vm.liveActivityEnabled,
+    vm.liveActivityPushState,
+    vm.liveActivityPushEnabled,
+    vm.watchEnabled,
+    vm.watchAlertsEnabled,
+    vm.presenceRelayEnabled,
+    vm.voiceConfirmRelayEnabled,
+    vm.dictationEnabled,
+    vm.dictationOnline,
+    vm.tlsSettings.pinnedFingerprint,
+    vm.isAdmin,
+    vm.languageOverride?.languageCode,
+  ].join('|');
+}
+
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
@@ -36,7 +74,9 @@ class SettingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final vm = context.watch<RobotViewModel>();
+    // Redrawn when something this screen draws changes (see settingsScreenShape), not for the metrics tick.
+    context.select<RobotViewModel, String>(settingsScreenShape);
+    final vm = context.read<RobotViewModel>();
     final l10n = AppLocalizations.of(context)!;
     final server = vm.activeServer;
     return ListView(
