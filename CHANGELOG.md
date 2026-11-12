@@ -4,6 +4,7 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **Widget tests of the audit dialog:** 6 tests against a real local server (a recorded line, the check of the chain when asked, the filters that ask the server again, an empty record, a record the server keeps off, a refusal shown as a sentence); no behaviour changes.
 - **Tests of the words of the connections and server options dialogs:** 6 tests that read every kind of client, action, failure, "ago" unit, protection that is lowered and source of an option in the eight languages and check that none is empty or repeated; no behaviour changes.
 - **README: the platform statement:** a note says that where the README speaks of the CM5 it means the pilot bench that runs today, and that the target platform of HYDRA-UMC, an NVIDIA Jetson Orin NX 16 GB, is a design that has not been built or tested.
 - **Listen only dims and disables the controls it blocks (port of the Android app):** the joystick pad, the base-rotation buttons, HOME/RESET, PLAY, PAUSE, the enable button, the valves and pumps and the sliders are disabled and the last two groups drawn at 40 % opacity while the switch is on, like the DSI; STOP stays active. Not compiled or run on an iPhone. The opacity is a pure function (`ListenOnlyGate.controlOpacity`) with a test.
