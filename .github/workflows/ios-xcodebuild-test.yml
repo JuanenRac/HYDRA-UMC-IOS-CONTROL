@@ -63,6 +63,8 @@ jobs:
           set -euo pipefail
           xcodebuild test -workspace ios/Runner.xcworkspace -scheme Runner \
             -destination "platform=iOS Simulator,id=${{ steps.simulator.outputs.udid }}" \
-            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" 2>&1 | tee "$RUNNER_TEMP/xcodebuild.log" | tail -n 60
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" 2>&1 | tee "$RUNNER_TEMP/xcodebuild.log" | tail -n 60 || true
           { echo "### xcodebuild test on the iOS simulator"; echo '```'; grep -E "Test Suite|Executed|TEST SUCCEEDED|TEST FAILED|error:" "$RUNNER_TEMP/xcodebuild.log" | tail -n 30; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          # What each failed check said, so a red run can be read without the result bundle.
+          grep -nE "RunnerTests.swift:[0-9]+|XCTAssert|failed -|Timed out|asynchronous wait" "$RUNNER_TEMP/xcodebuild.log" | head -n 40 || true
           grep -q "TEST SUCCEEDED" "$RUNNER_TEMP/xcodebuild.log"
