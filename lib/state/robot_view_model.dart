@@ -3,16 +3,10 @@
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
 // GPL-3.0-or-later - see LICENSE
 //
-// Single ChangeNotifier every screen listens to via Provider - the Dart
-// counterpart to HYDRA-UMC-ANDROID-CONTROL's own viewmodel/RobotViewModel.kt.
-// Every write goes through sendAtomicCommand(), which POSTs the real atomic
-// POST /api/robot/:id/command endpoint (server.ts:210-298) instead of
-// overwriting the whole settings tree: a small, targeted payload avoids
-// read-modify-write races with other connected clients and lets the
-// server compute affectedIds (self + combinedWith) itself rather than
-// trusting the client to get combined-robot propagation right. Every
-// command that needs it (enable/disable/play/pause/stop) propagates to a
-// robot's own combinedWith siblings for that same reason.
+// The single ChangeNotifier every screen listens to through Provider (the counterpart of the view model of the Android app).
+// Contract: every write is one POST /api/robot/:id/command with a small payload; the server computes the affected robots
+// (itself and its combinedWith) and broadcasts the change, so the app never rewrites the settings tree. Enable, disable,
+// play, pause and stop are propagated to the combined robots.
 // =============================================================================
 
 import 'dart:async';
@@ -93,9 +87,7 @@ enum LiveActivityPushState { off, registered, serverOff, failed }
 enum AuditFailure { forbidden, unavailable, session, network, other }
 
 class RobotViewModel extends ChangeNotifier {
-  // injectable so login / _attemptTokenRefresh / logout get real
-  // test coverage against a fake AuthPrefs backed by a fake SecureTokenBackend,
-  // the same pattern HYDRA-UMC-DSI's own RobotViewModel already uses.
+  // The stores and clients are injectable, so sign-in, token renewal and sign-out run in tests against a fake AuthPrefs.
   RobotViewModel({
     AuthPrefs? authPrefs,
     BleScanner? bleScanner,
@@ -161,13 +153,10 @@ class RobotViewModel extends ChangeNotifier {
   Timer? _metricsTimer;
   Timer? _stateCacheTimer;
 
-  // Debounced disk write of state.raw (see network/state_cache.dart's own
-  // header comment for why - not on every single notifyListeners() call,
-  // which fires on every WS broadcast AND every local optimistic command
-  // mutation, several times a second during a held jog).
+  // Debounced write of state.raw to the cache (network/state_cache.dart): never on every notifyListeners(), which fires on every
+  // broadcast and every optimistic change, several times a second during a held jog.
   void _scheduleCacheSave() {
-    // Nothing is written for a signed-out app: the cache would outlive the
-    // session it belongs to.
+    // Nothing is cached while signed out: the cache belongs to the session.
     if (!isLoggedIn) return;
     _stateCacheTimer?.cancel();
     _stateCacheTimer = Timer(const Duration(seconds: 1), () {
@@ -203,20 +192,15 @@ class RobotViewModel extends ChangeNotifier {
   // fires about every 150 ms, a request may take 5 s), and a command that fails after newer ones applied must not restore its older snapshot over them.
   final Map<dynamic, int> _commandGeneration = {};
 
-  // Jog commands on the wire, per robot. A held button repeats every 150 ms;
-  // on a slow link the POSTs used to pile up and still be applied after the
-  // button was released. While one is in flight the next tick is dropped.
-  // (counted in [commands])
+  // Jog commands on the wire are counted per robot in [commands]: a held button repeats every 150 ms, and while one is in flight the
+  // next tick is dropped, so a slow link never applies jogs after the button was released.
 
-  // One session renewal at a time, however many requests and socket events
-  // notice the expired token together: the refresh token is single-use, so a
-  // second parallel refresh would be refused and end a session that was fine.
+  // One session renewal at a time, however many requests and socket events notice the expired token together: the refresh token
+  // is single-use, so a second parallel renewal would be refused and end a valid session.
   late final SessionManager _session = SessionManager(client: () => apiClient, renew: _attemptTokenRefresh);
   bool _handlingWsAuthFailure = false;
 
-  // The sign-out in progress (revoking the refresh token, erasing the stored
-  // session): a login that starts meanwhile waits for it, or its fresh token
-  // would be erased by the logout still running.
+  // The sign-out in progress (revoking the refresh token, erasing the stored session): a sign-in that starts meanwhile waits for it.
   Future<void>? _pendingLogout;
 
   ServerInfo? activeServer;
@@ -235,28 +219,18 @@ class RobotViewModel extends ChangeNotifier {
   bool isShowingCachedState = false;
   DateTime? cachedStateSavedAt;
 
-  // In-app voice/text assistant (ui/voice_assistant_dialog.dart) - separate
-  // from robot state, same reasoning as HYDRA-UMC-ANDROID-CONTROL's own
-  // latestVoiceAssistantReply: a reply must never be mistaken for a
-  // physical command or applied optimistically.
+  // The reply of the in-app assistant (ui/voice_assistant_dialog.dart). Kept apart from the robot state: a reply is never a
+  // physical command and is never applied optimistically.
   AssistantReply? latestAssistantReply;
   bool voiceAssistantBusy = false;
 
-  // Explicit language override (null = follow the OS locale) - persisted
-  // via LanguagePrefs, loaded in init(), read by main.dart's own
-  // MaterialApp.locale and changed from ui/settings_screen.dart.
+  // Language chosen in Settings (null follows the language of the system); kept by LanguagePrefs and read by MaterialApp.locale.
   Locale? languageOverride;
 
-  // Rolling connection/command event log for ui/telemetry_screen.dart -
-  // ported from HYDRA-UMC-ANDROID-CONTROL's own logTelemetry()/
-  // telemetryLogs, same 50-entry cap and newest-first order. In-memory
-  // only (unlike lastError/state, never persisted) - a diagnostic trail
-  // for the current session, not something meant to survive a restart.
+  // Connection and command events for ui/telemetry_screen.dart: newest first, at most 50, in memory only (never persisted).
   final List<String> telemetryLog = [];
 
-  // Deliberately does NOT call notifyListeners() itself - every call site
-  // already triggers one shortly after for the state change the log entry
-  // is describing, so this would only ever double the rebuild.
+  // Does not notify: every caller notifies for the change the entry describes.
   void _logTelemetry(String message) {
     final now = DateTime.now();
     String two(int n) => n.toString().padLeft(2, '0');
@@ -297,11 +271,7 @@ class RobotViewModel extends ChangeNotifier {
     if (purgeStaleKeychain) await _authPrefs.purgeStaleKeychainOnFirstRun();
     languageOverride = await _languagePrefs.loadLocale();
     _listenToShortcuts();
-    // Real, if possibly stale, robot data on screen immediately rather than
-    // an empty Dashboard/Control while the live connect() round-trip below
-    // is still in flight - genuinely useful right after the phone comes
-    // back into WiFi range. Superseded by the real fetch the moment
-    // connect() succeeds; see network/state_cache.dart's own header comment.
+    // The saved last-known state is shown at once; the live fetch of connect() replaces it (network/state_cache.dart).
     tlsSettings = await _tlsPrefs.load();
     TlsSettingsStore.current = tlsSettings;
     blockCommandsOnSavedData = await _clientPrefs.loadBlockCommandsOnSavedData();
@@ -352,8 +322,7 @@ class RobotViewModel extends ChangeNotifier {
     biometricEnabled = await _authPrefs.loadBiometricEnabled();
     if (saved != null) {
       final (host, port) = saved;
-      // The scheme this server was last seen on: one that answered TLS is not
-      // probed over plain http again at start-up.
+      // The scheme this server was last seen on: a server that answered TLS is not probed over plain http again.
       final useTls = await _authPrefs.loadUseTls();
       final client = HydraApiClient(host, port, useTls: useTls);
       client.authToken = token;
@@ -364,18 +333,13 @@ class RobotViewModel extends ChangeNotifier {
     }
     if (isLoggedIn && biometricEnabled) {
       if (biometricAvailable) {
-        // Hold off on connect() (and on notifyListeners() showing MainScreen)
-        // until unlockWithBiometrics() succeeds - _RootGate reads
-        // needsBiometricUnlock before isLoggedIn, so the app shows the
-        // unlock gate instead of jumping straight into a live session.
+        // No connect() until unlockWithBiometrics() succeeds: _RootGate reads needsBiometricUnlock before isLoggedIn and shows the gate.
         needsBiometricUnlock = true;
         notifyListeners();
         return;
       }
-      // The gate was turned on but cannot be shown now (Face ID permission
-      // withdrawn, fingerprints removed, a failing sensor): the lock fails
-      // closed. The saved session is dropped and a full sign-in is required
-      // instead of skipping the gate.
+      // The gate is on but cannot be shown (Face ID permission withdrawn, fingerprints removed, a failing sensor): the lock fails
+      // closed, the saved session is dropped and a full sign-in is required.
       isLoggedIn = false;
       apiClient?.authToken = null;
       await _authPrefs.clearToken();
@@ -383,10 +347,7 @@ class RobotViewModel extends ChangeNotifier {
       return;
     }
     notifyListeners();
-    // A restored session needs the same real connect() step login() runs
-    // (fetch settings, open the WS, start metrics polling) - without this
-    // call the app landed straight on MainScreen with isLoggedIn=true but
-    // an empty HydraState and no live connection.
+    // A restored session runs the same connect() as a sign-in (settings, socket, metrics poll).
     if (isLoggedIn) await connect();
   }
 
@@ -1192,10 +1153,7 @@ class RobotViewModel extends ChangeNotifier {
     _myUsername = null;
     // A sign-out still erasing the previous session must finish first.
     await _pendingLogout;
-    // Close out any previous session's client before replacing it - each
-    // HydraApiClient owns its own http.Client (its own connection pool),
-    // and overwriting apiClient without closing the old one first leaked
-    // one on every re-login.
+    // The client of the previous session is closed before it is replaced: each one owns its connection pool.
     apiClient?.close();
     final client = HydraApiClient(server.host, server.port);
     client.tokenRenewer = () => _renewedTokenOf(client);
@@ -1212,15 +1170,12 @@ class RobotViewModel extends ChangeNotifier {
       }
       client.authToken = token;
       isLoggedIn = true;
-      // login() resolves the scheme itself (HydraApiClient._resolveScheme), so
-      // the server we are now signed in to carries the scheme it really uses.
+      // The client resolves the scheme itself (HydraApiClient._resolveScheme): the server is stored with the scheme it answers on.
       activeServer = server.copyWith(useTls: client.usesTls);
       await _authPrefs.saveConnection(server.host, server.port);
       await _authPrefs.saveUseTls(client.usesTls);
-      // HYDRA-UMC-SERVER's POST /api/login also returns an opaque
-      // refreshToken; a server predating that omits it. Either way a login
-      // REPLACES the stored one, so a refresh token left behind by a previous
-      // account can never be used for this session.
+      // POST /api/login also returns an opaque refreshToken (an older server omits it). A sign-in always REPLACES the stored one,
+      // so the refresh token of a previous account is never used for this session.
       final refreshToken = resp['refreshToken'] as String?;
       await _authPrefs.saveToken(token, server.username, refreshToken: refreshToken, replaceRefreshToken: true);
       _cacheUser = server.username;
@@ -1263,13 +1218,11 @@ class RobotViewModel extends ChangeNotifier {
     if (isBleScanning) unawaited(_bleScanner.stop());
     _metricsTimer?.cancel();
     _stateCacheTimer?.cancel();
-    // A pending debounced command (a speed change) would otherwise be sent
-    // after sign-out, with no token, and answer with a 401.
+    // A debounced command still waiting (a speed change) is dropped: it would go out without a token.
     commands.reset();
     stopAllResult = null;
     stopAllUnconfirmed = false;
-    // Clear the bearer token from the live apiClient too, not just from
-    // persisted storage.
+    // The bearer token is cleared from the live client as well as from storage.
     final client = apiClient;
     if (client != null) {
       for (final id in held) {
@@ -1288,9 +1241,8 @@ class RobotViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Strictly in order: read the refresh token, revoke it on the server
-  // (best-effort), then erase the stored session and the offline copy of the
-  // robot state (it can hold camera credentials and belongs to this session).
+  // In order: read the refresh token, revoke it on the server (best effort), then erase the stored session and the offline copy of
+  // the robot state (it can hold camera credentials).
   Future<void> _finishLogout(HydraApiClient? client) async {
     try {
       final refreshToken = await _authPrefs.loadRefreshToken();
@@ -1301,9 +1253,8 @@ class RobotViewModel extends ChangeNotifier {
     }
   }
 
-  // The session is over for good (the token is dead and could not be
-  // renewed): tell the user and sign out completely - socket, metrics poll,
-  // timers and stored tokens - not just flip the flag.
+  // The session is over (the token is dead and could not be renewed): the user is told and everything is closed (socket, metrics
+  // poll, timers, stored tokens).
   void _forceLogout() {
     if (!isLoggedIn) return;
     lastError = const HydraError(HydraErrorKind.wsAuthRejected);
@@ -1311,15 +1262,9 @@ class RobotViewModel extends ChangeNotifier {
     logout();
   }
 
-  /// try to recover a WebSocket 1008 (auth) close by exchanging the
-  /// stored refresh token for a fresh access token, before concluding the
-  /// session itself is dead. This app never stores a password (auth_prefs.dart's
-  /// own header comment on why), so ANDROID-CONTROL's "replay the remembered
-  /// password" approach doesn't apply; this mirrors HYDRA-UMC-DSI's / STUDIO's
-  /// own refresh-token client (HYDRA-UMC-SERVER 0.6.2). Fails closed exactly
-  /// where a real re-login is still correct: no refresh token on file, or a
-  /// non-success / 401 response (the refresh token itself expired, or the
-  /// account was genuinely revoked).
+  /// Tries to recover a WebSocket 1008 (auth) close by exchanging the stored refresh token for a new access token before the session
+  /// is declared dead. The app never stores a password, so there is no re-login to replay. Fails closed where a real sign-in is
+  /// still correct: no refresh token on file, or a refusal (401) because the refresh token expired or the account was revoked.
   Future<bool> _attemptTokenRefresh() async {
     final client = apiClient;
     final server = activeServer;
@@ -1342,14 +1287,11 @@ class RobotViewModel extends ChangeNotifier {
     }
   }
 
-  // Renewal and the repeat of a request after an expired token live in the
-  // SessionManager; these two names stay as the view model's entry to it.
+  // Renewal and the repeat of a request after an expired token belong to the SessionManager; these are the entry points to it.
   Future<bool> _renewSession() => _session.renewSession();
 
-  // The interceptor over the http client (network/renewing_client.dart) asks
-  // for a new token here when a request is answered with an expired session;
-  // the renewal is the same single-flight one, and a client that is no longer
-  // the live one is not renewed.
+  // Called by the interceptor of the http client (network/renewing_client.dart) when a request is answered with an expired
+  // session. It is the same single renewal; a client that is no longer the live one is not renewed.
   Future<String?> _renewedTokenOf(HydraApiClient client) async {
     if (!identical(client, apiClient)) return null;
     return await _renewSession() ? client.authToken : null;
@@ -1357,10 +1299,8 @@ class RobotViewModel extends ChangeNotifier {
 
   Future<T> _authed<T>(Future<T> Function(HydraApiClient client) call) => _session.authed(call);
 
-  // The server closed (or announced it would close) the socket because the
-  // token is dead: the error frame and the 1008 close that follows it about
-  // 100 ms later are ONE event. Renew once and reopen the socket with the new
-  // token; only a failed renewal signs the user out.
+  // The server closed the socket (or said it would) because the token is dead. The error frame and the 1008 close after it are one
+  // event: renew once and reopen the socket; only a failed renewal signs out.
   Future<void> _onWsAuthFailure(ServerInfo server) async {
     if (_handlingWsAuthFailure) return;
     _handlingWsAuthFailure = true;
@@ -1393,21 +1333,9 @@ class RobotViewModel extends ChangeNotifier {
     unawaited(connect());
   }
 
-  /// Called when the app is actually backgrounded (main.dart's own
-  /// _RootGateState.didChangeAppLifecycleState, AppLifecycleState.paused
-  /// specifically - not the merely-transient `inactive` state a system
-  /// alert or the app switcher also produces). Real gap found while
-  /// auditing the code: this app relied entirely on iOS's own OS-level
-  /// socket timeout to eventually notice a backgrounded connection was
-  /// dead, rather than actively closing it - HYDRA-UMC-ANDROID-CONTROL's
-  /// own equivalent already closes proactively. Explicitly disconnecting
-  /// here stops the 5s REST metrics poll and releases the socket the
-  /// moment the app leaves the foreground, instead of leaving both alive
-  /// against a connection the OS may suspend or kill on its own schedule.
-  /// Safe to call while logged out or already disconnected - both
-  /// `_ws?.disconnect()`/`_metricsTimer?.cancel()` are no-ops then.
-  /// `connect()` (via `reconnectIfNeeded()` on resume) fully
-  /// re-establishes both, so nothing here needs its own undo path.
+  /// Called when the app is backgrounded (AppLifecycleState.paused, not the transient `inactive` of a system alert or the app
+  /// switcher). It closes the socket and stops the metrics poll at once instead of leaving them to a connection the system may
+  /// suspend. Safe while signed out or already disconnected; `connect()` (through `reconnectIfNeeded()` on resume) restores both.
   void pauseForBackground() {
     _foreground = false;
     // Leaving the screen ends a held continuous jog.
@@ -1429,8 +1357,7 @@ class RobotViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Through _authed(): a token that expired while the app was closed is
-      // renewed with the refresh token instead of ending the session.
+      // Through _authed(): a token that expired while the app was closed is renewed with the refresh token.
       final settings = await _authed((c) => c.getSettings());
       state = HydraState(settings);
       isShowingCachedState = false;
@@ -1445,9 +1372,7 @@ class RobotViewModel extends ChangeNotifier {
       connectionStatus = 'error';
       _logTelemetry('REST sync error: $e');
       if (e is HydraApiException && e.isSessionProblem) {
-        // The token is dead and could not be renewed. Sign out for real and
-        // stop here: opening the socket and the metrics poll for a session
-        // that no longer exists only left them running behind the login screen.
+        // The token is dead and could not be renewed: sign out and stop here, without opening the socket or the metrics poll.
         _forceLogout();
         return;
       }
@@ -1497,10 +1422,8 @@ class RobotViewModel extends ChangeNotifier {
       onError: (error) {
         lastError = error;
         _logTelemetry('WebSocket error: ${error.params['message'] ?? error.params['error'] ?? error.kind.name}');
-        // The server's "Access denied" frame and the 1008 close that follows
-        // it (the WS layer's wsAuthRejected) mean the same thing: this token
-        // is dead. A client-side connection failure (wsConnectionLost/
-        // wsConnectFailed) is a connectivity problem, never an auth one.
+        // The "Access denied" frame and the 1008 close (wsAuthRejected) both mean the token is dead. A connection failure
+        // (wsConnectionLost, wsConnectFailed) is about connectivity, never about the session.
         final isAuthFailure = error.kind == HydraErrorKind.wsAuthRejected ||
             (error.kind == HydraErrorKind.serverMessage &&
                 (((error.params['message'] ?? '').contains('denied')) ||
@@ -1520,8 +1443,7 @@ class RobotViewModel extends ChangeNotifier {
     _metricsTimer?.cancel();
     _metricsTimer = Timer.periodic(const Duration(seconds: 5), (_) async {
       try {
-        // Carries the bearer token: a server run with
-        // HYDRA_UMC_INFO_AUTH=required answers 401 to the open read.
+        // Carries the bearer token: a server with HYDRA_UMC_INFO_AUTH=required answers 401 to an open read.
         final m = await client.getSystemMetrics();
         metricsListenable.value = SystemMetrics(
           cpuLoad: _asInt(m['cpu_load']),
@@ -1531,17 +1453,13 @@ class RobotViewModel extends ChangeNotifier {
           tempIsReal: m['temp_is_real'] != false,
         );
       } catch (_) {
-        // best-effort background poll - a miss doesn't clear the last known reading
+        // Best effort: a missed poll keeps the last reading.
       }
     });
   }
 
-  /// Sends a typed/recognised transcript from the in-app voice assistant
-  /// dialog through the authenticated Server boundary - same real
-  /// POST /api/voice/turn route HYDRA-UMC-ANDROID-CONTROL's own
-  /// postVoiceTurn()/sendVoiceTurn() use for its own in-app button. A reply
-  /// only ever carries text/status; it never invokes sendAtomicCommand or
-  /// changes robot state directly.
+  /// Sends a typed or recognised transcript of the in-app assistant through POST /api/voice/turn. A reply carries only text and
+  /// status: it never calls sendAtomicCommand and never changes the robot state.
   Future<void> sendVoiceTurn(String transcript) async {
     final client = apiClient;
     if (client == null) {
@@ -1570,20 +1488,12 @@ class RobotViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Applies one {controllerId, robotId, patch, cameraId?, cameraPatch?}
-  /// delta in place onto state.raw's own nested Maps - RobotView/
-  /// ControllerView already read/write through to these same objects (see
-  /// models/hydra_state.dart's own header comment), so mutating here is
-  /// visible everywhere else immediately, no rebuild needed.
+  /// Applies one {controllerId, robotId, patch, cameraId?, cameraPatch?} delta in place on the maps of state.raw (RobotView and
+  /// ControllerView read through to them, so every screen sees it at once).
   ///
-  /// Looks the robot up by controllerId + robotId directly rather than via
-  /// HydraState.robotById() (which only searches activeController) - a
-  /// delta can legitimately target a robot in a non-active controller in a
-  /// multi-controller swarm. Validates the robot exists locally BEFORE
-  /// touching anything: if it doesn't, the delta is discarded and a full
-  /// reload is forced instead of ever creating a "ghost" robot from a
-  /// partial patch - the delta-sync design mitigation (b),
-  /// non-optional.
+  /// The robot is looked up by controllerId and robotId, because a delta may target a robot of a controller that is not the active
+  /// one. When the robot does not exist locally the delta is discarded and a full reload is forced: a partial patch never creates
+  /// a robot.
   void _applyRobotDelta(Map<String, dynamic> msg) {
     final controllerId = msg['controllerId'];
     final robotId = msg['robotId'];
@@ -1658,10 +1568,9 @@ class RobotViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Applies [command]/[params] to [robotId] (defaults to the selected
-  /// robot) and, when [propagateToCombined] is true, its own combinedWith
-  /// siblings too - locally for instant UI feedback via [localMutate], then
-  /// via the real atomic endpoint. See this file's own header comment.
+  /// Applies [command] and [params] to [robotId] (the selected robot by default) and, when [propagateToCombined] is true, to its
+  /// combinedWith robots: locally at once through [localMutate], then through the atomic endpoint. A failure restores the previous
+  /// values (see the contract in the header of this file).
   Future<void> _sendAtomicCommand(
     String command, {
     Map<String, dynamic>? params,
@@ -1688,10 +1597,7 @@ class RobotViewModel extends ChangeNotifier {
 
     final client = apiClient;
     if (client == null) {
-      // Nothing to roll back yet (no mutation applied below) - but this was
-      // previously a silent no-op with zero feedback, so a stray command
-      // fired while disconnected just vanished with no sign anything was
-      // wrong.
+      // Nothing was changed yet, so there is nothing to roll back; the person is told there is no connection.
       lastError = const HydraError(HydraErrorKind.notConnected);
       notifyListeners();
       return;
@@ -1755,11 +1661,8 @@ class RobotViewModel extends ChangeNotifier {
 
     void rollback() {
       for (final entry in snapshots.entries) {
-        // Skip the rollback if a newer command for this same robot has
-        // already started since this one's snapshot was taken (see
-        // _commandGeneration's own header comment) - this failure is stale,
-        // and restoring its snapshot now would overwrite whatever that
-        // newer command already applied.
+        // A newer command of the same robot has started since this snapshot (see _commandGeneration): this failure is stale and
+        // must not overwrite what the newer command applied.
         if (_commandGeneration[entry.key] != myGeneration[entry.key]) continue;
         final r = state.robotById(entry.key);
         if (r != null) {
@@ -1819,11 +1722,8 @@ class RobotViewModel extends ChangeNotifier {
       }
     }
 
-    // Debounced (same real mechanism as HYDRA-UMC-ANDROID-CONTROL's own
-    // sendAtomicCommand): cancel any still-pending send for this exact
-    // command name, then schedule a new one after `debounce` - a rapid
-    // burst of calls for the same command (e.g. every Slider drag frame)
-    // collapses into exactly one real POST once the drag settles.
+    // Debounce: a send still pending for this command name is cancelled and a new one is scheduled after `debounce`, so a burst
+    // (every frame of a slider drag) becomes one POST once it settles.
     await commands.debounce(command, debounce, send);
   }
 
@@ -1962,10 +1862,8 @@ class RobotViewModel extends ChangeNotifier {
       case 'play':
         _sendAtomicCommand(command, propagateToCombined: true, localMutate: (r) => r.setPlaying(true));
       case 'pause':
-        // Sent as an explicit desired state, computed once from the selected
-        // robot and applied identically to its combined group. Toggling each
-        // member from its own local state let a pair drift in opposite
-        // directions, while the server resolves one desired state.
+        // Sent as an explicit desired state, computed once from the selected robot and applied to its whole combined group, so a
+        // pair never drifts in opposite directions.
         final paused = !(selectedRobot?.isPaused ?? false);
         _sendAtomicCommand(command, params: {'paused': paused}, propagateToCombined: true, localMutate: (r) => r.setPaused(paused));
       case 'stop':
@@ -1988,9 +1886,8 @@ class RobotViewModel extends ChangeNotifier {
 
   // ---- Global STOP -------------------------------------------------------
   //
-  // One tap, no confirmation, every robot: POST /api/stop-all. It does not
-  // wait for any roster refresh and a reservation held by another account
-  // never blocks it.
+  // One tap, no confirmation, every robot: POST /api/stop-all. It waits for no roster refresh and a reservation held by another
+  // account never blocks it.
 
   /// The newest answer of the global STOP, shown until the user closes it.
   StopAllResult? stopAllResult;
@@ -2057,8 +1954,7 @@ class RobotViewModel extends ChangeNotifier {
         result = StopAllResult.fromJson(await _postStopAllWithRetry());
       } on HydraApiException catch (e) {
         if (e.isRateLimited || e.isNotFound) {
-          // Over the global route's rate limit, or an older server without
-          // it: stop the robots one by one instead.
+          // Over the rate limit of the global route, or a server without it: the robots are stopped one by one.
           result = await _stopEachRobot();
         } else {
           failure = e;
@@ -2130,8 +2026,7 @@ class RobotViewModel extends ChangeNotifier {
     return StopAllResult.fromRobots(entries, viaFallback: true);
   }
 
-  // Reads the state again after a STOP (the WebSocket deltas usually got there
-  // first); a failure is ignored, the socket keeps the picture up to date.
+  // Reads the state again after a STOP (the socket usually delivered it first); a failure is ignored.
   void _refreshAfterStopAll() {
     if (apiClient == null) return;
     unawaited(
@@ -2147,10 +2042,8 @@ class RobotViewModel extends ChangeNotifier {
 
   // ---- Reservations, safety limits and jog arming (contract v2, block 1) ----
   //
-  // Reservations are optional: a robot nobody reserved is commanded as before.
-  // The controller id (HydraApiClient.controllerId) is sent with every reserve,
-  // release, jog-arm and command, so a reservation belongs to the account AND
-  // to this installation.
+  // Reservations are optional: a robot nobody reserved is commanded as before. The controller id (HydraApiClient.controllerId) goes
+  // with every reserve, release, jog-arm and command, so a reservation belongs to the account and to this installation.
 
   /// Every active reservation, as of the last refresh (GET /api/claims).
   List<ClaimInfo> claims = const [];
@@ -2178,8 +2071,7 @@ class RobotViewModel extends ChangeNotifier {
   ClaimStanding claimStandingOf(dynamic robotId) =>
       claimStanding(claimOf(robotId), _myUsername ?? activeServer?.username ?? '', controllerId);
 
-  // The account name of this session: a restored session has no password and
-  // so no username on the server entry; the saved one is read once.
+  // The account name of this session; a restored session has no username on the server entry, so the saved one is read once.
   String? _myUsername;
 
   /// True when the server requires the jog of [robotId] to be armed and it is
@@ -2217,8 +2109,7 @@ class RobotViewModel extends ChangeNotifier {
           safetyByRobot[robotId] = safety;
           final until = safety.jogArmedUntil;
           final now = DateTime.now();
-          // The server clock and this device clock may differ: the arming is
-          // shown as ending no later than its length allows.
+          // The clocks may differ: the arming is shown as ending no later than its length allows.
           if (until != null && until > now.millisecondsSinceEpoch) {
             final byServer = DateTime.fromMillisecondsSinceEpoch(until);
             final byLength = now.add(Duration(milliseconds: safety.armTtlMs));
@@ -2704,9 +2595,7 @@ class RobotViewModel extends ChangeNotifier {
     _sendAtomicCommand(RobotCommandContract.pump, params: {'index': index, 'state': newState}, localMutate: (r) => r.setPump(index, newState));
   }
 
-  /// Debounced (300ms, matching HYDRA-UMC-ANDROID-CONTROL's own setSpeed) -
-  /// a dragged Slider's onChanged (ui/control_screen.dart) fires this many
-  /// times a second.
+  /// Debounced (300 ms): the slider of the Control screen fires many times a second while dragged.
   /// Sets the jog step of the robot on the server, so every client that shows it uses the same one (the `jogStep` command).
   void setJogStep(double step) {
     if (!step.isFinite || step <= 0 || step > 1000) return;
@@ -2730,11 +2619,8 @@ class RobotViewModel extends ChangeNotifier {
     );
   }
 
-  /// Toggles a robot's vision system on/off from the Camera screen
-  /// (server.ts's own "vision" command). Takes an explicit robotId since
-  /// the camera being browsed isn't necessarily the globally selected
-  /// control robot - same design as HYDRA-UMC-ANDROID-CONTROL's own
-  /// setVisionEnabled(robotId, enabled).
+  /// Switches the vision system of a robot from the Camera screen (the `vision` command). It takes the robot id because the
+  /// camera being browsed is not necessarily the selected robot.
   void setVisionEnabled(dynamic robotId, bool enabled) {
     _sendAtomicCommand(
       'vision',

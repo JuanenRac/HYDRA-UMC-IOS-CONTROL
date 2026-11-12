@@ -187,12 +187,8 @@ class _RobotCard extends StatelessWidget {
   }
 }
 
-/// Formats seconds into a human-readable uptime string (e.g. "2d 4h 15m") -
-/// same algorithm and same deliberately untranslated d/h/m units (matching
-/// this ecosystem's short-technical-abbreviation convention, e.g. E-STOP)
-/// as HYDRA-UMC-ANDROID-CONTROL's own ui/DashboardScreen.kt formatUptime(),
-/// ported here so this app's Dashboard matches that one instead of only
-/// ever showing a raw hours-with-one-decimal figure.
+/// Formats seconds as an uptime such as "2d 4h 15m". The d, h and m units are not translated, like the other short technical
+/// abbreviations of the ecosystem (E-STOP).
 String formatUptime(int seconds) {
   final d = seconds ~/ 86400;
   final h = (seconds % 86400) ~/ 3600;

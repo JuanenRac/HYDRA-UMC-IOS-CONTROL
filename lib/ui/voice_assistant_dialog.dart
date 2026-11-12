@@ -3,20 +3,9 @@
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
 // GPL-3.0-or-later - see LICENSE
 //
-// Lets the operator ask HYDRA-UMC-VOICE-UI a question or give it an order
-// by typing - the same real POST /api/voice/turn route
-// HYDRA-UMC-ANDROID-CONTROL's own in-app voice button and paired-Watch
-// relay both use. Text input only for now: unlike Android's
-// RecognizerIntent (a system intent, always present), on-device speech
-// recognition on iOS needs the native Speech framework wired through a
-// real plugin and Info.plist entries (NSSpeechRecognitionUsageDescription/
-// NSMicrophoneUsageDescription) that this Windows-only development
-// environment cannot build or verify against a real device/Xcode - see
-// this repo's own established precedent (network/README notes on
-// BLE/notifications/widget gaps) for not claiming an Xcode-only feature
-// verified when it never actually ran on one. Typing already delivers the
-// real request in full (ask a question or give an order); a mic button can
-// follow once there's a way to actually build and test it.
+// Lets the operator ask HYDRA-UMC-VOICE-UI a question or give it an order by typing, through POST /api/voice/turn (the route of
+// the assistant of the Android app). Text input only: dictation is a separate native channel (state/external_surfaces.dart) that
+// needs the Speech framework and its Info.plist entries on a real device.
 // =============================================================================
 
 import 'package:flutter/material.dart';

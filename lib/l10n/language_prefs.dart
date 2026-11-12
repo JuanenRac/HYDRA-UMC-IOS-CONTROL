@@ -3,12 +3,8 @@
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
 // GPL-3.0-or-later - see LICENSE
 //
-// Persists an explicit language override across launches via
-// shared_preferences (same "remember me" mechanism as
-// network/auth_prefs.dart) - the same precedence order this ecosystem
-// already uses in HYDRA-UMC-UPDATER's own i18n.py resolveInitialLang():
-// a previously saved choice on this device, then the OS's own configured
-// locale (when it's one of the 7 this app ships), then English.
+// Persists the language chosen in Settings across launches (shared_preferences). The language is resolved in this order: the saved
+// choice, then the language of the system when it is one of the supported ones, then English.
 // =============================================================================
 
 import 'dart:ui';

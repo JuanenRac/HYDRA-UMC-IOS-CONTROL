@@ -3,26 +3,13 @@
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
 // GPL-3.0-or-later - see LICENSE
 //
-// Ported from HYDRA-UMC-ANDROID-CONTROL's own network/StateCache.kt: a
-// persistent cache of the last known settings tree (models/hydra_state.dart's
-// own HydraState.raw - the exact same shape the server's own WS/REST
-// payload already uses, so no separate serialization schema to keep in
-// sync), so the Dashboard/Control screens show real, if possibly stale,
-// robot data immediately on launch instead of an empty state while the
-// live connect() round-trip is still in flight - genuinely useful on a
-// phone that just came back into WiFi range. Superseded by the real
-// connect() the moment it succeeds; this cache exists purely for that
-// brief offline/reconnecting window, not as a source of truth.
+// Persistent cache of the last known settings tree (HydraState.raw, the shape of the server payload), so the Dashboard and the
+// Control screen show the saved robots at once on launch instead of an empty state while connect() is still running. The live
+// connect() replaces it as soon as it succeeds; the cache is a stop-gap for the offline or reconnecting window, never a source
+// of truth.
 //
-// this class used to save/load the raw tree with no timestamp at
-// all - exactly the plain "visual cache" the original idea warned
-// against, with no way for a caller to know whether what's on screen is
-// five seconds or five days old if a real reconnect never happens (a
-// dead server, a wrong host after a device restore, ...). loadCachedState()
-// now returns that real save instant alongside the data, mirroring
-// HYDRA-UMC-WATCH's own real LastKnownStateCache.kt (staleAfterMs/isStale)
-// - the same real risk, the same real fix, ported to this persistent
-// (not in-memory) cache.
+// loadCachedState() returns the save instant with the data, so the caller can tell how old what is on screen is (isStale, as in
+// the last-known-state cache of the watch app). A cache without a timestamp is treated as maximally stale.
 // =============================================================================
 
 import 'dart:convert';
@@ -105,7 +92,9 @@ class StateCache {
     }
   }
 
-  /// Same real success/failure contract as [loadState] (null on first
+  /// Like [loadState] (null on first launch or a corrupt cache), plus the instant it was saved. A cache with no recorded
+  /// timestamp reports [CachedState.savedAt] as `DateTime.fromMillisecondsSinceEpoch(0)`: an unknown age is maximally stale, never
+  /// "just saved".
   /// launch or a corrupt cache), but also carries the real save instant -
   /// see this file's own header note. A cache saved by an older app
   /// build with no recorded timestamp (an in-place update from before

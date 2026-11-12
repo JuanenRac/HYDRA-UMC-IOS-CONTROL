@@ -45,26 +45,10 @@ void _surfaceAsyncError(Object error) {
   );
 }
 
-/// Global error handling: without this, an uncaught exception (a bad
-/// server payload, a null a screen didn't guard against, ...) either shows
-/// Flutter's own default ErrorWidget - a blank grey box with zero
-/// information in a release build, red text only in debug - or, for an
-/// error thrown outside Flutter's own build/layout/paint pipeline (a
-/// fire-and-forget async callback with no try/catch), an unhandled
-/// exception that crashes the whole isolate with no on-screen sign
-/// anything went wrong at all. Neither gives the operator any indication
-/// of what happened or a way to recover short of force-quitting the app.
-///
-/// debugPrint alone (the only channel this had before) is a real gap for
-/// the 2 async-error paths below: it's a no-op in release builds with no
-/// attached debugger/log tool, so an uncaught async error there used to be
-/// genuinely invisible - the app would just silently stop doing whatever
-/// that callback was supposed to do, with the operator seeing nothing.
-/// _surfaceAsyncError() adds a real on-screen SnackBar via the root
-/// ScaffoldMessengerKey for those 2 paths; the 3rd path (a widget failing
-/// to build) already gets its own dedicated on-screen message via
-/// ErrorWidget.builder/_CrashScreen below, so it isn't routed through
-/// _surfaceAsyncError() too (that would double-report the same failure).
+/// Global error handling. An uncaught error is made visible: a widget that fails to build shows a message on the screen
+/// (ErrorWidget.builder, _CrashScreen), and an error in an async callback outside the build pipeline shows a SnackBar through
+/// the root ScaffoldMessengerKey (_surfaceAsyncError). The build failures do not go through _surfaceAsyncError, so one failure is
+/// reported once. debugPrint stays as the log, but is silent in a release build.
 void main() {
   FlutterError.onError = (details) {
     FlutterError.presentError(details);
@@ -205,12 +189,8 @@ class HydraUmcControlApp extends StatelessWidget {
   }
 }
 
-/// Shows the login screen until a session is active - mirrors
-/// HYDRA-UMC-ANDROID-CONTROL's own MainActivity gating on isLoggedIn.
-/// needsBiometricUnlock is checked first: a restored session with the
-/// biometric gate enabled (see state/robot_view_model.dart's own init())
-/// must not fall through to MainScreen just because isLoggedIn is already
-/// true.
+/// Shows the login screen until a session is active. needsBiometricUnlock is checked first: a restored session behind the
+/// biometric gate (init() in state/robot_view_model.dart) does not reach MainScreen just because isLoggedIn is already true.
 ///
 /// Also the one WidgetsBindingObserver for the whole app: iOS suspends (and
 /// may eventually kill) network sockets while the app is backgrounded, so

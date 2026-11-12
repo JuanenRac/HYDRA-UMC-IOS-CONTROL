@@ -3,20 +3,10 @@
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
 // GPL-3.0-or-later - see LICENSE
 //
-// Thin wrapper over package:local_auth, playing the same role
-// HYDRA-UMC-ANDROID-CONTROL's own util/BiometricHelper.kt plays there:
-// isAvailable() gates whether settings_screen.dart even offers the toggle,
-// authenticate() shows the native Face ID/Touch ID/Windows Hello prompt.
-// Adapted to this app's own architecture rather than a literal port:
-// Android's version gates re-entering a remembered username/password (this
-// app never stores a raw password at all, only a bearer token - see
-// auth_prefs.dart), so here it gates restoring an already-valid saved
-// session on launch instead (see state/robot_view_model.dart's own
-// init()/unlockWithBiometrics()) - same "strengthen the login" goal,
-// adapted to what this app actually persists.
-// biometricOnly: true mirrors Android's BIOMETRIC_STRONG|BIOMETRIC_WEAK
-// (no device-credential/passcode fallback allowed) as closely as
-// local_auth's own cross-platform API allows.
+// Thin wrapper over package:local_auth. isAvailable() decides whether settings_screen.dart offers the toggle; authenticate()
+// shows the native Face ID, Touch ID or Windows Hello prompt, with biometricOnly: true (no passcode fallback).
+// The app stores a bearer token and never a password, so the gate protects the restore of an already valid saved session on
+// launch (see init() and unlockWithBiometrics() in state/robot_view_model.dart).
 // =============================================================================
 
 import 'package:local_auth/local_auth.dart';

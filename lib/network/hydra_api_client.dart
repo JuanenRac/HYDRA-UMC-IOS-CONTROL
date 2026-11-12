@@ -55,13 +55,8 @@ import 'tls_settings.dart';
 export 'package:hydra_umc_app_common/hydra_umc_app_common.dart' show HydraApiException, TokenRenewer;
 
 class HydraApiClient extends HydraApiCore {
-  // Starts as plain HTTP - getHydraInfo() below switches it to HTTPS the
-  // first time a plain-HTTP probe gets no answer at all and an HTTPS one
-  // does (server.ts's own optional TLS_CERT_PATH/TLS_KEY_PATH switches a
-  // server to HTTPS/WSS-only, no HTTP fallback of its own). Mirrors
-  // HYDRA-UMC-ANDROID-CONTROL's own HydraApiClient.baseUrl/usesTls -
-  // same real fix, same reasoning, independently implemented per client.
-
+  // Starts as plain HTTP; getHydraInfo() switches to HTTPS the first time a plain probe gets no answer and an HTTPS one does
+  // (a server with TLS_CERT_PATH and TLS_KEY_PATH answers HTTPS and WSS only, with no HTTP fallback).
   /// True once this server was seen answering over TLS (or was saved so).
   bool _tlsSeen;
 

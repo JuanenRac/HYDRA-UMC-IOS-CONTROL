@@ -3,16 +3,9 @@
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
 // GPL-3.0-or-later - see LICENSE
 //
-// Ported from HYDRA-UMC-ANDROID-CONTROL's own ui/TelemetryScreen.kt (the
-// Logs tab only - that file's own second "Ecosystem" tab reads a separate
-// GET /api/ecosystem/status endpoint and is a materially larger feature of
-// its own, not part of this port). A terminal-style, newest-first,
-// monospace log of real connection/command lifecycle events
-// (state/robot_view_model.dart's own telemetryLog/_logTelemetry()) - green
-// text on black, red for anything that looks like an error, same "Matrix
-// Green" convention as the Android app. Log content is deliberately never
-// localized (a diagnostic trail, not user-facing chrome) - only this
-// screen's own title/empty-state/tooltip go through AppLocalizations.
+// The Logs tab: a terminal-style log, newest first, in monospace, of the connection and command events of the view model
+// (telemetryLog, _logTelemetry()): green text on black, red for anything that looks like an error. The content of the log is
+// never localized (it is a diagnostic trail); only the title, the empty state and the tooltip use AppLocalizations.
 // =============================================================================
 
 import 'package:flutter/material.dart';

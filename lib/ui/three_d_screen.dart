@@ -3,18 +3,9 @@
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
 // GPL-3.0-or-later - see LICENSE
 //
-// Embeds HYDRA-UMC-STUDIO's own real-time 3D viewport in a WebView
-// (?hideUI=true&robotId=#token=) - same approach
-// HYDRA-UMC-ANDROID-CONTROL's own ui/ThreeDScreen.kt uses, for the same
-// reason: gets the real, currently-shipping STUDIO 3D scene (every real
-// robot mesh/kinematics) for free instead of reimplementing it natively.
-// webview_flutter only ships an Android/iOS(+macOS) platform
-// implementation - guarded behind Platform.isIOS/isAndroid so this screen
-// degrades to an honest placeholder rather than crashing on platforms it
-// doesn't support (this app's primary target is iOS; the Windows desktop
-// target exists so this app's own logic can be built and run on a
-// Windows dev machine without needing a Mac, but 3D falls back to a
-// placeholder there since webview_flutter has no Windows implementation).
+// Embeds the 3D viewport of HYDRA-UMC-STUDIO in a WebView (?hideUI=true&robotId=#token=), so the scene and the kinematics of every
+// robot are the ones STUDIO ships. webview_flutter has an implementation for Android and iOS only: on other platforms (the
+// Windows desktop target used to run the app logic without a Mac) the screen shows a placeholder instead of failing.
 // =============================================================================
 
 import 'dart:io' show Platform;
