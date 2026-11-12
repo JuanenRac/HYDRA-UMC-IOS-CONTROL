@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **The camera screen listens to the fields it draws, not to the whole view model:** it is redrawn when its robots, their cameras, the server address or the media headers change, and no longer for the metrics tick or for a field that is not its own; `test/selector_rebuild_test.dart` checks both directions (2 more tests).
+
 - **The global STOP is tested to be on screen where robots are driven:** `test/stop_presence_test.dart` (2 widget tests) checks that the Control tab carries the large global STOP once a robot is selected and that the main screen carries the one of its bar, with or without a robot.
 
 - **The Swift tests report their line coverage on the simulator:** the manual workflow `ios-xcodebuild-test.yml` now runs `xcodebuild test` with code coverage on, keeps the result bundle and prints the coverage of the targets and the least covered files of the app (`xccov`) in the summary of the run.

@@ -20,6 +20,7 @@ import 'package:hydra_umc_control/l10n/app_localizations.dart';
 import 'package:hydra_umc_control/models/access.dart';
 import 'package:hydra_umc_control/network/auth_prefs.dart';
 import 'package:hydra_umc_control/state/robot_view_model.dart';
+import 'package:hydra_umc_control/ui/camera_screen.dart';
 import 'package:hydra_umc_control/ui/control_screen.dart';
 
 class _Backend implements SecureTokenBackend {
@@ -135,6 +136,43 @@ void main() {
         vm.poke();
       });
       expect(related, contains('ControlScreen'), reason: change.key);
+    }
+  });
+
+  testWidgets('the camera screen ignores what it does not show', (tester) async {
+    final vm = await _pump(tester, const CameraScreen());
+    addTearDown(vm.dispose);
+    await tester.pumpAndSettle();
+    vm.poke();
+    await tester.pump();
+    final unrelated = await _rebuilt(tester, () async {
+      vm.connectionStatus = 'connected';
+      vm.isShowingCachedState = true;
+      vm.confirmPlay = !vm.confirmPlay;
+      vm.poke();
+    });
+    expect(unrelated, isNot(contains('CameraScreen')));
+  });
+
+  testWidgets('the camera screen follows the robots and their cameras', (tester) async {
+    final vm = await _pump(tester, const CameraScreen());
+    addTearDown(vm.dispose);
+    await tester.pumpAndSettle();
+    vm.poke();
+    await tester.pump();
+    final changes = <String, void Function()>{
+      'the robot goes offline': () => vm.selectedRobot!.raw['online'] = false,
+      'the vision of the robot is switched': () => vm.selectedRobot!.raw['visionEnabled'] = true,
+      'a camera is assigned to the robot': () => vm.state.raw['controllers'][0]['cameras'] = [
+        {'id': 'cam-9', 'assignedRobotId': 1},
+      ],
+    };
+    for (final change in changes.entries) {
+      final related = await _rebuilt(tester, () async {
+        change.value();
+        vm.poke();
+      });
+      expect(related, contains('CameraScreen'), reason: change.key);
     }
   });
 }

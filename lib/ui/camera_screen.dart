@@ -4,12 +4,28 @@
 // GPL-3.0-or-later - see LICENSE
 // =============================================================================
 
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../l10n/app_localizations.dart';
 import '../state/robot_view_model.dart';
 import 'widgets/mjpeg_view.dart';
+
+/// Everything the camera screen draws or decides from the view model, as one text: the screen is redrawn when this text
+/// changes and not when only the metrics do. A field the screen starts to read must be added here
+/// (test/selector_rebuild_test.dart checks the fields it has now). The media headers carry the session, so only a
+/// digest of them is kept in the text.
+String cameraScreenShape(RobotViewModel vm) {
+  return jsonEncode([
+    vm.robots.map((r) => r.raw).toList(),
+    for (final r in vm.robots) vm.cameraIdFor(r),
+    vm.serverBaseUrl,
+    vm.activeServer != null,
+    vm.apiClient?.mediaHeaders.toString().hashCode,
+  ]);
+}
 
 class CameraScreen extends StatefulWidget {
   /// False while another tab is shown: the picture is then not downloaded or
@@ -27,7 +43,9 @@ class _CameraScreenState extends State<CameraScreen> {
   @override
   Widget build(BuildContext context) {
     if (!widget.active) return const SizedBox.shrink();
-    final vm = context.watch<RobotViewModel>();
+    // Redrawn when something this screen draws or decides changes (see cameraScreenShape), not for the metrics tick.
+    context.select<RobotViewModel, String>(cameraScreenShape);
+    final vm = context.read<RobotViewModel>();
     final l10n = AppLocalizations.of(context)!;
     final robots = vm.robots;
     if (robots.isEmpty) {
