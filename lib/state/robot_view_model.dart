@@ -135,6 +135,19 @@ class RobotViewModel extends ChangeNotifier {
   /// When on (it is, until the person turns it off), PLAY shows what it is about to start and asks first.
   bool confirmPlay = true;
 
+  /// Listen-only mode: the app shows the robots and their data but sends no command. Off by default. STOP (the global one and
+  /// the per-robot one) and the safe-mode `disable` keep working, because refusing a stop would be the unsafe side; every other
+  /// command is dropped here, whatever screen asked for it.
+  bool listenOnly = false;
+
+  /// Switches listen-only mode, and keeps the choice. A jog that is held stops when it is switched on.
+  Future<void> setListenOnly(bool value) async {
+    listenOnly = value;
+    if (value) deadMan.interrupt();
+    notifyListeners();
+    await _clientPrefs.saveListenOnly(value);
+  }
+
   /// HOME/RESET switch (see util/home_reset.dart); off until the person turns it on, the default comes from the contract.
   bool homeResetEnabled = RobotCommandContract.homeResetEnabledByDefault;
 
@@ -276,6 +289,7 @@ class RobotViewModel extends ChangeNotifier {
     TlsSettingsStore.current = tlsSettings;
     blockCommandsOnSavedData = await _clientPrefs.loadBlockCommandsOnSavedData();
     confirmPlay = await _clientPrefs.loadConfirmPlay();
+    listenOnly = await _clientPrefs.loadListenOnly();
     homeResetEnabled = await _clientPrefs.loadHomeReset(RobotCommandContract.homeResetEnabledByDefault);
     deadMan.enabled = await _clientPrefs.loadFlag(ClientFlags.deadManJog, RobotCommandContract.deadManEnabledByDefault);
     deadMan.blockOnBadLink = await _clientPrefs.loadFlag(ClientFlags.linkBlockJog, RobotCommandContract.linkBlockJogOnBadLinkDefault);
@@ -1121,6 +1135,7 @@ class RobotViewModel extends ChangeNotifier {
   /// screen calls it only after the last step; the checks run again here, so a robot that started moving between
   /// the steps is not reset. A refusal shows its own phrase and nothing goes out.
   void homeReset() {
+    if (listenOnly) return;
     final id = selectedRobotId;
     if (id == null) return;
     final block = homeResetBlock(id);
@@ -1579,6 +1594,7 @@ class RobotViewModel extends ChangeNotifier {
     Duration debounce = Duration.zero,
     required void Function(RobotView) localMutate,
   }) async {
+    if (listenOnly && command != RobotCommandContract.stop && command != RobotCommandContract.disable) return;
     final robotId = robotIdOverride ?? selectedRobotId;
     if (robotId == null) return;
     // A stop (or safe mode) of the robot ends a continuous jog that is held.
@@ -1730,6 +1746,19 @@ class RobotViewModel extends ChangeNotifier {
   /// How one command reaches the server: through [_authed], so an expired session is renewed once and the write repeated.
   /// A stop goes out with short timeouts.
   Future<Map<String, dynamic>> _postCommand(
+    dynamic robotId,
+    Map<String, dynamic> payload, {
+    required bool urgent,
+    String? ifMatch,
+  }) async {
+    final command = payload['command'];
+    if (listenOnly && command != RobotCommandContract.stop && command != RobotCommandContract.disable) {
+      throw StateError('listen only');
+    }
+    return _postCommandUnguarded(robotId, payload, urgent: urgent, ifMatch: ifMatch);
+  }
+
+  Future<Map<String, dynamic>> _postCommandUnguarded(
     dynamic robotId,
     Map<String, dynamic> payload, {
     required bool urgent,

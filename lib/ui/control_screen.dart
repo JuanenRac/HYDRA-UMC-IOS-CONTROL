@@ -48,6 +48,7 @@ String controlScreenShape(RobotViewModel vm) {
     vm.accessBusy,
     vm.conditionalMode.toString(),
     vm.confirmPlay,
+    vm.listenOnly,
     vm.homeResetEnabled,
     vm.homeResetBlock(id).name,
     vm.isAdmin,
@@ -128,6 +129,20 @@ class _ControlScreenState extends State<ControlScreen> {
 
     return Column(
       children: [
+        if (vm.listenOnly)
+          Container(
+            key: const Key('listen-only-banner'),
+            width: double.infinity,
+            color: const Color(0xFF334155),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              children: [
+                const Icon(Icons.hearing, size: 18),
+                const SizedBox(width: 8),
+                Expanded(child: Text(l10n.controlListenOnlyBanner)),
+              ],
+            ),
+          ),
         Padding(
           padding: const EdgeInsets.all(12),
           child: DropdownButtonFormField<dynamic>(

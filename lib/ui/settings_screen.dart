@@ -116,6 +116,14 @@ class SettingsScreen extends StatelessWidget {
           value: vm.confirmPlay,
           onChanged: (value) => vm.setConfirmPlay(value),
         ),
+        SwitchListTile(
+          key: const Key('settings-listen-only'),
+          secondary: const Icon(Icons.hearing),
+          title: Text(l10n.settingsListenOnly),
+          subtitle: Text(l10n.settingsListenOnlySubtitle),
+          value: vm.listenOnly,
+          onChanged: (value) => vm.setListenOnly(value),
+        ),
         // HOME/RESET moves the real robot to zero: off by default, two confirmations when on.
         SwitchListTile(
           key: const Key('settings-home-reset'),

@@ -42,6 +42,19 @@ class ClientPrefs extends ClientPrefsCore {
   static const _keyDictationOnline = 'hydra_dictation_online';
   static const _keyWatch = 'hydra_watch_companion';
 
+  static const _keyListenOnly = 'hydra_listen_only';
+
+  /// Whether the app is in listen-only mode (it sends no command but STOP); off before any choice.
+  Future<bool> loadListenOnly() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_keyListenOnly) ?? false;
+  }
+
+  Future<void> saveListenOnly(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyListenOnly, value);
+  }
+
   Future<bool> loadBlockCommandsOnSavedData() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool(_keyBlockOnSavedData) ?? false;
