@@ -21,6 +21,7 @@ import '../l10n/app_localizations.dart';
 import '../models/hydra_state.dart';
 import '../models/robot_command_contract.dart';
 import '../models/access.dart';
+import '../network/listen_only_gate.dart';
 import '../state/robot_view_model.dart';
 import '../util/home_reset.dart';
 import '../util/play_confirmation.dart';
@@ -207,7 +208,7 @@ class _ControlScreenState extends State<ControlScreen> {
                   IgnorePointer(
                     ignoring: listenOnly,
                     child: Opacity(
-                      opacity: listenOnly ? 0.4 : 1,
+                      opacity: ListenOnlyGate.controlOpacity(listenOnly),
                       child: Column(
                         children: [
                           _speedAccelSliders(vm, robot, l10n),

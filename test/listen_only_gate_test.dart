@@ -68,4 +68,10 @@ void main() {
     await transport.send(const HttpRequestData('POST', 'http://127.0.0.1:3000/api/stop-all'));
     expect(sent, 3);
   });
+
+  test('the controls are dimmed only while the mode is on', () {
+    expect(ListenOnlyGate.controlOpacity(false), 1.0);
+    expect(ListenOnlyGate.controlOpacity(true), ListenOnlyGate.dimmedOpacity);
+    expect(ListenOnlyGate.dimmedOpacity, inInclusiveRange(0.2, 0.6));
+  });
 }

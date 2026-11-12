@@ -16,6 +16,10 @@ import 'package:hydra_umc_app_common/hydra_umc_app_common.dart' show HttpRespons
 class ListenOnlyGate {
   ListenOnlyGate._();
 
+  /// Opacity of the controls that the mode disables (the same dimming as the DSI); full opacity when it is off.
+  static const double dimmedOpacity = 0.4;
+  static double controlOpacity(bool on) => on ? dimmedOpacity : 1.0;
+
   /// Set by the view model with the switch of the settings; off until the person turns it on.
   static bool enabled = false;
 
