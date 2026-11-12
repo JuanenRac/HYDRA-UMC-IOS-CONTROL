@@ -72,6 +72,8 @@ Ansichten der App: **Anmeldung** (Serveradresse, Konto, ein Scan des lokalen Net
 
 **HYDRA-UMC-IOS-CONTROL** ist die Bedienkonsole von HYDRA-UMC für iPhone und iPad. Sie ist in Flutter geschrieben, damit sich ihre Logik unter Windows bauen, ausführen und testen lässt; der iOS-Build selbst braucht weiterhin Xcode auf einem Mac. Sie findet einen HYDRA-UMC-SERVER im lokalen Netz, meldet sich an, zeigt und bewegt die Roboter, überwacht ihre Kameras und eine 3D-Ansicht und stoppt mit einem Tipp alles, mit demselben Fernsteuerungsvertrag wie die SUITE und die Android-App. Sie ist kein Sicherheitsgerät.
 
+> **Plattform:** Wo dieses README CM5 sagt, ist der Pilotprüfstand gemeint, der heute läuft; die Zielplattform von HYDRA-UMC ist ein NVIDIA Jetson Orin NX 16 GB, ein Entwurf, der weder gebaut noch getestet wurde.
+
 ## 🏛️ Architektur
 
 <p align="center">

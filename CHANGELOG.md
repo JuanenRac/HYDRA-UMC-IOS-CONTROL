@@ -4,6 +4,7 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **README: the platform statement:** a note says that where the README speaks of the CM5 it means the pilot bench that runs today, and that the target platform of HYDRA-UMC, an NVIDIA Jetson Orin NX 16 GB, is a design that has not been built or tested.
 - **Listen only dims and disables the controls it blocks (port of the Android app):** the joystick pad, the base-rotation buttons, HOME/RESET, PLAY, PAUSE, the enable button, the valves and pumps and the sliders are disabled and the last two groups drawn at 40 % opacity while the switch is on, like the DSI; STOP stays active. Not compiled or run on an iPhone. The opacity is a pure function (`ListenOnlyGate.controlOpacity`) with a test.
 - **Listen only (off by default; port of the Android app):** a switch in Settings makes the app show the robots and their data without sending any command. While it is on, a banner on the Control tab says so and the view model drops every command except STOP and the safe-mode disable (the held jog goes through the same check and stops when it is switched on), because refusing a stop would be the unsafe side. The choice is kept across restarts. Texts in the eight languages; 4 tests against a real local server. Not compiled or run on an iPhone. The same switch also refuses, at the door of the network, every other write to the server (settings, push and presence registration, files) with a 423 that never leaves the phone, except STOP and the sign-in (`network/listen_only_gate.dart`, 3 more tests).
 

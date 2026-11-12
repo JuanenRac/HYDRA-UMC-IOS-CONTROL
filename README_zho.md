@@ -72,6 +72,8 @@ GPL-3.0-or-later - see LICENSE
 
 **HYDRA-UMC-IOS-CONTROL** 是 HYDRA-UMC 面向 iPhone 和 iPad 的操作员控制台。它用 Flutter 编写，因此其逻辑可以在 Windows 上构建、运行和测试；iOS 构建本身仍需要 Mac 上的 Xcode。它在本地网络中找到 HYDRA-UMC-SERVER，登录后显示并移动机器人、查看摄像头和 3D 视图，并可一键全部停止，使用与 SUITE 和 Android 应用相同的远程契约。它不是安全设备。
 
+> **平台：** 本 README 中的 CM5 指的是目前正在运行的试验台；HYDRA-UMC 的目标平台是 NVIDIA Jetson Orin NX 16 GB，这是尚未制造或测试的设计。
+
 ## 🏛️ 架构
 
 <p align="center">

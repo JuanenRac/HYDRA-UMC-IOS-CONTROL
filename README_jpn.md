@@ -72,6 +72,8 @@ Wi-Fi 経由で [HYDRA-UMC](https://github.com/JuanenRac/HYDRA-UMC) プラット
 
 **HYDRA-UMC-IOS-CONTROL** は iPhone と iPad 向けの HYDRA-UMC オペレーターコンソールです。ロジックを Windows でビルド・実行・テストできるよう Flutter で書かれており、iOS ビルド自体には引き続き Mac 上の Xcode が必要です。ローカルネットワーク上の HYDRA-UMC-SERVER を見つけてサインインし、ロボットの表示と操作、カメラと 3D ビューの確認、ワンタップでの全停止ができ、SUITE や Android アプリと同じリモート契約を使います。安全装置ではありません。
 
+> **プラットフォーム：** この README の「CM5」は、現在動作している試験用ベンチを指します。HYDRA-UMC の目標プラットフォームは NVIDIA Jetson Orin NX 16 GB ですが、これは製作も試験もされていない設計です。
+
 ## 🏛️ アーキテクチャ
 
 <p align="center">
