@@ -28,9 +28,7 @@ class ExternalSurfaces {
   })  : alertsBridge = alerts ?? MethodChannelAlertsBridge(),
         _liveActivity = liveActivity ?? MethodChannelLiveActivityBridge(),
         _watch = watch ?? MethodChannelWatchBridge(),
-        _clock = clock ?? DateTime.now {
-    _liveActivity.listenForPushToken(_onActivityToken);
-  }
+        _clock = clock ?? DateTime.now;
 
   final AlertsBridge alertsBridge;
   final LiveActivityBridge _liveActivity;
@@ -49,6 +47,7 @@ class ExternalSurfaces {
   /// Takes a token back from the server (the activity ended, or the option was turned off).
   Future<void> Function(String token)? forgetActivityToken;
 
+  bool _listeningForTokens = false;
   String? _activityRobotId;
   String? _registeredToken;
 
@@ -194,6 +193,10 @@ class ExternalSurfaces {
           return;
         }
         // A token is only asked for when the person turned the server refresh on and the view model can hand it over.
+        if (!_listeningForTokens) {
+          _listeningForTokens = true; // not in the constructor: the channel needs the bindings of the app
+          _liveActivity.listenForPushToken(_onActivityToken);
+        }
         _activityRobotId = content!.robotId;
         final wantsToken = _livePush && registerActivityToken != null && content.robotId.isNotEmpty;
         if (!await _liveActivity.start(_withStale(content.toMap()), pushToken: wantsToken)) {

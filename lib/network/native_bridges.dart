@@ -148,14 +148,18 @@ class MethodChannelLiveActivityBridge implements LiveActivityBridge {
     _onToken = onToken;
     if (_listening) return;
     _listening = true;
-    _channel.setMethodCallHandler((call) async {
-      if (call.method == 'pushToken') {
-        final raw = call.arguments;
-        final token = raw is Map ? raw['token'] : null;
-        if (token is String && token.isNotEmpty) _onToken?.call(token);
-      }
-      return null;
-    });
+    try {
+      _channel.setMethodCallHandler((call) async {
+        if (call.method == 'pushToken') {
+          final raw = call.arguments;
+          final token = raw is Map ? raw['token'] : null;
+          if (token is String && token.isNotEmpty) _onToken?.call(token);
+        }
+        return null;
+      });
+    } catch (_) {
+      _listening = false; // no bindings (a test, a desktop): there is no native half to hear
+    }
   }
 
   @override
