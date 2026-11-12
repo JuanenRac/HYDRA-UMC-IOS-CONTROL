@@ -204,6 +204,23 @@ class RunnerTests: XCTestCase {
     XCTAssertThrowsError(try JSONDecoder().decode(HydraJobAttributes.ContentState.self, from: incomplete))
   }
 
+  // MARK: the push token of the Live Activity
+
+  func testThePushTokenIsLowercaseHexadecimalWithTwoDigitsPerByte() {
+    XCTAssertEqual(LiveActivityPush.hex(Data([0x00, 0x0a, 0xff, 0x10, 0xAB])), "000aff10ab")
+  }
+
+  func testAnEmptyPushTokenIsAnEmptyString() {
+    XCTAssertEqual(LiveActivityPush.hex(Data()), "")
+  }
+
+  func testAThirtyTwoByteTokenGivesSixtyFourDigits() {
+    let token = Data((0..<32).map { UInt8($0 * 8 & 0xff) })
+    let text = LiveActivityPush.hex(token)
+    XCTAssertEqual(text.count, 64)
+    XCTAssertEqual(text, text.lowercased())
+  }
+
   // MARK: the watch link
 
   private func watchChannel() -> LoopbackMessenger {

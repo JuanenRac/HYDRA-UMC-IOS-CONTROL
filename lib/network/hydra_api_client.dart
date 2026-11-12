@@ -207,6 +207,20 @@ class HydraApiClient extends HydraApiCore {
     throwForStatus(resp);
   }
 
+  /// Hands the token of a Live Activity to the server, which then refreshes the card through the Apple push service.
+  /// A server that does not offer it (the option is off there) answers 404: [HydraApiException].
+  Future<void> postLiveActivity(String activityToken, String robotId) async {
+    final resp = await post('/api/push/live-activities', const Duration(seconds: 10), {'activityToken': activityToken, 'robotId': robotId});
+    throwForStatus(resp);
+  }
+
+  /// Takes the token of a Live Activity back. The account removes only its own.
+  Future<void> deleteLiveActivity(String activityToken) async {
+    final resp = await call('DELETE', '$baseUrl/api/push/live-activities/${Uri.encodeComponent(activityToken)}',
+        headers: {...clientHeaders, ...authHeaders}, timeout: const Duration(seconds: 10));
+    throwForStatus(resp);
+  }
+
   Future<void> deletePushDevice(String token) async {
     final resp = await call('DELETE', '$baseUrl/api/push/devices/$token',
         headers: {...clientHeaders, ...authHeaders}, timeout: const Duration(seconds: 10));

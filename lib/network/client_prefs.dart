@@ -37,6 +37,7 @@ class ClientPrefs extends ClientPrefsCore {
   static const _keyPush = 'hydra_push_notifications';
   static const _keyJobAlerts = 'hydra_job_alerts';
   static const _keyLiveActivity = 'hydra_live_activity';
+  static const _keyLiveActivityPush = 'hydra_live_activity_push';
   static const _keyDictation = 'hydra_dictation';
   static const _keyDictationOnline = 'hydra_dictation_online';
   static const _keyWatch = 'hydra_watch_companion';
@@ -81,6 +82,11 @@ class ClientPrefs extends ClientPrefsCore {
   Future<bool> loadLiveActivity(bool defaultValue) async => (await SharedPreferences.getInstance()).getBool(_keyLiveActivity) ?? defaultValue;
 
   Future<void> saveLiveActivity(bool value) async => (await SharedPreferences.getInstance()).setBool(_keyLiveActivity, value);
+
+  /// Whether the server may refresh the card of the Live Activity while the app is suspended; off in the contract.
+  Future<bool> loadLiveActivityPush(bool defaultValue) async => (await SharedPreferences.getInstance()).getBool(_keyLiveActivityPush) ?? defaultValue;
+
+  Future<void> saveLiveActivityPush(bool value) async => (await SharedPreferences.getInstance()).setBool(_keyLiveActivityPush, value);
 
   /// Whether the dictation button of the assistant is shown; off in the contract.
   Future<bool> loadDictation(bool defaultValue) async => (await SharedPreferences.getInstance()).getBool(_keyDictation) ?? defaultValue;

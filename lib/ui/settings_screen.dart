@@ -156,6 +156,19 @@ class SettingsScreen extends StatelessWidget {
           value: vm.liveActivityEnabled,
           onChanged: (value) => vm.setLiveActivity(value),
         ),
+        // The server refreshes the card while the app is suspended. Off by default, and only for a Live Activity that is on.
+        SwitchListTile(
+          key: const Key('settings-live-activity-push'),
+          secondary: const Icon(Icons.cloud_sync_outlined),
+          title: Text(l10n.liveActivityPushTitle),
+          subtitle: Text(switch (vm.liveActivityPushState) {
+            LiveActivityPushState.serverOff => l10n.liveActivityPushUnavailable,
+            LiveActivityPushState.failed => l10n.liveActivityPushFailed,
+            _ => l10n.liveActivityPushSubtitle,
+          }),
+          value: vm.liveActivityPushEnabled,
+          onChanged: vm.liveActivityEnabled ? (value) => vm.setLiveActivityPush(value) : null,
+        ),
         SwitchListTile(
           key: const Key('settings-watch'),
           secondary: const Icon(Icons.watch_outlined),

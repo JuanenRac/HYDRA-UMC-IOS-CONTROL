@@ -28,6 +28,7 @@ class LiveActivityContract {
   LiveActivityContract._();
 
   static const bool enabledByDefault = false;
+  static const bool serverPushEnabledByDefault = false;
   static const int minUpdateGapMs = 2000;
   static const int staleAfterSeconds = 120;
   static const int endAfterFinishedSeconds = 300;

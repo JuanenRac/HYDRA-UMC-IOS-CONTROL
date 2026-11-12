@@ -28,7 +28,9 @@ class ExternalSurfaces {
   })  : alertsBridge = alerts ?? MethodChannelAlertsBridge(),
         _liveActivity = liveActivity ?? MethodChannelLiveActivityBridge(),
         _watch = watch ?? MethodChannelWatchBridge(),
-        _clock = clock ?? DateTime.now;
+        _clock = clock ?? DateTime.now {
+    _liveActivity.listenForPushToken(_onActivityToken);
+  }
 
   final AlertsBridge alertsBridge;
   final LiveActivityBridge _liveActivity;
@@ -38,10 +40,25 @@ class ExternalSurfaces {
   bool _jobAlerts = JobAlertsContract.enabledByDefault;
   bool _liveActivityOn = LiveActivityContract.enabledByDefault;
   bool _watchOn = WatchCompanionContract.enabledByDefault;
+  bool _livePush = LiveActivityContract.serverPushEnabledByDefault;
+
+  /// Hands the token of the activity of a robot to the server (true when the server took it). Set by the view model; this
+  /// class never reads the network itself.
+  Future<bool> Function(String token, String robotId)? registerActivityToken;
+
+  /// Takes a token back from the server (the activity ended, or the option was turned off).
+  Future<void> Function(String token)? forgetActivityToken;
+
+  String? _activityRobotId;
+  String? _registeredToken;
 
   bool get jobAlertsEnabled => _jobAlerts;
   bool get liveActivityEnabled => _liveActivityOn;
   bool get watchEnabled => _watchOn;
+
+  /// Whether the server may refresh the card of the Live Activity while the app is suspended (off by default; it also needs
+  /// the Live Activity option and a server that offers it).
+  bool get liveActivityPushEnabled => _livePush;
 
   final JobAlertDetector _detector = JobAlertDetector();
   final LiveActivityPlanner _planner = LiveActivityPlanner();
@@ -94,6 +111,15 @@ class ExternalSurfaces {
   }
 
   void restoreLiveActivity(bool value) => _liveActivityOn = value;
+
+  /// Turns the refresh through the server on or off. Off takes the registered token back at once; on applies to the next
+  /// activity (the system only gives a token to an activity that asked for it when it started).
+  Future<void> setLiveActivityPush(bool value) async {
+    _livePush = value;
+    if (!value) await _forgetToken();
+  }
+
+  void restoreLiveActivityPush(bool value) => _livePush = value;
 
   void setWatch(bool value) {
     _watchOn = value;
@@ -167,14 +193,51 @@ class ExternalSurfaces {
           _planner.stop(); // nothing was started: the next change may try again
           return;
         }
-        if (!await _liveActivity.start(_withStale(content!.toMap()))) {
+        // A token is only asked for when the person turned the server refresh on and the view model can hand it over.
+        _activityRobotId = content!.robotId;
+        final wantsToken = _livePush && registerActivityToken != null && content.robotId.isNotEmpty;
+        if (!await _liveActivity.start(_withStale(content.toMap()), pushToken: wantsToken)) {
           _liveActivityRefused = true;
+          _activityRobotId = null;
           _planner.stop();
         }
       case ActivityAction.update:
         await _liveActivity.update(_withStale(content!.toMap()));
       case ActivityAction.end:
+        // The server stops refreshing first, so it never pushes to an activity that is going away.
+        await _forgetToken();
+        _activityRobotId = null;
         await _liveActivity.end(_withStale(content!.toMap()), dismissAfterSeconds: step.dismissAfterSeconds);
+    }
+  }
+
+  /// The system gave a token for the running activity (it can give a new one later, and the old one is then taken back).
+  void _onActivityToken(String token) {
+    unawaited(_registerToken(token));
+  }
+
+  Future<void> _registerToken(String token) async {
+    final robotId = _activityRobotId;
+    final register = registerActivityToken;
+    // A token that arrives when nothing is running, the option is off or nobody can take it is dropped.
+    if (!_livePush || robotId == null || robotId.isEmpty || register == null || token == _registeredToken) return;
+    final previous = _registeredToken;
+    try {
+      if (previous != null) await forgetActivityToken?.call(previous);
+      _registeredToken = await register(token, robotId) ? token : null;
+    } catch (_) {
+      _registeredToken = null; // the card still follows the app while it is open; a failed registration is never an error on the screen
+    }
+  }
+
+  Future<void> _forgetToken() async {
+    final token = _registeredToken;
+    _registeredToken = null;
+    if (token == null) return;
+    try {
+      await forgetActivityToken?.call(token);
+    } catch (_) {
+      // The server forgets a dead token by itself.
     }
   }
 

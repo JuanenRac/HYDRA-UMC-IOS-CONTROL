@@ -86,6 +86,9 @@ class SystemMetrics {
 /// What became of the registration of this phone for push notifications.
 enum PushState { off, registering, registered, denied, serverOff, failed }
 
+/// What became of handing the token of the Live Activity to the server (see [RobotViewModel.liveActivityPushState]).
+enum LiveActivityPushState { off, registered, serverOff, failed }
+
 /// Why the audit record could not be read, for the sentence the screen shows.
 enum AuditFailure { forbidden, unavailable, session, network, other }
 
@@ -346,7 +349,10 @@ class RobotViewModel extends ChangeNotifier {
     if (pendingLink != null) await receivePairing(pendingLink);
     surfaces.restoreJobAlerts(await _clientPrefs.loadJobAlerts(JobAlertsContract.enabledByDefault));
     surfaces.restoreLiveActivity(await _clientPrefs.loadLiveActivity(LiveActivityContract.enabledByDefault));
+    surfaces.restoreLiveActivityPush(await _clientPrefs.loadLiveActivityPush(LiveActivityContract.serverPushEnabledByDefault));
     surfaces.restoreWatch(await _clientPrefs.loadWatch(WatchCompanionContract.enabledByDefault));
+    surfaces.registerActivityToken = _registerActivityToken;
+    surfaces.forgetActivityToken = _forgetActivityToken;
     surfaces.listenForWatchStop(() => unawaited(stopAll()));
     surfaces.listenForWatchRelays(onPresence: relayPresence, onVoiceConfirm: relayVoiceConfirm);
     dictationEnabled = await _clientPrefs.loadDictation(VoiceContract.enabledByDefault);
@@ -538,6 +544,10 @@ class RobotViewModel extends ChangeNotifier {
 
   bool get jobAlertsEnabled => surfaces.jobAlertsEnabled;
   bool get liveActivityEnabled => surfaces.liveActivityEnabled;
+  bool get liveActivityPushEnabled => surfaces.liveActivityPushEnabled;
+
+  /// What became of the last token handed to the server; [LiveActivityPushState.off] while the option is off.
+  LiveActivityPushState liveActivityPushState = LiveActivityPushState.off;
   bool get watchEnabled => surfaces.watchEnabled;
 
   /// Turns the local notifications on (asks the system for permission; they stay off when it is refused) or off.
@@ -553,6 +563,49 @@ class RobotViewModel extends ChangeNotifier {
     await surfaces.setLiveActivity(value);
     await _clientPrefs.saveLiveActivity(value);
     notifyListeners();
+  }
+
+  /// Lets the server refresh the card of the Live Activity while the app is suspended (off by default). It needs the Live
+  /// Activity option, and the server decides how much the card shows.
+  Future<void> setLiveActivityPush(bool value) async {
+    await surfaces.setLiveActivityPush(value);
+    await _clientPrefs.saveLiveActivityPush(value);
+    if (!value) liveActivityPushState = LiveActivityPushState.off;
+    notifyListeners();
+  }
+
+  /// Hands the token of the activity to the server. True when it took it; a server without the route (404) leaves
+  /// [LiveActivityPushState.serverOff], any other failure [LiveActivityPushState.failed]. Never raises.
+  Future<bool> _registerActivityToken(String token, String robotId) async {
+    final client = apiClient;
+    if (client == null || !isLoggedIn) return false;
+    try {
+      await client.postLiveActivity(token, robotId);
+      liveActivityPushState = LiveActivityPushState.registered;
+      notifyListeners();
+      return true;
+    } on HydraApiException catch (e) {
+      liveActivityPushState = e.isNotFound ? LiveActivityPushState.serverOff : LiveActivityPushState.failed;
+      if (e.isSessionProblem) _forceLogout();
+    } catch (_) {
+      liveActivityPushState = LiveActivityPushState.failed;
+    }
+    notifyListeners();
+    return false;
+  }
+
+  Future<void> _forgetActivityToken(String token) async {
+    final client = apiClient;
+    if (client == null) return;
+    try {
+      await client.deleteLiveActivity(token);
+    } catch (_) {
+      // The server forgets a dead token by itself.
+    }
+    if (liveActivityPushState == LiveActivityPushState.registered) {
+      liveActivityPushState = LiveActivityPushState.off;
+      notifyListeners();
+    }
   }
 
   Future<void> setWatch(bool value) async {

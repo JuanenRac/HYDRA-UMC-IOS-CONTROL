@@ -60,11 +60,14 @@ class _FakeLive implements LiveActivityBridge {
   @override
   Future<bool> isAvailable() async => available;
   @override
-  Future<bool> start(Map<String, Object> content) async {
+  Future<bool> start(Map<String, Object> content, {bool pushToken = false}) async {
     calls.add('start');
     last = content;
     return true;
   }
+
+  @override
+  void listenForPushToken(void Function(String token) onToken) {}
 
   @override
   Future<void> update(Map<String, Object> content) async {

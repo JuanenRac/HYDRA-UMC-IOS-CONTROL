@@ -18,12 +18,14 @@ import 'job_alerts.dart';
 enum SurfaceStatus { running, paused, finished, stopped, offline, safeMode, idle }
 
 class SurfaceContent {
+  /// The id of the robot, for the server (never sent to the native halves, see [toMap]).
+  final String robotId;
   final String robotName;
   final SurfaceStatus status;
   final int step;
   final int total;
 
-  const SurfaceContent({required this.robotName, required this.status, this.step = 0, this.total = 0});
+  const SurfaceContent({required this.robotName, required this.status, this.step = 0, this.total = 0, this.robotId = ''});
 
   /// The robot name cut to the limit of the contract (so a very long name never fills the Dynamic Island).
   static String shortName(String name, [int max = LiveActivityContract.nameMax]) {
@@ -60,7 +62,7 @@ class SurfaceContent {
     var step = r.activeStep < 0 ? 0 : r.activeStep + 1;
     if (total > 0 && step > total) step = total;
     if (status == SurfaceStatus.finished) step = total;
-    return SurfaceContent(robotName: shortName(r.name), status: status, step: step, total: total);
+    return SurfaceContent(robotName: shortName(r.name), status: status, step: step, total: total, robotId: r.id);
   }
 
   Map<String, Object> toMap() => {'robotName': robotName, 'status': status.name, 'step': step, 'total': total};
@@ -68,13 +70,14 @@ class SurfaceContent {
   @override
   bool operator ==(Object other) =>
       other is SurfaceContent &&
+      other.robotId == robotId &&
       other.robotName == robotName &&
       other.status == status &&
       other.step == step &&
       other.total == total;
 
   @override
-  int get hashCode => Object.hash(robotName, status, step, total);
+  int get hashCode => Object.hash(robotId, robotName, status, step, total);
 }
 
 enum ActivityAction { none, start, update, end }

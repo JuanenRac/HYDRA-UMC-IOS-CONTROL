@@ -118,8 +118,13 @@ abstract class LiveActivityBridge {
   /// True when the phone can show a Live Activity and the person did not turn them off in the settings of the system.
   Future<bool> isAvailable();
 
-  Future<bool> start(Map<String, Object> content);
+  /// Starts the activity. With [pushToken] the system is also asked for the token the server needs to refresh the card while
+  /// the app is suspended; it comes back through [listenForPushToken] (the system may give another one later).
+  Future<bool> start(Map<String, Object> content, {bool pushToken = false});
   Future<void> update(Map<String, Object> content);
+
+  /// The token (hexadecimal) of the activity started with `pushToken: true`. Nothing is sent to the server from here.
+  void listenForPushToken(void Function(String token) onToken);
 
   /// Ends the activity; the system keeps its last content on the lock screen for [dismissAfterSeconds].
   Future<void> end(Map<String, Object> content, {int dismissAfterSeconds = 0});
@@ -131,8 +136,27 @@ class MethodChannelLiveActivityBridge implements LiveActivityBridge {
   @override
   Future<bool> isAvailable() async => await _call<bool>(_channel, 'isAvailable') ?? false;
 
+  void Function(String token)? _onToken;
+  bool _listening = false;
+
   @override
-  Future<bool> start(Map<String, Object> content) async => await _call<bool>(_channel, 'start', content) ?? false;
+  Future<bool> start(Map<String, Object> content, {bool pushToken = false}) async =>
+      await _call<bool>(_channel, 'start', pushToken ? {...content, 'pushToken': true} : content) ?? false;
+
+  @override
+  void listenForPushToken(void Function(String token) onToken) {
+    _onToken = onToken;
+    if (_listening) return;
+    _listening = true;
+    _channel.setMethodCallHandler((call) async {
+      if (call.method == 'pushToken') {
+        final raw = call.arguments;
+        final token = raw is Map ? raw['token'] : null;
+        if (token is String && token.isNotEmpty) _onToken?.call(token);
+      }
+      return null;
+    });
+  }
 
   @override
   Future<void> update(Map<String, Object> content) async {

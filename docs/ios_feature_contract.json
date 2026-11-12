@@ -14,8 +14,9 @@
     "connectionLostAfterMs": 10000
   },
   "liveActivity": {
-    "note": "Progress of the running trajectory on the lock screen and in the Dynamic Island. The app sends a change at most once per minUpdateGapMs; a state older than staleAfterSeconds is shown as stale by the system and the activity ends endAfterFinishedSeconds after the job finished.",
+    "note": "Progress of the running trajectory on the lock screen and in the Dynamic Island. serverPushEnabledByDefault is the separate switch that lets the server refresh the card through the Apple push service while the app is suspended (the app then hands the token of the activity to POST /api/push/live-activities and takes it back at the end); the server decides how much the card shows. The app sends a change at most once per minUpdateGapMs; a state older than staleAfterSeconds is shown as stale by the system and the activity ends endAfterFinishedSeconds after the job finished.",
     "enabledByDefault": false,
+    "serverPushEnabledByDefault": false,
     "minUpdateGapMs": 2000,
     "staleAfterSeconds": 120,
     "endAfterFinishedSeconds": 300,
