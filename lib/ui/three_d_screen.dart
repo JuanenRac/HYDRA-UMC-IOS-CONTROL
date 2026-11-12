@@ -110,14 +110,8 @@ class _ThreeDScreenState extends State<ThreeDScreen> with WidgetsBindingObserver
     final base = Uri.parse(vm.serverBaseUrl ?? server.baseUrl);
     // The token goes in the fragment (see ViewerUrl): it is never sent to the server.
     final url = ViewerUrl.build(base, robotId, token).toString();
-    // The controller is created once and reused, and loadRequest() only
-    // fires when the URL actually changes (a different robot/server/token) -
-    // build() itself runs on every RobotViewModel.notifyListeners() call
-    // (every WS "settings"/"delta" broadcast, the 5-second system-metrics
-    // poll, connectionStatus flips, ...), so a fresh WebViewController +
-    // loadRequest() on every build reloaded the embedded 3D scene from
-    // scratch several times a minute - resetting camera orbit/zoom and
-    // flickering the view - instead of leaving one live WebView running.
+    // The controller is created once and reused, and loadRequest() runs only when the URL changes (another robot, server or token): build() runs on
+    // every notification of the view model, and a reload each time would reset the camera and flicker the view.
     _controller ??= WebViewController()..setJavaScriptMode(JavaScriptMode.unrestricted);
     if (_loadedUrl != url) {
       _loadedUrl = url;

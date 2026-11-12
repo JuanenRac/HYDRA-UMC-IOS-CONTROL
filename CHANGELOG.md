@@ -4,6 +4,12 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **The global STOP is tested to be on screen where robots are driven:** `test/stop_presence_test.dart` (2 widget tests) checks that the Control tab carries the large global STOP once a robot is selected and that the main screen carries the one of its bar, with or without a robot.
+
+- **The Swift tests report their line coverage on the simulator:** the manual workflow `ios-xcodebuild-test.yml` now runs `xcodebuild test` with code coverage on, keeps the result bundle and prints the coverage of the targets and the least covered files of the app (`xccov`) in the summary of the run.
+
+- **The comments of the view model and of the 3D screen say what holds now, not the story of the bug:** the longest narrative blocks (the debounce of a command, the generation guard of the rollback, the saved-data flag, the biometric gate, the snapshot before a change and the reason for the controller of the 3D page) were rewritten as the contract they describe; the history stays in this file.
+
 - **The control screen is redrawn only for what it shows (a first step of the selectors):** it used to listen to the whole view model, so every change of anything else (the state of the connection, the saved-data banner, a voice reply) redrew the jog pad, the sliders and the buttons. It now listens to one text that holds exactly what it draws or decides from (the robots, the reservations, the limits and the arming of the jog, the requests under way, the Work of the robot, the switches of PLAY and HOME/RESET, the role and the state of the STOP), and each of those changes still redraws it. `test/selector_rebuild_test.dart` counts the widgets Flutter rebuilds for what is not the screen's and for nine changes that must redraw it (2 tests).
 
 - **The connection diagnostics are tested:** `test/connection_diagnostics_test.dart` (8 tests) covers which trust applies to a connection (plain http, pinned fingerprint, own authority, system certificates), the figures of the probes (smallest, average, largest, lost, none answered), and a report that names the address, the trust, each probe and the link, holds no password, token or certificate, says `unknown` for what the server did not tell and never goes past its line limit.

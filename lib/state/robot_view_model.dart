@@ -196,28 +196,11 @@ class RobotViewModel extends ChangeNotifier {
     _publishSurfaces();
   }
 
-  // Per-command-name debounce for _sendAtomicCommand()'s own network send -
-  // a dragged Slider's onChanged fires many times a second (setSpeed's own
-  // real caller, ui/control_screen.dart), and until this existed every one
-  // of those ticks fired its own real POST /api/robot/:id/command, unlike
-  // HYDRA-UMC-ANDROID-CONTROL's own equivalent sendAtomicCommand(), which
-  // already debounces setSpeed 300ms for exactly this reason (see that
-  // file's own "a dragged slider fires this many times a second" comment) -
-  // this port had the same gap the Android app already closed. Keyed by
-  // command name so debouncing 'speed' can never coalesce away or delay an
-  // unrelated command (e.g. a jog or E-STOP) that happens to fire during
-  // the same debounce window.
-  // (the timers live in [commands], keyed by command name)
+  // The send of a command can be debounced (a dragged slider fires many times a second). The timers live in [commands], keyed by command name, so
+  // debouncing 'speed' never delays or merges an unrelated command such as a jog or the STOP.
 
-  // Per-robot generation counter guarding _sendAtomicCommand()'s own
-  // rollback-on-failure below. A held jog button (joystick_pad.dart's
-  // _RepeatButton) fires a new command roughly every 150ms while the API
-  // call it's rolling back from can take up to the 5s network timeout - so
-  // several commands for the same robot can be in flight at once. Without
-  // this guard, an early command failing AFTER later ones already applied
-  // (and possibly already succeeded) would restore its own stale
-  // pre-mutation snapshot over top of that newer state, silently erasing
-  // real progress the operator already made.
+  // Per-robot generation counter for the rollback of _sendAtomicCommand(): several commands of one robot can be in flight at once (a held jog button
+  // fires about every 150 ms, a request may take 5 s), and a command that fails after newer ones applied must not restore its older snapshot over them.
   final Map<dynamic, int> _commandGeneration = {};
 
   // Jog commands on the wire, per robot. A held button repeats every 150 ms;
@@ -247,14 +230,8 @@ class RobotViewModel extends ChangeNotifier {
 
   SystemMetrics? get metrics => metricsListenable.value;
 
-  // `state` shown on screen came from network/state_cache.dart's own
-  // persisted last-known tree, not yet from a real, live response - see
-  // that file's own header comment for the real risk this closes. Set in
-  // init() when a cache is loaded, cleared the moment either real path
-  // that replaces `state` with a live server response succeeds (the REST
-  // fetch in connect(), or the WS onSettings callback) - so it is never
-  // left true once the app has genuinely heard from the server at least
-  // once, however long that takes.
+  // True while the `state` on screen is the saved last-known tree (network/state_cache.dart) and not a live answer: set in init() when a cache is loaded,
+  // cleared by the first live answer (the REST fetch in connect() or the WS settings message).
   bool isShowingCachedState = false;
   DateTime? cachedStateSavedAt;
 
@@ -306,15 +283,9 @@ class RobotViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Face ID/Touch ID/Windows Hello gate on restoring a saved session - see
-  // network/biometric_helper.dart's own header comment for why this is an
-  // adapted equivalent of HYDRA-UMC-ANDROID-CONTROL's own biometric login
-  // rather than a literal port. biometricAvailable reflects real hardware/
-  // platform capability (checked once in init()); biometricEnabled is the
-  // user's own opt-in from ui/settings_screen.dart, persisted via
-  // AuthPrefs. needsBiometricUnlock is true only while a restored session
-  // is waiting on a successful prompt - main.dart's _RootGate shows
-  // ui/biometric_gate_screen.dart for as long as it's true.
+  // Face ID / Touch ID / Windows Hello gate on restoring a saved session (network/biometric_helper.dart). biometricAvailable is what the device can do
+  // (checked once in init()); biometricEnabled is the person's opt-in (Settings, kept by AuthPrefs); needsBiometricUnlock is true while a restored
+  // session waits for the prompt, and main.dart shows the biometric gate for as long as it is.
   bool biometricAvailable = false;
   bool biometricEnabled = false;
   bool needsBiometricUnlock = false;
@@ -1765,13 +1736,8 @@ class RobotViewModel extends ChangeNotifier {
     final affectedIds = <dynamic>[robotId];
     if (propagateToCombined) affectedIds.addAll(target.combinedWith);
 
-    // Deep-copy snapshot of every affected robot's raw state before
-    // mutating: localMutate() writes straight into raw's own nested
-    // maps/lists in place, so a shallow copy could not undo anything.
-    //
-    // Applied unconditionally here, even when `debounce` delays the actual
-    // network send below - a dragged Slider still needs instant per-tick
-    // visual feedback; only the real POST round-trip is worth coalescing.
+    // Deep-copy snapshot of every affected robot's raw state before mutating (localMutate() edits the nested maps in place, so a shallow copy could not
+    // undo anything). The local change is applied at once even when `debounce` delays the send: only the request is coalesced, not the feedback.
     final snapshots = <dynamic, Map<String, dynamic>>{};
     final myGeneration = <dynamic, int>{};
     for (final id in affectedIds) {
@@ -1827,13 +1793,8 @@ class RobotViewModel extends ChangeNotifier {
         _logTelemetry('TX OK [$command] -> robot $robotId');
         notifyListeners();
       } catch (e) {
-        // Catches everything, not just HydraApiException: a plain network
-        // failure (timeout, connection refused, DNS failure) throws
-        // TimeoutException/SocketException/http's own ClientException, none
-        // of which is a HydraApiException. Roll back to the pre-mutation
-        // snapshot and surface the failure (see ui/main_screen.dart's own
-        // lastError listener) instead of leaving the UI showing a command
-        // that never reached the robot.
+        // Any failure, not only HydraApiException (a timeout, a refused connection or a DNS failure is none): roll back to the snapshot and report it,
+        // so the screen never shows a command that did not reach the robot.
         rollback();
         lastError = _commandError(command, e);
         // An older server does not have `reset`: remember it, so the button explains instead of sending again.
