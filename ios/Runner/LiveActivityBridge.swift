@@ -48,7 +48,7 @@ final class LiveActivityController {
   private var current: Activity<HydraJobAttributes>?
   private var tokenTask: Task<Void, Never>?
 
-  private func state(_ args: [String: Any]) -> HydraJobAttributes.ContentState {
+  func state(_ args: [String: Any]) -> HydraJobAttributes.ContentState {
     HydraJobAttributes.ContentState(
       robotName: args["robotName"] as? String ?? "",
       status: args["status"] as? String ?? "idle",
@@ -57,7 +57,7 @@ final class LiveActivityController {
     )
   }
 
-  private func content(_ args: [String: Any]) -> ActivityContent<HydraJobAttributes.ContentState> {
+  func content(_ args: [String: Any]) -> ActivityContent<HydraJobAttributes.ContentState> {
     // The system marks the content as out of date when nothing refreshed it for this long (the app was suspended).
     let stale = (args["staleAfterSeconds"] as? Int).map { Date().addingTimeInterval(TimeInterval($0)) }
     return ActivityContent(state: state(args), staleDate: stale)

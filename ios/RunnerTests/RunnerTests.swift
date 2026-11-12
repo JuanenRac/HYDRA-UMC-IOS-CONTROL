@@ -328,6 +328,110 @@ class RunnerTests: XCTestCase {
     XCTAssertTrue((messenger.call("hydra_umc/speech", "record") as AnyObject) === FlutterMethodNotImplemented)
   }
 
+  // MARK: the Live Activity channel
+
+  /// Calls a method the way Dart does and waits for the answer, which the Live Activity code gives from a task on the main actor.
+  @available(iOS 16.2, *)
+  private func callLater(_ messenger: LoopbackMessenger, _ method: String, arguments: Any? = nil) -> Any? {
+    let done = expectation(description: "the answer to \(method)")
+    var answer: Any?
+    FlutterMethodChannel(name: "hydra_umc/live_activity", binaryMessenger: messenger).invokeMethod(method, arguments: arguments) { result in
+      answer = result
+      done.fulfill()
+    }
+    wait(for: [done], timeout: 20)
+    return answer
+  }
+
+  @available(iOS 16.2, *)
+  func testTheLiveActivityStateTakesEachFieldFromTheArguments() {
+    let state = LiveActivityController.shared.state(["robotName": "Arm 1", "status": "running", "step": 3, "total": 12])
+    XCTAssertEqual(state, HydraJobAttributes.ContentState(robotName: "Arm 1", status: "running", step: 3, total: 12))
+  }
+
+  @available(iOS 16.2, *)
+  func testTheLiveActivityStateFallsBackToIdleWhenAFieldIsMissingOrOfAnotherType() {
+    let empty = LiveActivityController.shared.state([:])
+    XCTAssertEqual(empty, HydraJobAttributes.ContentState(robotName: "", status: "idle", step: 0, total: 0))
+    let wrong = LiveActivityController.shared.state(["robotName": 7, "status": false, "step": "3", "total": 1.5])
+    XCTAssertEqual(wrong, empty)
+  }
+
+  @available(iOS 16.2, *)
+  func testTheLiveActivityContentIsNotStaleUnlessTheArgumentsAskForIt() {
+    XCTAssertNil(LiveActivityController.shared.content([:]).staleDate)
+    XCTAssertNil(LiveActivityController.shared.content(["staleAfterSeconds": "60"]).staleDate)
+    let before = Date()
+    let stale = LiveActivityController.shared.content(["staleAfterSeconds": 90]).staleDate
+    XCTAssertNotNil(stale)
+    XCTAssertEqual(stale!.timeIntervalSince(before), 90, accuracy: 5)
+  }
+
+  @available(iOS 16.2, *)
+  func testTheLiveActivityChannelRefusesAnUnknownMethod() {
+    let messenger = LoopbackMessenger()
+    LiveActivityChannel.register(messenger: messenger)
+    XCTAssertTrue((messenger.call("hydra_umc/live_activity", "pause") as AnyObject) === FlutterMethodNotImplemented)
+  }
+
+  @available(iOS 16.2, *)
+  func testUpdatingOrEndingWhenNoActivityRunsIsHarmless() {
+    let messenger = LoopbackMessenger()
+    LiveActivityChannel.register(messenger: messenger)
+    XCTAssertNil(callLater(messenger, "update", arguments: ["robotName": "Arm 1", "status": "running", "step": 1, "total": 2]))
+    XCTAssertNil(callLater(messenger, "end", arguments: ["dismissAfterSeconds": 0]))
+    XCTAssertNil(callLater(messenger, "end"))
+  }
+
+  @available(iOS 16.2, *)
+  func testStartingAnActivityAnswersTrueOrFalseNeverAnythingElse() {
+    let messenger = LoopbackMessenger()
+    LiveActivityChannel.register(messenger: messenger)
+    let started = callLater(messenger, "start", arguments: ["robotName": "Arm 1", "status": "running", "step": 1, "total": 2])
+    XCTAssertTrue(started is Bool, "start answered \(String(describing: started))")
+    XCTAssertTrue(callLater(messenger, "isAvailable") is Bool)
+    // Leave nothing running on the simulator.
+    XCTAssertNil(callLater(messenger, "end", arguments: ["dismissAfterSeconds": 0]))
+  }
+
+  // MARK: the shortcut of the global stop
+
+  @available(iOS 16.0, *)
+  func testTheStopIntentLeavesARequestForTheApp() async throws {
+    _ = GlobalStopRequests.shared.take()
+    _ = try await GlobalStopIntent().perform()
+    XCTAssertTrue(GlobalStopRequests.shared.take())
+    XCTAssertFalse(GlobalStopRequests.shared.take(), "a request is taken once")
+  }
+
+  @available(iOS 16.0, *)
+  func testTheAppOffersOneShortcutAndItOpensTheApp() {
+    XCTAssertEqual(HydraAppShortcuts.appShortcuts.count, 1)
+    XCTAssertTrue(GlobalStopIntent.openAppWhenRun)
+  }
+
+  func testTheQuickActionOfTheIconAsksForTheStopAndOthersAreHandedOn() throws {
+    guard let scene = UIApplication.shared.connectedScenes.compactMap({ $0 as? UIWindowScene }).first else {
+      throw XCTSkip("the host app has no window scene on this simulator")
+    }
+    let delegate = SceneDelegate()
+    var asked = 0
+    GlobalStopRequests.shared.onRequest = { asked += 1 }
+    var handled: Bool?
+    let stop = UIApplicationShortcutItem(type: GlobalStopRequests.quickActionType, localizedTitle: "Stop")
+    delegate.windowScene(scene, performActionFor: stop) { handled = $0 }
+    XCTAssertEqual(handled, true)
+    XCTAssertEqual(asked, 1)
+    XCTAssertTrue(GlobalStopRequests.shared.take())
+  }
+
+  // MARK: the dictation, when nothing is pending
+
+  func testFinishingTheDictationWhenNothingListensIsHarmless() {
+    SpeechChannel.shared.finish(status: "ok")
+    SpeechChannel.shared.finish(status: nil)
+  }
+
   // MARK: life cycle
 
   func testTheAppIsHostingTheTests() {

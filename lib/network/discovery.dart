@@ -3,35 +3,20 @@
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
 // GPL-3.0-or-later - see LICENSE
 //
-// Two independent discovery paths, both feeding the same "Scan local
-// network" sheet in ui/login_screen.dart:
-//   - discoverMdns(): real mDNS/Bonjour, querying the "_hydra._tcp.local"
-//     service server.ts publishes - near-instant on a network that
-//     delivers the multicast replies.
-//   - scanSubnets(): brute-force GET /api/hydra-info against every host on
-//     the device's own local /24(s) - slower, but needs no multicast
-//     delivery at all, so it stays the guaranteed fallback. In particular,
-//     iOS silently drops multicast *receive* for any app that wasn't
-//     granted Apple's dedicated Multicast Networking entitlement
-//     (com.apple.developer.networking.multicast - requested from Apple
-//     per-app, not something a plain `flutter build ios` gets for free):
-//     an unentitled iOS build can still send the mDNS query but may never
-//     see a reply, so discoverMdns() failing quietly on iOS is expected
-//     until that entitlement is requested and added to Runner.entitlements,
-//     not a bug in this file. HYDRA-UMC-SUITE and HYDRA-UMC-ANDROID-CONTROL
-//     still only scan subnets - this app is the first of the 3 clients to
-//     add real mDNS, additively, without dropping the fallback either of
-//     them still relies on.
+// Finds servers on the local network, by two independent paths that feed the same
+// "Scan local network" sheet of ui/login_screen.dart:
+//   - discoverMdns(): mDNS/Bonjour query for the "_hydra._tcp.local" service the
+//     server publishes. Near-instant when the network delivers multicast replies.
+//     iOS drops multicast *receive* for an app without Apple's Multicast Networking
+//     entitlement (com.apple.developer.networking.multicast, granted per app and
+//     listed in Runner.entitlements): without it the query goes out but no reply
+//     may come, and the function finishes with nothing found.
+//   - scanSubnets(): GET /api/hydra-info against every host of the /24 networks of
+//     the device. Slower, but needs no multicast, so it is the path that always works.
 //
-// The prefix list scanSubnets() scans comes from this device's own network
-// interfaces (dart:io's NetworkInterface.list(), portable and
-// permission-free on iOS/Android/Windows/macOS/Linux - no extra platform
-// plugin needed) rather than a single hardcoded guess: a phone's LAN is
-// just as likely to be 192.168.0.x, 192.168.68.x (common ISP router
-// defaults) or 10.x.x.x as it is to be 192.168.1.x, and scanning only the
-// latter silently finds nothing on every other network. 192.168.1.x is
-// kept only as a last-resort fallback for the rare case interface
-// enumeration itself returns nothing (e.g. a locked-down simulator).
+// scanSubnets() takes its prefixes from the network interfaces of the device
+// (dart:io NetworkInterface.list(): no permission and no plugin) and falls back to
+// 192.168.1.x only when the enumeration returns nothing, as on a locked-down simulator.
 // =============================================================================
 
 import 'dart:async';
