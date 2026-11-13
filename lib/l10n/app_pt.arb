@@ -218,6 +218,8 @@
   "settingsConfirmPlaySubtitle": "Mostra o robô, os seus pontos gravados, a velocidade e quem o tem reservado antes de iniciar uma trajetória.",
   "settingsListenOnly": "Só escuta",
   "settingsListenOnlySubtitle": "Mostra os robôs e os seus dados, mas não envia nenhum comando: os controlos ficam desativados. O STOP funciona sempre.",
+  "settingsListenOnlyServer": "Só escuta para este servidor",
+  "settingsListenOnlyServerSubtitle": "Não envia nenhum comando ao servidor em uso, exceto o STOP e a desativação do modo seguro. Os outros servidores não são afetados.",
   "controlListenOnlyBanner": "Só escuta: os comandos estão desativados. O STOP continua a funcionar.",
   "playConfirmTitle": "Iniciar a reprodução?",
   "playConfirmMessage": "{robot} vai executar a trajetória que tem: {points} pontos gravados a {speed}% de velocidade.\n{reservation}",

@@ -23,6 +23,20 @@ class ListenOnlyGate {
   /// Set by the view model with the switch of the settings; off until the person turns it on.
   static bool enabled = false;
 
+  /// The most servers kept read-only by their own switch.
+  static const int maxServers = 50;
+
+  /// How a server is named in the list: its host and port.
+  static String serverKey(String host, int port) => '$host:$port';
+
+  /// Whether the mode holds for the server [serverKey]: the general switch, or that server in the list (no server known: only the general switch).
+  static bool effective(bool general, Set<String> servers, String? serverKey) =>
+      general || (serverKey != null && servers.contains(serverKey));
+
+  /// The names kept from a stored list: not empty, no longer than 200 characters, no spaces at the ends, at most [maxServers].
+  static Set<String> cleanServers(Iterable<String> raw) =>
+      raw.where((s) => s.isNotEmpty && s.length <= 200 && s.trim() == s).take(maxServers).toSet();
+
   static const Set<String> _allowedCommands = {'stop', 'disable'};
   static const Set<String> _sessionNames = {'login', 'refresh', 'logout'};
 

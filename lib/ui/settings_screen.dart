@@ -124,6 +124,15 @@ class SettingsScreen extends StatelessWidget {
           value: vm.listenOnly,
           onChanged: (value) => vm.setListenOnly(value),
         ),
+        if (vm.activeServer != null)
+          SwitchListTile(
+            key: const Key('settings-listen-only-server'),
+            secondary: const Icon(Icons.hearing_disabled_outlined),
+            title: Text(l10n.settingsListenOnlyServer),
+            subtitle: Text(l10n.settingsListenOnlyServerSubtitle),
+            value: vm.listenOnlyThisServer,
+            onChanged: (value) => vm.setListenOnlyThisServer(value),
+          ),
         // HOME/RESET moves the real robot to zero: off by default, two confirmations when on.
         SwitchListTile(
           key: const Key('settings-home-reset'),

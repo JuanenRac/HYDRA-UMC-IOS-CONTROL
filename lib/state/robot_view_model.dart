@@ -141,13 +141,44 @@ class RobotViewModel extends ChangeNotifier {
   /// command is dropped here, whatever screen asked for it.
   bool listenOnly = false;
 
+  /// The general switch and the servers that have their own: [listenOnly] is what holds for the server in use (either of them).
+  bool _listenOnlyGeneral = false;
+  Set<String> listenOnlyServers = <String>{};
+
+  String? get _activeServerKey {
+    final server = activeServer;
+    return server == null ? null : ListenOnlyGate.serverKey(server.host, server.port);
+  }
+
+  /// Whether the server in use is read-only by its own switch.
+  bool get listenOnlyThisServer {
+    final key = _activeServerKey;
+    return key != null && listenOnlyServers.contains(key);
+  }
+
+  void _refreshListenOnly({bool interrupt = true}) {
+    final on = ListenOnlyGate.effective(_listenOnlyGeneral, listenOnlyServers, _activeServerKey);
+    listenOnly = on;
+    ListenOnlyGate.enabled = on;
+    if (on && interrupt) deadMan.interrupt();
+  }
+
   /// Switches listen-only mode, and keeps the choice. A jog that is held stops when it is switched on.
   Future<void> setListenOnly(bool value) async {
-    listenOnly = value;
-    ListenOnlyGate.enabled = value;
-    if (value) deadMan.interrupt();
+    _listenOnlyGeneral = value;
+    _refreshListenOnly();
     notifyListeners();
     await _clientPrefs.saveListenOnly(value);
+  }
+
+  /// Switches listen-only mode for the server in use alone, and keeps the choice (nothing happens while no server is in use).
+  Future<void> setListenOnlyThisServer(bool value) async {
+    final key = _activeServerKey;
+    if (key == null) return;
+    listenOnlyServers = value ? {...listenOnlyServers, key} : ({...listenOnlyServers}..remove(key));
+    _refreshListenOnly();
+    notifyListeners();
+    await _clientPrefs.saveListenOnlyServers(listenOnlyServers);
   }
 
   /// HOME/RESET switch (see util/home_reset.dart); off until the person turns it on, the default comes from the contract.
@@ -291,8 +322,9 @@ class RobotViewModel extends ChangeNotifier {
     TlsSettingsStore.current = tlsSettings;
     blockCommandsOnSavedData = await _clientPrefs.loadBlockCommandsOnSavedData();
     confirmPlay = await _clientPrefs.loadConfirmPlay();
-    listenOnly = await _clientPrefs.loadListenOnly();
-    ListenOnlyGate.enabled = listenOnly;
+    _listenOnlyGeneral = await _clientPrefs.loadListenOnly();
+    listenOnlyServers = await _clientPrefs.loadListenOnlyServers();
+    _refreshListenOnly(interrupt: false);
     homeResetEnabled = await _clientPrefs.loadHomeReset(RobotCommandContract.homeResetEnabledByDefault);
     deadMan.enabled = await _clientPrefs.loadFlag(ClientFlags.deadManJog, RobotCommandContract.deadManEnabledByDefault);
     deadMan.blockOnBadLink = await _clientPrefs.loadFlag(ClientFlags.linkBlockJog, RobotCommandContract.linkBlockJogOnBadLinkDefault);
@@ -346,6 +378,7 @@ class RobotViewModel extends ChangeNotifier {
       client.tokenRenewer = () => _renewedTokenOf(client);
       apiClient = client;
       activeServer = ServerInfo(host: host, port: port, useTls: useTls);
+      _refreshListenOnly(interrupt: false);
       isLoggedIn = token != null;
     }
     if (isLoggedIn && biometricEnabled) {
@@ -1190,6 +1223,7 @@ class RobotViewModel extends ChangeNotifier {
       isLoggedIn = true;
       // The client resolves the scheme itself (HydraApiClient._resolveScheme): the server is stored with the scheme it answers on.
       activeServer = server.copyWith(useTls: client.usesTls);
+      _refreshListenOnly(interrupt: false);
       await _authPrefs.saveConnection(server.host, server.port);
       await _authPrefs.saveUseTls(client.usesTls);
       // POST /api/login also returns an opaque refreshToken (an older server omits it). A sign-in always REPLACES the stored one,
