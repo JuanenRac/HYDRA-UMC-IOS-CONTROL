@@ -239,6 +239,8 @@
   "settingsConfirmPlaySubtitle": "Shows the robot, its recorded points, the speed and who has it reserved before a trajectory starts.",
   "settingsListenOnly": "Listen only",
   "settingsListenOnlySubtitle": "Shows the robots and their data but sends no command: the controls are disabled. STOP always works.",
+  "settingsListenOnlyServer": "Listen only for this server",
+  "settingsListenOnlyServerSubtitle": "Sends no command to the server in use except STOP and the safe-mode disable. Other servers are not affected.",
   "controlListenOnlyBanner": "Listen only: commands are disabled. STOP still works.",
   "playConfirmTitle": "Start playback?",
   "playConfirmMessage": "{robot} will run the trajectory it has: {points} recorded points at {speed}% speed.\n{reservation}",

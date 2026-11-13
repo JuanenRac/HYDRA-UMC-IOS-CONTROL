@@ -219,6 +219,8 @@
   "settingsConfirmPlaySubtitle": "Affiche le robot, ses points enregistrés, la vitesse et qui l'a réservé avant de lancer une trajectoire.",
   "settingsListenOnly": "Écoute seule",
   "settingsListenOnlySubtitle": "Affiche les robots et leurs données mais n'envoie aucune commande : les commandes sont désactivées. STOP fonctionne toujours.",
+  "settingsListenOnlyServer": "Écoute seule pour ce serveur",
+  "settingsListenOnlyServerSubtitle": "N’envoie aucune commande au serveur utilisé sauf STOP et la désactivation du mode sûr. Les autres serveurs ne sont pas concernés.",
   "controlListenOnlyBanner": "Écoute seule : les commandes sont désactivées. STOP fonctionne toujours.",
   "playConfirmTitle": "Lancer la lecture ?",
   "playConfirmMessage": "{robot} va exécuter la trajectoire qu'il possède : {points} points enregistrés à {speed}% de vitesse.\n{reservation}",

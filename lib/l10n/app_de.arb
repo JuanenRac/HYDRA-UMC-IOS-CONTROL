@@ -219,6 +219,8 @@
   "settingsConfirmPlaySubtitle": "Zeigt vor dem Start einer Bahn den Roboter, seine aufgezeichneten Punkte, die Geschwindigkeit und wer ihn reserviert hat.",
   "settingsListenOnly": "Nur zuhören",
   "settingsListenOnlySubtitle": "Zeigt die Roboter und ihre Daten, sendet aber keine Befehle: die Bedienelemente sind deaktiviert. STOP funktioniert immer.",
+  "settingsListenOnlyServer": "Nur zuhören für diesen Server",
+  "settingsListenOnlyServerSubtitle": "Sendet an den verwendeten Server außer STOP und dem Abschalten des sicheren Modus keinen Befehl. Andere Server sind nicht betroffen.",
   "controlListenOnlyBanner": "Nur zuhören: Befehle sind deaktiviert. STOP funktioniert weiterhin.",
   "playConfirmTitle": "Wiedergabe starten?",
   "playConfirmMessage": "{robot} fährt die vorhandene Bahn ab: {points} aufgezeichnete Punkte bei {speed}% Geschwindigkeit.\n{reservation}",

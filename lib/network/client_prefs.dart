@@ -15,6 +15,7 @@
 import 'package:hydra_umc_app_common/hydra_umc_app_common.dart' show ClientPrefsCore;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'listen_only_gate.dart';
 import 'shared_preferences_store.dart';
 
 /// The names of the switches kept with [ClientPrefs.loadFlag].
@@ -53,6 +54,19 @@ class ClientPrefs extends ClientPrefsCore {
   Future<void> saveListenOnly(bool value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keyListenOnly, value);
+  }
+
+  static const _keyListenOnlyServers = 'hydra_listen_only_servers';
+
+  /// The servers (host:port) that are read-only by their own switch, whatever the general one says; none before any choice.
+  Future<Set<String>> loadListenOnlyServers() async {
+    final prefs = await SharedPreferences.getInstance();
+    return ListenOnlyGate.cleanServers(prefs.getStringList(_keyListenOnlyServers) ?? const <String>[]);
+  }
+
+  Future<void> saveListenOnlyServers(Set<String> servers) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(_keyListenOnlyServers, ListenOnlyGate.cleanServers(servers).toList()..sort());
   }
 
   Future<bool> loadBlockCommandsOnSavedData() async {
