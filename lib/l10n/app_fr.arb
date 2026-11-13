@@ -32,6 +32,9 @@
   "settingsStatus": "État : {status}",
   "settingsRequireBiometric": "Exiger Face ID / Touch ID",
   "settingsRequireBiometricSubtitle": "Redemander au lancement avant de se reconnecter à une session enregistrée",
+  "settingsStrongBiometric": "Verrouillage biométrique fort (Trousseau)",
+  "settingsStrongBiometricSubtitle": "Garde la session enregistrée dans un élément du Trousseau que seuls Face ID ou Touch ID ouvrent : le système le demande et rien ne peut simuler la vérification. Un visage ou un doigt ajouté ensuite met fin à la session enregistrée et vous vous reconnectez. iOS n’a pas de biométrie faible, donc aucune façon de se connecter n’est perdue. Désactivé par défaut.",
+  "settingsStrongBiometricFailed": "Le verrouillage biométrique fort n’a pas pu être modifié : l’appareil a besoin d’un code et de Face ID ou Touch ID configuré.",
   "settingsSignOut": "Se déconnecter",
   "settingsVersion": "Version",
 

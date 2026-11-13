@@ -32,6 +32,9 @@
   "settingsStatus": "状态：{status}",
   "settingsRequireBiometric": "需要 Face ID / Touch ID",
   "settingsRequireBiometricSubtitle": "重新连接已保存的会话前，每次启动都需再次验证",
+  "settingsStrongBiometric": "强生物识别锁(钥匙串)",
+  "settingsStrongBiometricSubtitle": "将已保存的会话放在只有 Face ID 或 Touch ID 才能打开的钥匙串项目中:由系统要求验证,任何东西都无法伪造。之后录入新的面容或手指会结束已保存的会话,需要重新登录。iOS 没有弱生物识别,因此不会丢失任何登录方式。默认关闭。",
+  "settingsStrongBiometricFailed": "无法更改强生物识别锁:设备需要设置密码,并已设置 Face ID 或 Touch ID。",
   "settingsSignOut": "退出登录",
   "settingsVersion": "版本",
 

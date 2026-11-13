@@ -22,6 +22,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:hydra_umc_app_common/hydra_umc_app_common.dart';
 
 import 'shared_preferences_store.dart';
+import 'strong_session_backend.dart';
 
 // Tests inject a fake of this seam instead of a real platform channel.
 export 'package:hydra_umc_app_common/hydra_umc_app_common.dart' show SecureTokenBackend;
@@ -35,6 +36,17 @@ class FlutterSecureStorageBackend implements SecureTokenBackend {
           const FlutterSecureStorage(
             iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock_this_device),
           );
+
+  /// The Keychain items behind the strong biometric mode: their access control is the currently enrolled biometrics (Face ID or
+  /// Touch ID), so reading one makes the system show the prompt. They use their own service name, apart from the normal items.
+  FlutterSecureStorageBackend.biometric()
+    : _storage = const FlutterSecureStorage(
+        iOptions: IOSOptions(
+          accountName: 'hydra_strong_session',
+          accessibility: KeychainAccessibility.passcode,
+          accessControlFlags: [AccessControlFlag.biometryCurrentSet],
+        ),
+      );
 
   final FlutterSecureStorage _storage;
 
@@ -53,8 +65,31 @@ class FlutterSecureStorageBackend implements SecureTokenBackend {
 /// The last server and the session of this app. The preferences and the session rules are the shared ones of the SDK
 /// package (clients/dart_app_common); this class gives them the platform's storage.
 class AuthPrefs extends AuthPrefsCore {
-  AuthPrefs({SecureTokenBackend? secureBackend}) : this._(secureBackend ?? FlutterSecureStorageBackend(), SharedPreferencesPrefsStore());
+  AuthPrefs({SecureTokenBackend? secureBackend, SecureTokenBackend? strongBackend})
+      : this._(secureBackend ?? FlutterSecureStorageBackend(), strongBackend ?? FlutterSecureStorageBackend.biometric(), SharedPreferencesPrefsStore());
 
-  AuthPrefs._(SecureTokenBackend secure, SharedPreferencesPrefsStore plain)
-      : super(store: plain, session: SessionStore(secure: secure, plain: plain, log: debugPrint));
+  AuthPrefs._(SecureTokenBackend normal, SecureTokenBackend strong, SharedPreferencesPrefsStore plain)
+      : this._routed(
+          StrongSessionBackend(
+            normal: normal,
+            strong: strong,
+            isStrong: () async => (await plain.getBool(strongSessionFlagKey)) ?? false,
+          ),
+          plain,
+        );
+
+  AuthPrefs._routed(StrongSessionBackend backend, SharedPreferencesPrefsStore plain)
+      : _backend = backend,
+        _plain = plain,
+        super(store: plain, session: SessionStore(secure: backend, plain: plain, log: debugPrint));
+
+  final StrongSessionBackend _backend;
+  final SharedPreferencesPrefsStore _plain;
+
+  /// Whether the session is kept behind the biometric prompt (the strong mode; off by default).
+  Future<bool> loadBiometricStrong() async => (await _plain.getBool(strongSessionFlagKey)) ?? false;
+
+  /// Turns the strong mode on or off, moving the stored session between the two stores. Throws, with nothing changed, when the
+  /// device refuses the protected item (no passcode set, no biometrics enrolled).
+  Future<void> setBiometricStrong(bool value) => _backend.switchTo(value, (strong) => _plain.setBool(strongSessionFlagKey, strong));
 }

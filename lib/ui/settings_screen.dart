@@ -29,6 +29,7 @@ String settingsScreenShape(RobotViewModel vm) {
     vm.connectionStatus,
     vm.biometricAvailable,
     vm.biometricEnabled,
+    vm.biometricStrong,
     vm.blockCommandsOnSavedData,
     vm.confirmPlay,
     vm.homeResetEnabled,
@@ -100,6 +101,20 @@ class SettingsScreen extends StatelessWidget {
             value: vm.biometricEnabled,
             onChanged: (value) => vm.setBiometricEnabled(value),
           ),
+          if (vm.biometricEnabled)
+            SwitchListTile(
+              key: const Key('settings-biometric-strong'),
+              secondary: const Icon(Icons.enhanced_encryption),
+              title: Text(l10n.settingsStrongBiometric),
+              subtitle: Text(l10n.settingsStrongBiometricSubtitle),
+              value: vm.biometricStrong,
+              onChanged: (value) async {
+                final changed = await vm.setBiometricStrong(value);
+                if (!changed && context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.settingsStrongBiometricFailed)));
+                }
+              },
+            ),
         ],
         const Divider(),
         SwitchListTile(

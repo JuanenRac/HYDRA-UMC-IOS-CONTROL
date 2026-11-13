@@ -308,6 +308,8 @@ class RobotViewModel extends ChangeNotifier {
   // session waits for the prompt, and main.dart shows the biometric gate for as long as it is.
   bool biometricAvailable = false;
   bool biometricEnabled = false;
+  // The strong mode (Settings, off by default): the saved session sits in a Keychain item the system opens only with Face ID or Touch ID.
+  bool biometricStrong = false;
   bool needsBiometricUnlock = false;
 
   /// [purgeStaleKeychain] is true only for the real app start (main.dart): a
@@ -369,6 +371,7 @@ class RobotViewModel extends ChangeNotifier {
     final token = await _authPrefs.loadToken();
     biometricAvailable = await _biometricHelper.isAvailable();
     biometricEnabled = await _authPrefs.loadBiometricEnabled();
+    biometricStrong = await _authPrefs.loadBiometricStrong();
     if (saved != null) {
       final (host, port) = saved;
       // The scheme this server was last seen on: a server that answered TLS is not probed over plain http again.
@@ -381,7 +384,8 @@ class RobotViewModel extends ChangeNotifier {
       _refreshListenOnly(interrupt: false);
       isLoggedIn = token != null;
     }
-    if (isLoggedIn && biometricEnabled) {
+    // In the strong mode the Keychain read above already asked for the biometric, so the gate does not ask a second time.
+    if (isLoggedIn && biometricEnabled && !biometricStrong) {
       if (biometricAvailable) {
         // No connect() until unlockWithBiometrics() succeeds: _RootGate reads needsBiometricUnlock before isLoggedIn and shows the gate.
         needsBiometricUnlock = true;
@@ -1197,7 +1201,24 @@ class RobotViewModel extends ChangeNotifier {
   Future<void> setBiometricEnabled(bool value) async {
     biometricEnabled = value;
     await _authPrefs.saveBiometricEnabled(value);
+    // The strong mode rests on the gate: switching the gate off ends it, and the session moves back to the normal store.
+    if (!value && biometricStrong) await setBiometricStrong(false);
     notifyListeners();
+  }
+
+  /// Turns the strong mode on (only while the gate is on and the device has biometrics) or off. False when the device refused the
+  /// protected Keychain item (no passcode or biometrics enrolled) or the person cancelled the prompt; the mode is then unchanged.
+  Future<bool> setBiometricStrong(bool value) async {
+    if (value && !(biometricEnabled && biometricAvailable)) return false;
+    try {
+      await _authPrefs.setBiometricStrong(value);
+    } catch (e) {
+      _logTelemetry('Strong biometric mode not changed: ${e.runtimeType}');
+      return false;
+    }
+    biometricStrong = value;
+    notifyListeners();
+    return true;
   }
 
   Future<bool> login(ServerInfo server) async {

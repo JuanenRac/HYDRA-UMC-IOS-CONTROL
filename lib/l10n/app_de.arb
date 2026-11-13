@@ -32,6 +32,9 @@
   "settingsStatus": "Status: {status}",
   "settingsRequireBiometric": "Face ID / Touch ID erforderlich",
   "settingsRequireBiometricSubtitle": "Beim Start erneut abfragen, bevor eine gespeicherte Sitzung wiederhergestellt wird",
+  "settingsStrongBiometric": "Starke biometrische Sperre (Schlüsselbund)",
+  "settingsStrongBiometricSubtitle": "Hält die gespeicherte Sitzung in einem Schlüsselbund-Eintrag, den nur Face ID oder Touch ID öffnen: Das System fragt danach, und nichts kann die Prüfung vortäuschen. Ein später hinzugefügtes Gesicht oder ein Finger beendet die gespeicherte Sitzung, und Sie melden sich neu an. iOS hat keine schwache Biometrie, es geht also kein Anmeldeweg verloren. Standardmäßig aus.",
+  "settingsStrongBiometricFailed": "Die starke biometrische Sperre konnte nicht geändert werden: Das Gerät braucht einen Code und eingerichtetes Face ID oder Touch ID.",
   "settingsSignOut": "Abmelden",
   "settingsVersion": "Version",
 
