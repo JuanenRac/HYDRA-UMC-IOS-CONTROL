@@ -32,6 +32,9 @@
   "settingsStatus": "状態: {status}",
   "settingsRequireBiometric": "Face ID / Touch ID を要求",
   "settingsRequireBiometricSubtitle": "保存済みセッションへの再接続前に、起動のたびに再確認する",
+  "settingsStrongBiometric": "強力な生体認証ロック(キーチェーン)",
+  "settingsStrongBiometricSubtitle": "保存したセッションを、Face ID または Touch ID でのみ開くキーチェーン項目に保管します。確認はシステムが求めるため、偽装できません。あとから顔や指を登録すると保存したセッションは終了し、再度サインインします。iOS には弱い生体認証がないため、サインイン手段は失われません。初期設定はオフです。",
+  "settingsStrongBiometricFailed": "強力な生体認証ロックを変更できませんでした。デバイスにパスコードと設定済みの Face ID または Touch ID が必要です。",
   "settingsSignOut": "サインアウト",
   "settingsVersion": "バージョン",
 

@@ -32,6 +32,9 @@
   "settingsStatus": "Stato: {status}",
   "settingsRequireBiometric": "Richiedi Face ID / Touch ID",
   "settingsRequireBiometricSubtitle": "Richiedilo di nuovo all'avvio prima di riconnettersi a una sessione salvata",
+  "settingsStrongBiometric": "Blocco biometrico forte (Portachiavi)",
+  "settingsStrongBiometricSubtitle": "Tiene la sessione salvata in un elemento del Portachiavi che solo Face ID o Touch ID aprono: lo chiede il sistema e nulla può simulare il controllo. Un volto o un dito aggiunto dopo termina la sessione salvata e si accede di nuovo. iOS non ha biometria debole, quindi non si perde nessun modo di accedere. Disattivato per impostazione predefinita.",
+  "settingsStrongBiometricFailed": "Non è stato possibile cambiare il blocco biometrico forte: il dispositivo richiede un codice e Face ID o Touch ID configurato.",
   "settingsSignOut": "Esci",
   "settingsVersion": "Versione",
 

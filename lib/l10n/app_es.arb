@@ -32,6 +32,9 @@
   "settingsStatus": "Estado: {status}",
   "settingsRequireBiometric": "Requerir Face ID / Touch ID",
   "settingsRequireBiometricSubtitle": "Volver a pedirlo al iniciar antes de reconectar con una sesión guardada",
+  "settingsStrongBiometric": "Bloqueo biométrico fuerte (Llavero)",
+  "settingsStrongBiometricSubtitle": "Guarda la sesión en un elemento del Llavero que solo abren Face ID o Touch ID: lo pide el sistema y nada puede falsear la comprobación. Una cara o huella añadida después termina la sesión guardada y vuelves a entrar. iOS no tiene biometría débil, así que no se pierde ninguna forma de entrar. Desactivado por defecto.",
+  "settingsStrongBiometricFailed": "No se pudo cambiar el bloqueo biométrico fuerte: el dispositivo necesita un código y Face ID o Touch ID configurado.",
   "settingsSignOut": "Cerrar sesión",
   "settingsVersion": "Versión",
 

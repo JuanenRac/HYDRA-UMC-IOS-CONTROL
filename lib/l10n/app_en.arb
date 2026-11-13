@@ -39,6 +39,9 @@
   "@settingsStatus": {"placeholders": {"status": {"type": "String"}}},
   "settingsRequireBiometric": "Require Face ID / Touch ID",
   "settingsRequireBiometricSubtitle": "Ask again on launch before reconnecting to a saved session",
+  "settingsStrongBiometric": "Strong biometric lock (Keychain)",
+  "settingsStrongBiometricSubtitle": "Keeps the saved session in a Keychain item that only Face ID or Touch ID opens, so the system asks for it and nothing can fake the check. A face or finger enrolled later ends the saved session and you sign in again. iOS has no weak biometrics, so no way of signing in is lost. Off by default.",
+  "settingsStrongBiometricFailed": "The strong biometric lock could not be changed: the device needs a passcode and an enrolled Face ID or Touch ID.",
   "settingsSignOut": "Sign Out",
   "settingsVersion": "Version",
 
