@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **A read-only server is told apart from a robot in safe mode (text in the eight languages):** a 423 `server-read-only` now reads "The server is in read-only mode: the command was not sent. Only STOP and the safe-mode disable go through. An administrator can switch it off." instead of the safe-mode sentence of a single robot. The wording and the mapping are in place; they take effect with the SDK release that carries the new error kind (until then the old sentence is shown). `test/server_read_only_text_test.dart` and a case in `test/robot_view_model_safe_mode_test.dart`.
+
 - **Listen only can be set for the server in use alone (off by default):** next to the general switch, Settings has a switch for the server the app is connected to (the list of `host:port` is kept on the phone). While it is on, that server gets no command but STOP and the safe-mode disable and no write but the session, and a held jog stops; other servers are not affected, and the general switch still covers all. The texts are in the eight languages. Same behaviour as the Android app. `test/listen_only_servers_test.dart`. Not run on an iPhone.
 - **Widget tests of the audit dialog:** 6 tests against a real local server (a recorded line, the check of the chain when asked, the filters that ask the server again, an empty record, a record the server keeps off, a refusal shown as a sentence); no behaviour changes.
 - **Tests of the words of the connections and server options dialogs:** 6 tests that read every kind of client, action, failure, "ago" unit, protection that is lowered and source of an option in the eight languages and check that none is empty or repeated; no behaviour changes.

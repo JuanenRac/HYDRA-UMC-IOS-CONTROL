@@ -1904,6 +1904,8 @@ class RobotViewModel extends ChangeNotifier {
       if (e.isHomeRejected) return HydraError(HydraErrorKind.homeRejected, {'command': command});
       if (e.isRevisionMismatch) return HydraError(HydraErrorKind.revisionChanged, {'command': command});
       if (e.isJogNotArmed) return const HydraError(HydraErrorKind.jogNotArmed);
+      final readOnlyKind = HydraErrorKind.values.asNameMap()['serverReadOnly'];
+      if (readOnlyKind != null && e.code == 'server-read-only') return HydraError(readOnlyKind, {'command': command});
       if (e.isRobotDisabled) return HydraError(HydraErrorKind.robotDisabled, {'command': command});
       if (e.isEnableNotAllowed) return const HydraError(HydraErrorKind.enableNotAllowed);
       if (e.isAdminRequired) return const HydraError(HydraErrorKind.adminRequired);
