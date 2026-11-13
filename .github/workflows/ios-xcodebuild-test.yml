@@ -1,25 +1,37 @@
 # =============================================================================
-# HYDRA-UMC-IOS-CONTROL - Swift tests on the iOS simulator (manual)
+# HYDRA-UMC-IOS-CONTROL - Swift tests on the iOS simulator
 # Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
 # GPL-3.0-or-later - see LICENSE
 # =============================================================================
-# Started by hand only (workflow_dispatch): it never runs on a push or a pull request, so it cannot turn the checks of a push red.
+# Runs once a week, by hand, and on a pull request to main that changes the app, its build files or this check (never on a push, so a push to main
+# cannot turn red because of an emulator). A newer run of the same pull request cancels the older one.
 #
 # Runs on a macOS runner of GitHub (free for a public repository), not on a Mac of the owner: sets up Flutter, generates the iOS configuration without signing
 # (`flutter build ios --config-only --no-codesign`) and runs `xcodebuild test` of the Runner scheme on an iPhone simulator that the runner has. Nothing is signed, nothing
 # is uploaded, no profile or certificate is used. It checks that the Swift code of the app and its tests build and pass on the simulator; it is not a phone.
 
-name: iOS tests on the simulator (manual)
+name: iOS tests on the simulator
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: "27 6 * * 1"
+  pull_request:
+    branches: [main]
+    paths:
+      - "ios/**"
+      - "lib/**"
+      - "test/**"
+      - "pubspec.yaml"
+      - "pubspec.lock"
+      - ".github/workflows/ios-xcodebuild-test.yml"
 
 permissions:
   contents: read
 
 concurrency:
-  group: ios-xcodebuild-test
-  cancel-in-progress: false
+  group: ios-xcodebuild-test-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   xcodebuild:
@@ -38,6 +50,13 @@ jobs:
           set -euo pipefail
           git clone --depth 1 --branch 3.47.9 https://github.com/flutter/flutter.git "$RUNNER_TEMP/flutter"
           echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
+
+      - name: Keep the downloaded Dart packages between runs
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.pub-cache
+          key: pub-${{ runner.os }}-${{ hashFiles('pubspec.lock') }}
+          restore-keys: pub-${{ runner.os }}-
 
       - name: Generate the iOS configuration without signing
         shell: bash
