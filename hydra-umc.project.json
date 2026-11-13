@@ -11,11 +11,11 @@
   ],
   "deployment_target": "mobile",
   "maturity": "functional",
-  "evidence": "none",
+  "evidence": "simulator",
   "family": "Core Backend & Clients",
   "parent": "HYDRA-UMC-SERVER",
   "build": "flutter pub get && flutter test (checks, any platform); flutter build ios (real iOS build, requires Xcode on macOS)",
-  "notes": "iOS/iPadOS control app with real-time WebSocket sync to HYDRA-UMC-SERVER: sign-in, dashboard, manual control with a global STOP, live camera, 3D view, telemetry and an offline copy of the last state that is clearly marked as saved data.",
+  "notes": "iOS/iPadOS control app with real-time WebSocket sync to HYDRA-UMC-SERVER: sign-in, dashboard, manual control with a global STOP, live camera, 3D view, telemetry and an offline copy of the last state that is clearly marked as saved data. Evidence is simulator: the xcodebuild workflow runs the Swift tests on an iPhone simulator (started by hand); no run on a real iPhone is recorded.",
   "native_version": {
     "file": "pubspec.yaml",
     "pattern": "^version:\\s*(\\d+)\\.(\\d+)\\.(\\d+)\\+\\d+"
