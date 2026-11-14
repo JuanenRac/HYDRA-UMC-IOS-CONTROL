@@ -21,6 +21,9 @@
 //  - Every connection attempt carries a generation number: the answer of an
 //    attempt that was replaced (the address changed, the widget was disposed)
 //    is dropped instead of leaving a second stream running.
+//  - A stream that ends, fails or is refused is opened again after the wait of
+//    [MjpegReconnectPolicy] (the same schedule as the Android player), for as
+//    long as the view is shown and the app is in the foreground.
 // =============================================================================
 
 import 'dart:async';
@@ -34,6 +37,35 @@ import '../../network/tls_settings.dart';
 
 /// Upper bound for the bytes waiting for a frame end.
 const int mjpegMaxBufferBytes = 4 * 1024 * 1024;
+
+/// How long the camera view waits before it opens a stream again.
+///
+/// The pause is one second, doubles with every attempt that brought no frame,
+/// stops growing after four doublings and never passes fifteen seconds, so a
+/// dead camera is polled gently and a recovered one is picked up within
+/// seconds. Pure on purpose: the schedule is tested without a screen or a
+/// socket. It is the same schedule as `MjpegReconnectPolicy` of the Android app.
+class MjpegReconnectPolicy {
+  const MjpegReconnectPolicy._();
+
+  static const Duration baseDelay = Duration(seconds: 1);
+  static const Duration maxDelay = Duration(seconds: 15);
+  static const int _maxDoublings = 4;
+  static const int _countLimit = 1000;
+
+  static int _bounded(int value, int top) => value < 0 ? 0 : (value > top ? top : value);
+
+  /// Attempts in a row that brought no frame, after the one that just ended.
+  static int failuresAfter(int previousFailures, {required bool gotFrame}) =>
+      gotFrame ? 0 : _bounded(previousFailures, _countLimit) + 1;
+
+  /// Pause before the next attempt, for the number of failures in a row.
+  static Duration delayFor(int failures) {
+    final doublings = _bounded(failures, _maxDoublings);
+    final wait = baseDelay * (1 << doublings);
+    return wait > maxDelay ? maxDelay : wait;
+  }
+}
 
 /// The newest complete JPEG in [bytes] as (start, endExclusive), or null when
 /// there is none yet. Used by the view, and testable on its own.
@@ -71,10 +103,17 @@ class _MjpegViewState extends State<MjpegView> with WidgetsBindingObserver {
   Uint8List? _frame;
   StreamSubscription<List<int>>? _sub;
   http.Client? _client;
+  Timer? _retry;
   bool _hasError = false;
   String? _reason;
   int _generation = 0;
   bool _pausedByLifecycle = false;
+
+  /// Attempts in a row that brought no frame (the input of the reconnect wait).
+  int _failures = 0;
+
+  /// True once the attempt in progress has delivered a frame.
+  bool _attemptGotFrame = false;
 
   @override
   void initState() {
@@ -89,13 +128,14 @@ class _MjpegViewState extends State<MjpegView> with WidgetsBindingObserver {
       case AppLifecycleState.paused:
       case AppLifecycleState.hidden:
       case AppLifecycleState.detached:
-        if (_client != null || _sub != null) {
+        if (_client != null || _sub != null || _retry != null) {
           _stop();
           _pausedByLifecycle = true;
         }
       case AppLifecycleState.resumed:
         if (_pausedByLifecycle) {
           _pausedByLifecycle = false;
+          _failures = 0;
           _start();
         }
       case AppLifecycleState.inactive:
@@ -111,12 +151,34 @@ class _MjpegViewState extends State<MjpegView> with WidgetsBindingObserver {
       _frame = null;
       _hasError = false;
       _reason = null;
+      _failures = 0;
       _start();
     }
   }
 
+  /// The attempt of [generation] is over (the stream ended, failed or was
+  /// refused): close it and open another one after the wait of the schedule.
+  /// An attempt that was already replaced does nothing.
+  void _attemptEnded(int generation) {
+    if (generation != _generation) return;
+    _generation++; // whatever else this attempt reports is stale now
+    _sub?.cancel();
+    _sub = null;
+    _client?.close();
+    _client = null;
+    _failures = MjpegReconnectPolicy.failuresAfter(_failures, gotFrame: _attemptGotFrame);
+    _retry?.cancel();
+    _retry = Timer(MjpegReconnectPolicy.delayFor(_failures), () {
+      _retry = null;
+      if (mounted) _start();
+    });
+  }
+
   Future<void> _start() async {
+    _retry?.cancel();
+    _retry = null;
     final generation = ++_generation;
+    _attemptGotFrame = false;
     final client = (widget.clientFactory ?? createClient)();
     _client = client;
     var pending = BytesBuilder(copy: false);
@@ -135,7 +197,7 @@ class _MjpegViewState extends State<MjpegView> with WidgetsBindingObserver {
             _reason = 'HTTP ${response.statusCode}';
           });
         }
-        client.close();
+        _attemptEnded(generation);
         return;
       }
       _sub = response.stream.listen(
@@ -152,6 +214,7 @@ class _MjpegViewState extends State<MjpegView> with WidgetsBindingObserver {
           final frame = Uint8List.fromList(Uint8List.sublistView(bytes, found.start, found.end));
           pending = BytesBuilder(copy: false);
           if (found.end < bytes.length) pending.add(Uint8List.sublistView(bytes, found.end));
+          _attemptGotFrame = true;
           if (mounted) {
             setState(() {
               _frame = frame;
@@ -162,19 +225,24 @@ class _MjpegViewState extends State<MjpegView> with WidgetsBindingObserver {
         },
         onError: (Object _) {
           if (mounted && generation == _generation) setState(() => _hasError = true);
+          _attemptEnded(generation);
         },
         onDone: () {
           if (mounted && generation == _generation) setState(() => _hasError = true);
+          _attemptEnded(generation);
         },
         cancelOnError: true,
       );
     } catch (_) {
       if (mounted && generation == _generation) setState(() => _hasError = true);
+      _attemptEnded(generation);
     }
   }
 
   void _stop() {
     _generation++;
+    _retry?.cancel();
+    _retry = null;
     _sub?.cancel();
     _sub = null;
     _client?.close();
