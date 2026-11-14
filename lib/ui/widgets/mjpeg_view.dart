@@ -24,6 +24,9 @@
 //  - A stream that ends, fails or is refused is opened again after the wait of
 //    [MjpegReconnectPolicy] (the same schedule as the Android player), for as
 //    long as the view is shown and the app is in the foreground.
+//  - A connection that stays silent (no answer, or no bytes) for
+//    [MjpegReconnectPolicy.stallTimeout] counts as ended, like the read timeout
+//    of the Android player, so a stalled camera is opened again too.
 // =============================================================================
 
 import 'dart:async';
@@ -50,6 +53,9 @@ class MjpegReconnectPolicy {
 
   static const Duration baseDelay = Duration(seconds: 1);
   static const Duration maxDelay = Duration(seconds: 15);
+
+  /// How long a connection may stay silent before it is given up and opened again.
+  static const Duration stallTimeout = Duration(seconds: 30);
   static const int _maxDoublings = 4;
   static const int _countLimit = 1000;
 
@@ -104,6 +110,7 @@ class _MjpegViewState extends State<MjpegView> with WidgetsBindingObserver {
   StreamSubscription<List<int>>? _sub;
   http.Client? _client;
   Timer? _retry;
+  Timer? _stall;
   bool _hasError = false;
   String? _reason;
   int _generation = 0;
@@ -162,6 +169,8 @@ class _MjpegViewState extends State<MjpegView> with WidgetsBindingObserver {
   void _attemptEnded(int generation) {
     if (generation != _generation) return;
     _generation++; // whatever else this attempt reports is stale now
+    _stall?.cancel();
+    _stall = null;
     _sub?.cancel();
     _sub = null;
     _client?.close();
@@ -174,11 +183,22 @@ class _MjpegViewState extends State<MjpegView> with WidgetsBindingObserver {
     });
   }
 
+  /// Starts counting the silence of the attempt of [generation] again.
+  void _armStall(int generation) {
+    _stall?.cancel();
+    _stall = Timer(MjpegReconnectPolicy.stallTimeout, () {
+      _stall = null;
+      if (mounted && generation == _generation) setState(() => _hasError = true);
+      _attemptEnded(generation);
+    });
+  }
+
   Future<void> _start() async {
     _retry?.cancel();
     _retry = null;
     final generation = ++_generation;
     _attemptGotFrame = false;
+    _armStall(generation);
     final client = (widget.clientFactory ?? createClient)();
     _client = client;
     var pending = BytesBuilder(copy: false);
@@ -203,6 +223,7 @@ class _MjpegViewState extends State<MjpegView> with WidgetsBindingObserver {
       _sub = response.stream.listen(
         (chunk) {
           if (generation != _generation) return;
+          _armStall(generation);
           pending.add(chunk);
           if (pending.length > mjpegMaxBufferBytes) {
             pending = BytesBuilder(copy: false); // never produced a frame end: start over
@@ -243,6 +264,8 @@ class _MjpegViewState extends State<MjpegView> with WidgetsBindingObserver {
     _generation++;
     _retry?.cancel();
     _retry = null;
+    _stall?.cancel();
+    _stall = null;
     _sub?.cancel();
     _sub = null;
     _client?.close();
