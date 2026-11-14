@@ -537,5 +537,20 @@
   "workBlockedNoTable": "Este trabalho usa uma mesa XY que o robô não tem.",
   "workNotSupported": "Este servidor não suporta o carregamento de um trabalho.",
   "deadManBlockedOff": "O movimento contínuo está desativado. Ative-o nas Definições.",
-  "pairingOff": "O emparelhamento está desativado. Ative-o nas Definições."
+  "pairingOff": "O emparelhamento está desativado. Ative-o nas Definições.",
+  "canOtaTitle": "Flash CAN",
+  "canOtaPhaseConnecting": "A ligar à placa",
+  "canOtaPhaseEnteringBootloader": "A entrar no bootloader",
+  "canOtaPhaseErasingFram": "A apagar a FRAM",
+  "canOtaPhaseTransferring": "A enviar a imagem",
+  "canOtaPhaseVerifying": "A verificar a imagem",
+  "canOtaPhaseRebooting": "A reiniciar a placa",
+  "canOtaPhaseDone": "Flash concluído",
+  "canOtaPhaseError": "O flash falhou",
+  "canOtaPercent": "{percent} %",
+  "@canOtaPercent": {"placeholders": {"percent": {"type": "int"}}},
+  "canOtaPages": "{sent} de {total} páginas",
+  "@canOtaPages": {"placeholders": {"sent": {"type": "int"}, "total": {"type": "int"}}},
+  "canOtaError": "Motivo: {reason}",
+  "@canOtaError": {"placeholders": {"reason": {"type": "String"}}}
 }

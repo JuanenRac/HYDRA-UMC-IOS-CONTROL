@@ -538,5 +538,20 @@
   "workBlockedNoTable": "Questo lavoro usa una tavola XY che il robot non ha.",
   "workNotSupported": "Questo server non supporta il caricamento di un lavoro.",
   "deadManBlockedOff": "Il movimento continuo è disattivato. Attivalo nelle Impostazioni.",
-  "pairingOff": "L'abbinamento è disattivato. Attivalo nelle Impostazioni."
+  "pairingOff": "L'abbinamento è disattivato. Attivalo nelle Impostazioni.",
+  "canOtaTitle": "Flash CAN",
+  "canOtaPhaseConnecting": "Connessione alla scheda",
+  "canOtaPhaseEnteringBootloader": "Ingresso nel bootloader",
+  "canOtaPhaseErasingFram": "Cancellazione della FRAM",
+  "canOtaPhaseTransferring": "Invio dell'immagine",
+  "canOtaPhaseVerifying": "Verifica dell'immagine",
+  "canOtaPhaseRebooting": "Riavvio della scheda",
+  "canOtaPhaseDone": "Flash completato",
+  "canOtaPhaseError": "Flash non riuscito",
+  "canOtaPercent": "{percent} %",
+  "@canOtaPercent": {"placeholders": {"percent": {"type": "int"}}},
+  "canOtaPages": "{sent} di {total} pagine",
+  "@canOtaPages": {"placeholders": {"sent": {"type": "int"}, "total": {"type": "int"}}},
+  "canOtaError": "Motivo: {reason}",
+  "@canOtaError": {"placeholders": {"reason": {"type": "String"}}}
 }

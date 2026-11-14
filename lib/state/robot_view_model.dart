@@ -20,6 +20,7 @@ import '../app_version.dart';
 import '../l10n/language_prefs.dart';
 import '../models/access.dart';
 import '../models/assistant_reply.dart';
+import '../models/can_ota_progress.dart';
 import '../models/connection_history.dart';
 import '../models/ecosystem.dart';
 import '../models/contract_v2.dart';
@@ -257,6 +258,9 @@ class RobotViewModel extends ChangeNotifier {
   /// The last reading of the server's load, listened to by the one widget that shows it: a reading every few seconds
   /// must not rebuild every screen that watches the view model.
   final ValueNotifier<SystemMetrics?> metricsListenable = ValueNotifier<SystemMetrics?>(null);
+
+  /// The last progress of a flash cycle of a board that the server pushed (administrators only); null before the first message and after the socket closes.
+  final ValueNotifier<CanOtaProgress?> canOtaProgressListenable = ValueNotifier<CanOtaProgress?>(null);
 
   SystemMetrics? get metrics => metricsListenable.value;
 
@@ -1478,6 +1482,7 @@ class RobotViewModel extends ChangeNotifier {
           deadMan.ensureProbe(_linkProbeActive);
           _ensureWatchAlertLoop();
         } else if (status == WsStatus.disconnected) {
+          canOtaProgressListenable.value = null;
           // A held jog must not outlive the connection: its axis is stopped (the server also stops it by itself).
           deadMan.interrupt();
           deadMan.stopProbe();
@@ -1492,6 +1497,7 @@ class RobotViewModel extends ChangeNotifier {
       },
       onDelta: _applyRobotDelta,
       onClaims: _applyClaimsPush,
+      onCanOtaProgress: applyCanOtaProgress,
       onError: (error) {
         lastError = error;
         _logTelemetry('WebSocket error: ${error.params['message'] ?? error.params['error'] ?? error.kind.name}');
@@ -1882,6 +1888,13 @@ class RobotViewModel extends ChangeNotifier {
     } catch (e) {
       if (e is HydraApiException && e.isSessionProblem) _forceLogout();
     }
+  }
+
+  /// The progress of a flash cycle the server pushed (WebSocket message `canota_progress`). A message with a phase the app does not know leaves what is shown as it was.
+  @visibleForTesting
+  void applyCanOtaProgress(Map<String, dynamic> message) {
+    final progress = CanOtaProgress.fromMessage(message);
+    if (progress != null) canOtaProgressListenable.value = progress;
   }
 
   /// The reservations the server pushed (WebSocket message `claims`): replaces the list and the arming of this app's own reservations.
@@ -2732,6 +2745,7 @@ class RobotViewModel extends ChangeNotifier {
     surfaces.dispose();
     commands.cancelAllPending();
     metricsListenable.dispose();
+    canOtaProgressListenable.dispose();
     apiClient?.close();
     super.dispose();
   }
