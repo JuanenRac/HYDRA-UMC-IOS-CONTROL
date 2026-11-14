@@ -3,13 +3,10 @@
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
 // GPL-3.0-or-later - see LICENSE
 //
-// The live progress of a CAN flash cycle: the message reaches the view model through the socket of the app (a real local dart:io server),
-// an unknown phase leaves what is shown as it was, and the card shows the phase, the percent, the pages and the reason in the language chosen.
+// The live progress of a CAN flash cycle: an unknown phase leaves what is shown as it was in the view model, and the card shows the phase, the percent,
+// the pages and the reason in the language chosen. The delivery through the socket is in can_ota_socket_test.dart (a file without the widget binding,
+// which answers every HTTP request with 400).
 // =============================================================================
-
-import 'dart:async';
-import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -18,7 +15,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:hydra_umc_control/l10n/app_localizations.dart';
 import 'package:hydra_umc_control/models/can_ota_progress.dart';
 import 'package:hydra_umc_control/network/auth_prefs.dart';
-import 'package:hydra_umc_control/network/hydra_websocket.dart';
 import 'package:hydra_umc_control/state/robot_view_model.dart';
 import 'package:hydra_umc_control/ui/dashboard_screen.dart';
 
@@ -42,35 +38,6 @@ Widget _card(CanOtaProgress progress, Locale locale) => MaterialApp(
     );
 
 void main() {
-  group('the socket of the app', () {
-    test('a progress message goes to its own callback and not to the settings one', () async {
-      final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
-      addTearDown(() => server.close(force: true));
-      server.listen((request) async {
-        final socket = await WebSocketTransformer.upgrade(request, protocolSelector: (p) => p.contains('hydra.bearer') ? 'hydra.bearer' : null);
-        socket.add(jsonEncode(_message({'phase': 'transferring', 'pages_sent': 5, 'pages_total': 20, 'percent': 25})));
-      });
-      final progress = Completer<Map<String, dynamic>>();
-      final settings = <Map<String, dynamic>>[];
-      final ws = HydraWebSocket(
-        host: '127.0.0.1',
-        port: server.port,
-        token: 'tok',
-        onStatus: (_) {},
-        onSettings: settings.add,
-        onError: (_) {},
-        onCanOtaProgress: (m) {
-          if (!progress.isCompleted) progress.complete(m);
-        },
-      )..connect();
-      addTearDown(ws.disconnect);
-      final read = CanOtaProgress.fromMessage(await progress.future.timeout(const Duration(seconds: 5)))!;
-      expect(read.phase, CanOtaPhase.transferring);
-      expect(read.percent, 25);
-      expect(settings, isEmpty);
-    });
-  });
-
   group('the view model', () {
     test('keeps the last progress, ignores a phase it does not know and starts empty', () async {
       SharedPreferences.setMockInitialValues({});
