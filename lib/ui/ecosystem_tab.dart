@@ -3,7 +3,7 @@
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
 // GPL-3.0-or-later - see LICENSE
 //
-// Ported from HYDRA-UMC-ANDROID-CONTROL's EcosystemTab: the project manifests the server finds next to itself, grouped by
+// Same as HYDRA-UMC-ANDROID-CONTROL's EcosystemTab: the project manifests the server finds next to itself, grouped by
 // family, with a bulb only for the projects that declare a network service (green when the server just reached it, red
 // when it did not; a project without a service shows no bulb, because it was never meant to be "up"). Read when the tab
 // opens and by the refresh button, never polled.

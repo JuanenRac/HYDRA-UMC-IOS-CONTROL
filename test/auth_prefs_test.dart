@@ -1,5 +1,5 @@
 // the session
-// token used to live in plain SharedPreferences, indistinguishable from
+// token lives in the secure store, not in plain SharedPreferences next to
 // host/port. These tests exercise AuthPrefs against a fake
 // SecureTokenBackend (no real platform channel) covering: the real
 // no-regression fallback when secure storage is unavailable, and the real

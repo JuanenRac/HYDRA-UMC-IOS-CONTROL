@@ -5,7 +5,7 @@
 //
 // Embeds the 3D viewport of HYDRA-UMC-STUDIO in a WebView (?hideUI=true&robotId=#token=), so the scene and the kinematics of every
 // robot are the ones STUDIO ships. webview_flutter has an implementation for Android and iOS only: on other platforms (the
-// Windows desktop target used to run the app logic without a Mac) the screen shows a placeholder instead of failing.
+// Windows desktop target that runs the app logic without a Mac) the screen shows a placeholder instead of failing.
 // =============================================================================
 
 import 'dart:io' show Platform;
