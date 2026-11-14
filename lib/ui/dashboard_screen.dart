@@ -17,6 +17,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../l10n/app_localizations.dart';
+import '../models/can_ota_progress.dart';
 import '../models/hydra_state.dart';
 import '../state/robot_view_model.dart';
 import 'widgets/status_led.dart';
@@ -45,6 +46,11 @@ class DashboardScreen extends StatelessWidget {
         ValueListenableBuilder<SystemMetrics?>(
           valueListenable: vm.metricsListenable,
           builder: (context, metrics, _) => metrics == null ? const SizedBox.shrink() : _MetricsBar(metrics: metrics),
+        ),
+        // Read-only: the app shows the flash cycle the server reports and starts none.
+        ValueListenableBuilder<CanOtaProgress?>(
+          valueListenable: vm.canOtaProgressListenable,
+          builder: (context, progress, _) => progress == null ? const SizedBox.shrink() : CanOtaProgressCard(progress: progress),
         ),
         Expanded(
           child: robots.isEmpty
@@ -196,4 +202,55 @@ String formatUptime(int seconds) {
   if (d > 0) return '${d}d ${h}h ${m}m';
   if (h > 0) return '${h}h ${m}m';
   return '${m}m';
+}
+
+/// The text of a phase of a flash cycle in the language of the person.
+String canOtaPhaseText(AppLocalizations l10n, CanOtaPhase phase) => switch (phase) {
+      CanOtaPhase.connecting => l10n.canOtaPhaseConnecting,
+      CanOtaPhase.enteringBootloader => l10n.canOtaPhaseEnteringBootloader,
+      CanOtaPhase.erasingFram => l10n.canOtaPhaseErasingFram,
+      CanOtaPhase.transferring => l10n.canOtaPhaseTransferring,
+      CanOtaPhase.verifying => l10n.canOtaPhaseVerifying,
+      CanOtaPhase.rebooting => l10n.canOtaPhaseRebooting,
+      CanOtaPhase.done => l10n.canOtaPhaseDone,
+      CanOtaPhase.error => l10n.canOtaPhaseError,
+    };
+
+/// The phase, a bar with the percent, the pages while the image is sent and the reason when the cycle fails.
+class CanOtaProgressCard extends StatelessWidget {
+  final CanOtaProgress progress;
+  const CanOtaProgressCard({super.key, required this.progress});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final percent = progress.percent;
+    final sent = progress.pagesSent;
+    final total = progress.pagesTotal;
+    final failed = progress.phase == CanOtaPhase.error;
+    final errorColor = Theme.of(context).colorScheme.error;
+    return Card(
+      margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+      child: Padding(
+        padding: const EdgeInsets.all(10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.canOtaTitle, style: Theme.of(context).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w800)),
+            const SizedBox(height: 4),
+            Text(canOtaPhaseText(l10n, progress.phase), style: TextStyle(color: failed ? errorColor : null)),
+            if (percent != null) ...[
+              const SizedBox(height: 4),
+              LinearProgressIndicator(value: percent / 100),
+              Text(l10n.canOtaPercent(percent), style: Theme.of(context).textTheme.bodySmall),
+            ],
+            if (sent != null && total != null && total > 1 && progress.phase == CanOtaPhase.transferring)
+              Text(l10n.canOtaPages(sent, total), style: Theme.of(context).textTheme.bodySmall),
+            if (progress.error != null)
+              Text(l10n.canOtaError(progress.error!), style: Theme.of(context).textTheme.bodySmall?.copyWith(color: errorColor)),
+          ],
+        ),
+      ),
+    );
+  }
 }

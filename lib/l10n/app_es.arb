@@ -538,5 +538,20 @@
   "workBlockedNoTable": "Este trabajo usa una mesa XY y el robot no tiene ninguna.",
   "workNotSupported": "Este servidor no admite cargar un trabajo.",
   "deadManBlockedOff": "El movimiento continuo está desactivado. Actívelo en Ajustes.",
-  "pairingOff": "El emparejamiento está desactivado. Actívelo en Ajustes."
+  "pairingOff": "El emparejamiento está desactivado. Actívelo en Ajustes.",
+  "canOtaTitle": "Flasheo CAN",
+  "canOtaPhaseConnecting": "Conectando con la placa",
+  "canOtaPhaseEnteringBootloader": "Entrando en el bootloader",
+  "canOtaPhaseErasingFram": "Borrando la FRAM",
+  "canOtaPhaseTransferring": "Enviando la imagen",
+  "canOtaPhaseVerifying": "Verificando la imagen",
+  "canOtaPhaseRebooting": "Reiniciando la placa",
+  "canOtaPhaseDone": "Flasheo terminado",
+  "canOtaPhaseError": "El flasheo ha fallado",
+  "canOtaPercent": "{percent} %",
+  "@canOtaPercent": {"placeholders": {"percent": {"type": "int"}}},
+  "canOtaPages": "{sent} de {total} páginas",
+  "@canOtaPages": {"placeholders": {"sent": {"type": "int"}, "total": {"type": "int"}}},
+  "canOtaError": "Motivo: {reason}",
+  "@canOtaError": {"placeholders": {"reason": {"type": "String"}}}
 }
