@@ -222,6 +222,8 @@
   "settingsConfirmPlaySubtitle": "Affiche le robot, ses points enregistrés, la vitesse et qui l'a réservé avant de lancer une trajectoire.",
   "settingsListenOnly": "Écoute seule",
   "settingsListenOnlySubtitle": "Affiche les robots et leurs données mais n'envoie aucune commande : les commandes sont désactivées. STOP fonctionne toujours.",
+  "settingsRequireReleaseSignature": "Exiger la signature de la version",
+  "settingsRequireReleaseSignatureSubtitle": "Lors de la vérification d'une version téléchargée, exige en plus la signature Ed25519 des versions et refuse celle qui n'en a pas de valide. Désactivé par défaut : l'empreinte est quand même vérifiée.",
   "settingsListenOnlyServer": "Écoute seule pour ce serveur",
   "settingsListenOnlyServerSubtitle": "N’envoie aucune commande au serveur utilisé sauf STOP et la désactivation du mode sûr. Les autres serveurs ne sont pas concernés.",
   "controlListenOnlyBanner": "Écoute seule : les commandes sont désactivées. STOP fonctionne toujours.",

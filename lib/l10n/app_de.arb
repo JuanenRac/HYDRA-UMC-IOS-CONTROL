@@ -222,6 +222,8 @@
   "settingsConfirmPlaySubtitle": "Zeigt vor dem Start einer Bahn den Roboter, seine aufgezeichneten Punkte, die Geschwindigkeit und wer ihn reserviert hat.",
   "settingsListenOnly": "Nur zuhören",
   "settingsListenOnlySubtitle": "Zeigt die Roboter und ihre Daten, sendet aber keine Befehle: die Bedienelemente sind deaktiviert. STOP funktioniert immer.",
+  "settingsRequireReleaseSignature": "Release-Signatur verlangen",
+  "settingsRequireReleaseSignatureSubtitle": "Beim Prüfen einer heruntergeladenen Version wird zusätzlich die Ed25519-Signatur der Releases verlangt; eine Version ohne gültige Signatur wird abgelehnt. Standardmäßig aus: die Prüfsumme wird trotzdem geprüft.",
   "settingsListenOnlyServer": "Nur zuhören für diesen Server",
   "settingsListenOnlyServerSubtitle": "Sendet an den verwendeten Server außer STOP und dem Abschalten des sicheren Modus keinen Befehl. Andere Server sind nicht betroffen.",
   "controlListenOnlyBanner": "Nur zuhören: Befehle sind deaktiviert. STOP funktioniert weiterhin.",

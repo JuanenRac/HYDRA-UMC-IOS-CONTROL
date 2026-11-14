@@ -222,6 +222,8 @@
   "settingsConfirmPlaySubtitle": "Mostra il robot, i suoi punti registrati, la velocità e chi lo ha prenotato prima di avviare una traiettoria.",
   "settingsListenOnly": "Solo ascolto",
   "settingsListenOnlySubtitle": "Mostra i robot e i loro dati ma non invia alcun comando: i controlli sono disattivati. STOP funziona sempre.",
+  "settingsRequireReleaseSignature": "Richiedi la firma della versione",
+  "settingsRequireReleaseSignatureSubtitle": "Nel controllo di una versione scaricata, richiede anche la firma Ed25519 delle versioni e rifiuta quella senza una firma valida. Disattivato per impostazione predefinita: l'impronta viene comunque verificata.",
   "settingsListenOnlyServer": "Solo ascolto per questo server",
   "settingsListenOnlyServerSubtitle": "Non invia comandi al server in uso tranne STOP e la disattivazione della modalità sicura. Gli altri server non sono interessati.",
   "controlListenOnlyBanner": "Solo ascolto: i comandi sono disattivati. STOP continua a funzionare.",

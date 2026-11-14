@@ -137,4 +137,17 @@ class ClientPrefs extends ClientPrefsCore {
 
   Future<void> saveFlag(String name, bool value) async => (await SharedPreferences.getInstance()).setBool('hydra_flag_$name', value);
 
+  static const _keyRequireReleaseSignature = 'hydra_require_release_signature';
+
+  /// Whether a downloaded release must also carry a valid signature of the releases; off before any choice, which is how the
+  /// app behaved before the check existed (the digest is checked either way).
+  Future<bool> loadRequireReleaseSignature() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_keyRequireReleaseSignature) ?? false;
+  }
+
+  Future<void> saveRequireReleaseSignature(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyRequireReleaseSignature, value);
+  }
 }
