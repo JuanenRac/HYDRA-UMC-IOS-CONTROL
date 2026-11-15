@@ -4,6 +4,7 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **The SDK pin and the shared tools are up to date:** the SDK dependency names the newest release tag, and the shared tools are the canonical copies again.
 - **The common words of the apps come from the SDK:** the eight ARB files carry the `common<Id>` entries that `tools/i18n_common.py render arb` writes (100 words in all, written once in HYDRA-UMC-SDK), and the own keys that said exactly the same word in the eight languages (45 keys) are gone: the screens read the common entry instead. `tools/extra_checks.py` checks that the entries are the ones of the SDK when the SDK is at hand; the keys that differ in form or in meaning (capitals, a longer wording) or that the interface specification names stay as they are.
 - **The search for servers on the network comes from the shared app package:** the mDNS query and the sweep of the local subnets (candidate subnets, mobile-data and VPN interfaces, concurrency) now run in the SDK package, and the app only supplies the probe that reads `GET /api/hydra-info`; the scan sheet, the interface switch and the result are unchanged. Tests: the probe turns a server answer into the server record, anything else or no answer into nothing, and leaves the client of a sweep open (`test/discovery_probe_test.dart`).
 
