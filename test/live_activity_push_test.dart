@@ -250,7 +250,7 @@ void main() {
       Uri? asked;
       final client = HydraApiClient('127.0.0.1', 3000, client: MockClient((request) async {
         asked = request.url;
-        return http.Response('{}', 200);
+        return http.Response('{"removed":true}', 200);
       }));
       client.authToken = 'tok.en';
       await client.deleteLiveActivity('a/b c');
