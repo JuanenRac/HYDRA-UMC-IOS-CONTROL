@@ -37,7 +37,7 @@ String protectionLoweringText(AppLocalizations l10n, ProtectionLowering lowering
 String optionSourceText(AppLocalizations l10n, OptionSource source) => switch (source) {
       OptionSource.env => l10n.serverOptionsSourceEnv,
       OptionSource.config => l10n.serverOptionsSourceConfig,
-      OptionSource.defaultValue => l10n.serverOptionsSourceDefault,
+      OptionSource.defaultValue => l10n.commonDefault,
     };
 
 /// Opens the dialog; the caller shows it to an administrator only (the server refuses anyone else).
@@ -116,7 +116,7 @@ class _ServerOptionsDialogState extends State<ServerOptionsDialog> {
             children: [for (final item in lowering) Text('- ${protectionLoweringText(l10n, item)}')],
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.of(dialog).pop(false), child: Text(l10n.securityCancel)),
+            TextButton(onPressed: () => Navigator.of(dialog).pop(false), child: Text(l10n.commonCancel)),
             FilledButton(
               key: const ValueKey('server-options-confirm-yes'),
               onPressed: () => Navigator.of(dialog).pop(true),
@@ -167,7 +167,7 @@ class _ServerOptionsDialogState extends State<ServerOptionsDialog> {
                 child: OutlinedButton(
                   key: const ValueKey('server-options-refresh'),
                   onPressed: vm.serverOptionsBusy ? null : () => vm.refreshServerOptions(),
-                  child: Text(l10n.connectionsRefresh),
+                  child: Text(l10n.commonRefresh),
                 ),
               ),
               if (current != null && shown != null)
@@ -204,7 +204,7 @@ class _ServerOptionsDialogState extends State<ServerOptionsDialog> {
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(l10n.actionClose)),
+        TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(l10n.commonClose)),
         if (current != null && shown != null && !current.isEmpty)
           FilledButton(
             key: const ValueKey('server-options-save'),

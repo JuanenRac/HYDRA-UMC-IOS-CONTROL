@@ -328,7 +328,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     controller: _portCtrl,
                                     keyboardType: TextInputType.number,
                                     decoration: InputDecoration(
-                                      labelText: l10n.loginPort,
+                                      labelText: l10n.commonPort,
                                       border: const OutlineInputBorder(),
                                     ),
                                   ),
@@ -373,7 +373,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             TextField(
                               controller: _userCtrl,
                               decoration: InputDecoration(
-                                labelText: l10n.loginUsername,
+                                labelText: l10n.commonUsername,
                                 prefixIcon: const Icon(Icons.person),
                                 border: const OutlineInputBorder(),
                               ),
@@ -383,7 +383,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               controller: _passCtrl,
                               obscureText: !_showPassword,
                               decoration: InputDecoration(
-                                labelText: l10n.loginPassword,
+                                labelText: l10n.commonPassword,
                                 prefixIcon: const Icon(Icons.lock),
                                 suffixIcon: IconButton(
                                   tooltip: _showPassword

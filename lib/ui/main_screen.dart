@@ -120,7 +120,7 @@ class _MainScreenState extends State<MainScreen> {
       case 'connecting':
         return l10n.connStatusConnecting;
       case 'error':
-        return l10n.connStatusError;
+        return l10n.commonError;
       case 'disconnected':
       default:
         return l10n.connStatusDisconnected;
@@ -173,12 +173,12 @@ class _MainScreenState extends State<MainScreen> {
         selectedIndex: _index,
         onDestinationSelected: (i) => setState(() => _index = i),
         destinations: [
-          NavigationDestination(icon: const Icon(Icons.dashboard), label: l10n.navDashboard),
+          NavigationDestination(icon: const Icon(Icons.dashboard), label: l10n.commonDashboard),
           NavigationDestination(icon: const Icon(Icons.gamepad), label: l10n.navControl),
-          NavigationDestination(icon: const Icon(Icons.videocam), label: l10n.navCamera),
+          NavigationDestination(icon: const Icon(Icons.videocam), label: l10n.commonCamera),
           NavigationDestination(icon: const Icon(Icons.view_in_ar), label: l10n.nav3d),
-          NavigationDestination(icon: const Icon(Icons.terminal), label: l10n.navTelemetry),
-          NavigationDestination(icon: const Icon(Icons.settings), label: l10n.navSettings),
+          NavigationDestination(icon: const Icon(Icons.terminal), label: l10n.commonTelemetry),
+          NavigationDestination(icon: const Icon(Icons.settings), label: l10n.commonSettings),
         ],
       ),
     );

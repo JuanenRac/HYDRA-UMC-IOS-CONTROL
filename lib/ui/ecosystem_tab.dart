@@ -60,11 +60,11 @@ class _EcosystemTabState extends State<EcosystemTab> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(l10n.ecosystemTab, style: Theme.of(context).textTheme.titleLarge?.copyWith(color: const Color(0xFF00E5FF))),
+              Text(l10n.commonEcosystem, style: Theme.of(context).textTheme.titleLarge?.copyWith(color: const Color(0xFF00E5FF))),
               IconButton(
                 key: const Key('ecosystem-refresh'),
                 icon: const Icon(Icons.refresh),
-                tooltip: l10n.ecosystemRefresh,
+                tooltip: l10n.commonRefresh,
                 onPressed: vm.ecosystemLoading ? null : () => vm.refreshEcosystem(),
               ),
             ],

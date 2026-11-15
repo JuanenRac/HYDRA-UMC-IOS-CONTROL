@@ -26,7 +26,7 @@ class TelemetryScreen extends StatelessWidget {
       length: 2,
       child: Column(
         children: [
-          TabBar(tabs: [Tab(text: l10n.telemetryTabLogs), Tab(text: l10n.ecosystemTab)]),
+          TabBar(tabs: [Tab(text: l10n.telemetryTabLogs), Tab(text: l10n.commonEcosystem)]),
           const Expanded(child: TabBarView(children: [_LogsTab(), EcosystemTab()])),
         ],
       ),
@@ -57,7 +57,7 @@ class _LogsTab extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                l10n.telemetryTitle,
+                l10n.commonTelemetry,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(color: const Color(0xFF00E5FF)),
               ),
               IconButton(

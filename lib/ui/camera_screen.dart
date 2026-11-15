@@ -61,7 +61,7 @@ class _CameraScreenState extends State<CameraScreen> {
         children: [
           DropdownButtonFormField<dynamic>(
             initialValue: robot.id,
-            decoration: InputDecoration(labelText: l10n.cameraLabel, border: const OutlineInputBorder(), isDense: true),
+            decoration: InputDecoration(labelText: l10n.commonCamera, border: const OutlineInputBorder(), isDense: true),
             items: robots
                 .map((r) => DropdownMenuItem(value: r.id, child: Text('${r.name}${r.hasCamera ? '' : l10n.cameraDisabledSuffix}')))
                 .toList(),

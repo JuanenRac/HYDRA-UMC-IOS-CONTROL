@@ -135,11 +135,11 @@ class _VoiceAssistantDialogState extends State<VoiceAssistantDialog> {
             vm.clearAssistantReply();
             Navigator.of(context).pop();
           },
-          child: Text(l10n.actionClose),
+          child: Text(l10n.commonClose),
         ),
         FilledButton(
           onPressed: busy ? null : () => _send(vm),
-          child: Text(l10n.voiceSend),
+          child: Text(l10n.commonSend),
         ),
       ],
     );
