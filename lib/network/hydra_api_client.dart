@@ -38,6 +38,7 @@ import 'package:http/http.dart' as http;
 import 'package:hydra_umc_app_common/hydra_umc_app_common.dart' show HydraApiCore, HydraApiException;
 
 import '../app_version.dart';
+import '../generated/hydra_server_client.dart' show HydraPostPushDevicesBody, HydraPostPushLiveActivitiesBody;
 import '../models/access.dart';
 import '../models/contract_v2.dart';
 import '../models/assistant_reply.dart';
@@ -45,6 +46,7 @@ import '../models/ecosystem.dart';
 import '../models/robot_command_contract.dart';
 import '../util/connection_diagnostics.dart' show InfoProbe;
 import 'command_sequence.dart';
+import 'generated_transport.dart';
 import 'package_http_transport.dart';
 import 'tls_settings.dart';
 
@@ -197,30 +199,21 @@ class HydraApiClient extends HydraApiCore {
     return resp.body;
   }
 
-  Future<void> postPushDevice(String token, String locale) async {
-    final resp = await post('/api/push/devices', const Duration(seconds: 10), {'token': token, 'platform': 'ios', 'locale': locale});
-    throwForStatus(resp);
-  }
+  // The four requests of the push registration go through the generated server client (generated/hydra_server_client.dart)
+  // over the HTTP stack of this client (network/generated_transport.dart).
+  Future<void> postPushDevice(String token, String locale) =>
+      callGenerated(this, const Duration(seconds: 10), (api) => api.postPushDevices(body: HydraPostPushDevicesBody(token: token, platform: 'ios', locale: locale)));
 
   /// Hands the token of a Live Activity to the server, which then refreshes the card through the Apple push service.
   /// A server that does not offer it (the option is off there) answers 404: [HydraApiException].
-  Future<void> postLiveActivity(String activityToken, String robotId) async {
-    final resp = await post('/api/push/live-activities', const Duration(seconds: 10), {'activityToken': activityToken, 'robotId': robotId});
-    throwForStatus(resp);
-  }
+  Future<void> postLiveActivity(String activityToken, String robotId) => callGenerated(
+      this, const Duration(seconds: 10), (api) => api.postPushLiveActivities(body: HydraPostPushLiveActivitiesBody(activityToken: activityToken, robotId: robotId)));
 
   /// Takes the token of a Live Activity back. The account removes only its own.
-  Future<void> deleteLiveActivity(String activityToken) async {
-    final resp = await call('DELETE', '$baseUrl/api/push/live-activities/${Uri.encodeComponent(activityToken)}',
-        headers: {...clientHeaders, ...authHeaders}, timeout: const Duration(seconds: 10));
-    throwForStatus(resp);
-  }
+  Future<void> deleteLiveActivity(String activityToken) =>
+      callGenerated(this, const Duration(seconds: 10), (api) => api.deletePushLiveActivitiesByToken(token: activityToken));
 
-  Future<void> deletePushDevice(String token) async {
-    final resp = await call('DELETE', '$baseUrl/api/push/devices/$token',
-        headers: {...clientHeaders, ...authHeaders}, timeout: const Duration(seconds: 10));
-    throwForStatus(resp);
-  }
+  Future<void> deletePushDevice(String token) => callGenerated(this, const Duration(seconds: 10), (api) => api.deletePushDevicesByToken(token: token));
 
   Future<RobotSafety?> getRobotSafety(dynamic robotId) async {
     try {
