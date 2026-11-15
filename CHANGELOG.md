@@ -4,6 +4,9 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+
+## [0.3.6]
+
 - **The SDK pin moves to `v0.7.1` and the recorded server answers and the generated server client are the ones of that release:** the answers of the voice, claims, safety-limits and audit routes are new, and `tools/sync_sdk_answers.py --check` and `tools/sync_sdk_client.py --check` pass again.
 - **The SDK pin is `v0.7.1` and the app sends its first requests through the generated server client:** `pubspec.yaml`, `pubspec.lock` and the workflow point at the tag. `lib/generated/hydra_server_client.dart` is the client the SDK generates from the server contract (classes with fields, `fromJson` and `toJson`); `tools/sync_sdk_client.py --check` keeps it identical to the SDK file and runs in the CI. `network/generated_transport.dart` carries its requests over the HTTP stack of the app, so the pinned TLS policy, the listen-only gate, the renewal of an expired session, the headers and the distinct errors of the server stay as they were. The registration of the push token and of the Live Activity (`POST` and `DELETE` of `/api/push/devices` and `/api/push/live-activities`) is the first batch; an answer that does not fit the contract is a `HydraApiException`. STOP and the sign-in stay written by hand on purpose, as do the requests that need a binary body, a text answer or the response headers (the transport refuses those with `UnsupportedError` until it carries them); `docs/rest_routes.json` lists the routes still written by hand. 10 tests in `test/generated_transport_test.dart`.
 - **Listen only comes from the shared app package:** `network/listen_only_gate.dart` only names `ListenOnlyGate` of the SDK package now, so the iOS app no longer keeps its own copy of the rule (what may leave while the mode is on, the 423 refusal, whose sentence names the phone). Behaviour is unchanged; the tests of the gate still run against the transport of the app.
@@ -61,6 +64,8 @@ All notable changes to this project are documented here.
 
 - **The HTTP client talks through the shared package of the SDK:** `HydraApiClient` extends the shared `HydraApiCore` (headers, bearer token, controller id, `If-Match`, the numbering of motion commands, the renewal of an expired session and the reading of error answers) over a small `PackageHttpTransport` adapter, and keeps its public API; the choice between http and https and the typed endpoints stay in the app. The error type (`HydraError`), the connection history, the server access options and the preferences (`ClientPrefs`, `AuthPrefs`) now come from the same package, with this app's own wording and storage adapters. The renewal tests go through the real client.
 - **The TLS rules come from the shared app package:** the settings (HTTPS first, plain HTTP only when allowed, pinned fingerprint, custom CA), the clients built from them and the reading of a server certificate were a copy of the package of the SDK, line for line; they now come from it, and the app only keeps where the settings are stored (the preferences of the phone). Same keys, same behaviour.
+
+- Build version synchronized with `hydra-umc.project.json` and the repository-native version source.
 
 ## [0.3.5] - The stored session follows the rules shared with the other mobile apps: AuthPrefs keeps the host, the port, the scheme and its other flags, and hands the token, the user name and the refresh token to SessionStore of the shared... (and 1 more changes)
 
