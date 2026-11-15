@@ -610,5 +610,11 @@
   "commonUpdate": "Atualizar",
   "commonUpToDate": "Atualizado",
   "commonSystemDefault": "Predefinição do sistema",
-  "commonSelectARobot": "Selecione um robô"
+  "commonSelectARobot": "Selecione um robô",
+  "settingsUpdateNotice": "Avisar-me de novas versões",
+  "settingsUpdateNoticeSubtitle": "Quando o pedir, lê a lista pública de versões e indica se existe uma mais recente. Não é descarregado nem instalado nada. Desativado por predefinição.",
+  "settingsUpdateCheckNow": "Procurar uma nova versão",
+  "settingsUpdateAvailable": "A versão {version} está disponível",
+  "settingsUpdateUpToDate": "Esta versão está atualizada",
+  "settingsUpdateCheckFailed": "Não foi possível ler a lista de versões"
 }

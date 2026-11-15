@@ -611,5 +611,11 @@
   "commonUpdate": "更新",
   "commonUpToDate": "已是最新",
   "commonSystemDefault": "跟随系统",
-  "commonSelectARobot": "请选择一个机器人"
+  "commonSelectARobot": "请选择一个机器人",
+  "settingsUpdateNotice": "通知新版本",
+  "settingsUpdateNoticeSubtitle": "在您操作时读取公开的版本列表，并告知是否有更新的版本。不会下载或安装任何内容。默认关闭。",
+  "settingsUpdateCheckNow": "检查新版本",
+  "settingsUpdateAvailable": "版本 {version} 可用",
+  "settingsUpdateUpToDate": "此版本已是最新",
+  "settingsUpdateCheckFailed": "无法读取版本列表"
 }

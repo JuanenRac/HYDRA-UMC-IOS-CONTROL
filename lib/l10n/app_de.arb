@@ -611,5 +611,11 @@
   "commonUpdate": "Aktualisieren",
   "commonUpToDate": "Aktuell",
   "commonSystemDefault": "Systemstandard",
-  "commonSelectARobot": "Roboter auswählen"
+  "commonSelectARobot": "Roboter auswählen",
+  "settingsUpdateNotice": "Über neue Versionen informieren",
+  "settingsUpdateNoticeSubtitle": "Auf Wunsch liest die App die öffentliche Liste der Versionen und sagt, ob es eine neuere gibt. Es wird nichts heruntergeladen oder installiert. Standardmäßig aus.",
+  "settingsUpdateCheckNow": "Nach neuer Version suchen",
+  "settingsUpdateAvailable": "Version {version} ist verfügbar",
+  "settingsUpdateUpToDate": "Diese Version ist aktuell",
+  "settingsUpdateCheckFailed": "Die Liste der Versionen konnte nicht gelesen werden"
 }
