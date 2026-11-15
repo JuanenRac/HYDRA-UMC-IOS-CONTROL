@@ -67,7 +67,7 @@ class SettingsScreen extends StatelessWidget {
       case 'connecting':
         return l10n.connStatusConnecting;
       case 'error':
-        return l10n.connStatusError;
+        return l10n.commonError;
       case 'disconnected':
       default:
         return l10n.connStatusDisconnected;
@@ -303,7 +303,7 @@ class SettingsScreen extends StatelessWidget {
         ListTile(
           key: const Key('settings-security'),
           leading: const Icon(Icons.shield_outlined),
-          title: Text(l10n.securityTitle),
+          title: Text(l10n.commonSecurity),
           subtitle: Text(vm.tlsSettings.pinnedFingerprint.isNotEmpty
               ? TlsFingerprint.display(vm.tlsSettings.pinnedFingerprint)
               : l10n.securityIntro),
@@ -333,12 +333,12 @@ class SettingsScreen extends StatelessWidget {
         const Divider(),
         ListTile(
           leading: const Icon(Icons.language),
-          title: Text(l10n.settingsLanguage),
+          title: Text(l10n.commonLanguage),
           trailing: DropdownButton<String?>(
             value: vm.languageOverride?.languageCode,
             underline: const SizedBox.shrink(),
             items: [
-              DropdownMenuItem<String?>(value: null, child: Text(l10n.settingsLanguageSystem)),
+              DropdownMenuItem<String?>(value: null, child: Text(l10n.commonSystemDefault)),
               for (final locale in AppLocalizations.supportedLocales)
                 DropdownMenuItem<String?>(
                   value: locale.languageCode,
@@ -351,7 +351,7 @@ class SettingsScreen extends StatelessWidget {
         const Divider(),
         ListTile(
           leading: const Icon(Icons.logout, color: Colors.redAccent),
-          title: Text(l10n.settingsSignOut),
+          title: Text(l10n.commonSignOut),
           onTap: () => vm.logout(),
         ),
         const Divider(),

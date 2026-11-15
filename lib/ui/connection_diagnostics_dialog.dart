@@ -70,7 +70,7 @@ class _ConnectionDiagnosticsDialogState extends State<ConnectionDiagnosticsDialo
   String _socket(AppLocalizations l10n, String status) => switch (status) {
         'connected' => l10n.connStatusConnected,
         'connecting' => l10n.connStatusConnecting,
-        'error' => l10n.connStatusError,
+        'error' => l10n.commonError,
         _ => l10n.connStatusDisconnected,
       };
 
@@ -108,7 +108,7 @@ class _ConnectionDiagnosticsDialogState extends State<ConnectionDiagnosticsDialo
             ] else if (_noServer)
               Text(l10n.diagNoServer)
             else if (result != null) ...[
-              row(l10n.diagAddress, '${result.scheme}://${result.host}:${result.port}', key: const Key('diag-address')),
+              row(l10n.commonAddress, '${result.scheme}://${result.host}:${result.port}', key: const Key('diag-address')),
               row(l10n.diagTrust, _trust(l10n, result.trust)),
               if (result.pinnedFingerprint.isNotEmpty) row(l10n.diagFingerprint, result.pinnedFingerprint),
               row(l10n.diagServerApi, result.remoteApiVersion?.toString() ?? l10n.diagUnknown),
@@ -119,7 +119,7 @@ class _ConnectionDiagnosticsDialogState extends State<ConnectionDiagnosticsDialo
               row(l10n.diagLink, _level(l10n, result.level), key: const Key('diag-link')),
               row(l10n.diagWebsocket, _socket(l10n, result.websocket)),
               row(l10n.diagRole, result.role ?? l10n.diagUnknown),
-              row(l10n.diagSavedData, result.showingSavedData ? l10n.diagYes : l10n.diagNo),
+              row(l10n.diagSavedData, result.showingSavedData ? l10n.commonYes : l10n.commonNo),
             ],
           ],
         ),
@@ -137,7 +137,7 @@ class _ConnectionDiagnosticsDialogState extends State<ConnectionDiagnosticsDialo
                 },
           child: Text(l10n.diagCopy),
         ),
-        FilledButton(onPressed: () => Navigator.of(context).pop(), child: Text(l10n.actionClose)),
+        FilledButton(onPressed: () => Navigator.of(context).pop(), child: Text(l10n.commonClose)),
       ],
     );
   }

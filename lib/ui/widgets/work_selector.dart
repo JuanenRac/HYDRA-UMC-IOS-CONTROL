@@ -103,8 +103,8 @@ class _WorkDialogState extends State<_WorkDialog> {
           title: Text(l10n.workDialogTitle),
           content: body,
           actions: [
-            TextButton(onPressed: () => vm.loadWorkList(widget.robot.id), child: Text(l10n.workRefresh)),
-            TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(l10n.playConfirmCancel)),
+            TextButton(onPressed: () => vm.loadWorkList(widget.robot.id), child: Text(l10n.commonRefresh)),
+            TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(l10n.commonCancel)),
           ],
         );
       },

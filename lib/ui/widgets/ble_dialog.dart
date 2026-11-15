@@ -131,7 +131,7 @@ class _BleDialogState extends State<BleDialog> {
           ),
         ),
       ),
-      actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(l10n.actionClose))],
+      actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(l10n.commonClose))],
     );
   }
 }

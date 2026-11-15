@@ -26,8 +26,8 @@ String connectionKindText(AppLocalizations l10n, String kind) => switch (kind) {
       'ios' => l10n.connectionsKindIos,
       'dsi' => l10n.connectionsKindDsi,
       'watch' => l10n.connectionsKindWatch,
-      'voice' => l10n.connectionsKindVoice,
-      _ => l10n.connectionsKindOther,
+      'voice' => l10n.commonVoice,
+      _ => l10n.commonOther,
     };
 
 String connectionActionText(AppLocalizations l10n, String action) => switch (action) {
@@ -132,9 +132,9 @@ class _ConnectionsDialogState extends State<ConnectionsDialog> {
         TextButton(
           key: const ValueKey('connections-refresh'),
           onPressed: vm.connectionsBusy ? null : () => vm.refreshConnections(),
-          child: Text(l10n.connectionsRefresh),
+          child: Text(l10n.commonRefresh),
         ),
-        TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(l10n.actionClose)),
+        TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(l10n.commonClose)),
       ],
     );
   }

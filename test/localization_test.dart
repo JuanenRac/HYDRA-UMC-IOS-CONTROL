@@ -47,7 +47,7 @@ void main() {
     );
     await tester.pump();
 
-    expect(l10n.navSettings, '設定');
+    expect(l10n.commonSettings, '設定');
   });
 
   testWidgets('Resolves Portuguese strings for a Locale("pt") override', (tester) async {
