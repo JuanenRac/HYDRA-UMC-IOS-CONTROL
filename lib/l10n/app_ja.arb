@@ -611,5 +611,11 @@
   "commonUpdate": "更新",
   "commonUpToDate": "最新です",
   "commonSystemDefault": "システムの既定値",
-  "commonSelectARobot": "ロボットを選択してください"
+  "commonSelectARobot": "ロボットを選択してください",
+  "settingsUpdateNotice": "新しいバージョンを知らせる",
+  "settingsUpdateNoticeSubtitle": "操作したときに公開されているバージョン一覧を読み、より新しいバージョンがあるかを表示します。ダウンロードやインストールは行いません。既定ではオフです。",
+  "settingsUpdateCheckNow": "新しいバージョンを確認",
+  "settingsUpdateAvailable": "バージョン {version} が利用できます",
+  "settingsUpdateUpToDate": "このバージョンは最新です",
+  "settingsUpdateCheckFailed": "バージョン一覧を読み込めませんでした"
 }

@@ -15,6 +15,7 @@ import 'connection_diagnostics_dialog.dart';
 import 'widgets/ble_dialog.dart';
 import 'widgets/pairing_widgets.dart';
 import 'widgets/release_signature_switch.dart';
+import 'widgets/update_notice_tile.dart';
 import 'widgets/security_dialog.dart';
 import 'widgets/server_options_dialog.dart';
 
@@ -133,6 +134,7 @@ class SettingsScreen extends StatelessWidget {
           onChanged: (value) => vm.setConfirmPlay(value),
         ),
         const ReleaseSignatureSwitch(),
+        const UpdateNoticeTile(),
         SwitchListTile(
           key: const Key('settings-listen-only'),
           secondary: const Icon(Icons.hearing),
