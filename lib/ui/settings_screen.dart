@@ -14,6 +14,7 @@ import '../state/robot_view_model.dart';
 import 'connection_diagnostics_dialog.dart';
 import 'widgets/ble_dialog.dart';
 import 'widgets/pairing_widgets.dart';
+import 'widgets/release_signature_switch.dart';
 import 'widgets/security_dialog.dart';
 import 'widgets/server_options_dialog.dart';
 
@@ -131,6 +132,7 @@ class SettingsScreen extends StatelessWidget {
           value: vm.confirmPlay,
           onChanged: (value) => vm.setConfirmPlay(value),
         ),
+        const ReleaseSignatureSwitch(),
         SwitchListTile(
           key: const Key('settings-listen-only'),
           secondary: const Icon(Icons.hearing),
