@@ -1663,7 +1663,7 @@ class RobotViewModel extends ChangeNotifier {
     if (robotId == null) return;
     // A stop (or safe mode) of the robot ends a continuous jog that is held.
     if (command == RobotCommandContract.stop || command == RobotCommandContract.disable) deadMan.interrupt();
-    if (blockCommandsOnSavedData && isShowingCachedState && command != 'stop') {
+    if (blockCommandsOnSavedData && isShowingCachedState && command != RobotCommandContract.stop && command != RobotCommandContract.disable) {
       lastError = const HydraError(HydraErrorKind.savedDataBlocked);
       notifyListeners();
       return;
