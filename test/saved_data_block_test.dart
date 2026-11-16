@@ -89,6 +89,17 @@ void main() {
     expect(vm.lastError?.kind, isNot(HydraErrorKind.savedDataBlocked));
   });
 
+  test('safe mode (disable) is never held back by the block either', () async {
+    final vm = await _modelShowingSavedData();
+    addTearDown(vm.dispose);
+    await vm.setBlockCommandsOnSavedData(true);
+
+    vm.sendCommand('disable');
+    await Future<void>.delayed(Duration.zero);
+
+    expect(vm.lastError?.kind, isNot(HydraErrorKind.savedDataBlocked));
+  });
+
   test('the choice is saved and read back at the next launch', () async {
     final vm = await _modelShowingSavedData();
     await vm.setBlockCommandsOnSavedData(true);

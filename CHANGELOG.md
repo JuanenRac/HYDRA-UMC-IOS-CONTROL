@@ -4,6 +4,7 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **Blocking commands on saved data no longer blocks safe mode:** the command that disables a robot goes out like STOP, as in Listen Only.
 
 ## [0.3.6]
 
