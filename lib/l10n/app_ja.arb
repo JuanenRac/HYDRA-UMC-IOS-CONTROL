@@ -194,7 +194,7 @@
   "settingsListenOnly": "リッスン専用",
   "settingsListenOnlySubtitle": "ロボットとそのデータを表示しますが、コマンドは送信しません。操作部は無効になります。STOP は常に機能します。",
   "settingsRequireReleaseSignature": "リリース署名を必須にする",
-  "settingsRequireReleaseSignatureSubtitle": "ダウンロードしたリリースを確認するとき、リリースのEd25519署名も必須とし、有効な署名のないリリースは拒否します。初期設定ではオフで、ダイジェストの確認は常に行われます。",
+  "settingsRequireReleaseSignatureSubtitle": "このアプリは新しいバージョンを通知するだけで、ダウンロードもインストールも行わないため、このスイッチはここでは効果がありません。設定を引き継げるように残してあります。",
   "settingsListenOnlyServer": "このサーバーはリッスン専用",
   "settingsListenOnlyServerSubtitle": "STOP とセーフモードの解除を除き、使用中のサーバーにコマンドを送りません。他のサーバーには影響しません。",
   "controlListenOnlyBanner": "リッスン専用：コマンドは無効です。STOP は引き続き使えます。",
