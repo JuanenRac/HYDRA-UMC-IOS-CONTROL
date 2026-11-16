@@ -1231,7 +1231,10 @@ class RobotViewModel extends ChangeNotifier {
     await _pendingLogout;
     // The client of the previous session is closed before it is replaced: each one owns its connection pool.
     apiClient?.close();
-    final client = HydraApiClient(server.host, server.port);
+    // A server that already answered over TLS (the one saved, or the one the list probed) is not asked in the clear again.
+    final saved = await _authPrefs.loadConnection();
+    final savedTls = saved != null && saved.$1 == server.host && saved.$2 == server.port && await _authPrefs.loadUseTls();
+    final client = HydraApiClient(server.host, server.port, useTls: server.useTls || savedTls);
     client.tokenRenewer = () => _renewedTokenOf(client);
     apiClient = client;
     _logTelemetry('Logging in to ${server.host}:${server.port}...');
