@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **The README describes the two-step sign-in screen:** the features list the full screen of Settings > Two-step sign-in (turn the second factor on and off, recovery codes shown once, new codes and the code field of the sign-in form; there is no switch for screenshots here), and the source map lists its files. The README and its seven translations are regenerated.
+
 - **Two-step sign-in has a full screen in the app:** Settings > Two-step sign-in now lets the signed-in account turn the second factor on (the password, then the key to put in an authenticator app, then the first code), shows the one-time recovery codes once, tells how many are left, warns when two or fewer remain and makes a new set (the old ones stop working), and turns the second factor off with the password and a code. The key and the codes stay hidden until the person asks to see them, are never written to a log, a store or the saved state of the screen, are dropped as soon as the step ends, and are hidden again when the app leaves the foreground. The key can be copied to paste it into an authenticator app. Texts are in the eight languages.
 - **The sign-in asks for the code of the second step:** when the server says the account has one, the form shows a field for an app code or a recovery code; a wrong code and a wait after too many wrong ones are told apart from a wrong password.
 - **The answers of the server keep their headers:** the transport of the app now hands over the response headers (in lower case), so a `Retry-After` or an `ETag` reaches the code that asks for it.

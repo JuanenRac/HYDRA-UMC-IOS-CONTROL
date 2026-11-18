@@ -17,6 +17,7 @@ Every file of the repository with a line on what it does: the annotated tree tha
 │   │   ├── stop_all_result.dart    # answer of the global STOP, robot by robot
 │   │   ├── connection_history.dart # Who connects to the server: the clients seen and the history of sign-ins
 │   │   ├── server_security.dart   # The nine access options of the server an administrator can change
+│   │   ├── totp_api.dart          # The calls of the second sign-in factor (/api/totp/status, begin, confirm, disable, recovery-codes) and the sign-in that carries the code
 │   │   ├── robot_command_contract.dart # Command names and limits, generated from docs/robot_command_contract.json (tools/gen_command_contract.py)
 │   │   ├── ecosystem.dart          # The answer of GET /api/ecosystem/status: the project manifests the server finds, with the live probe kept apart from "never probed"
 │   │   ├── ios_feature_contract.dart # Settings of the features of this app, generated from docs/ios_feature_contract.json (tools/gen_command_contract.py)
@@ -41,6 +42,7 @@ Every file of the repository with a line on what it does: the annotated tree tha
 │   │   ├── robot_view_model.dart    # Single ChangeNotifier every screen listens to
 │   │   ├── external_surfaces.dart   # What is shown outside the app, each behind its own switch: notifications of a job, Live Activity, Apple Watch
 │   │   ├── dead_man_jog_controller.dart # What the screen sees of the continuous jog and the link health: the switches, the held controls, the probe of the link
+│   │   ├── totp_flow.dart           # The second factor as a small state machine: status, turn on (password, key, first code, recovery codes), turn off, new recovery codes
 │   │   ├── robot_command_repository.dart # Every robot write: revisions, retry of a stop, table fallback, jogs on the wire, debounce, timings
 │   │   ├── session_manager.dart # One renewal at a time of an expired session, and one repeat of the request
 │   │   └── hydra_error.dart         # Typed error surface for RobotViewModel (no BuildContext of its own)
@@ -57,6 +59,7 @@ Every file of the repository with a line on what it does: the annotated tree tha
 │   │   ├── home_reset.dart          # HOME/RESET: when it is refused and the confirmation in steps
 │   │   ├── dead_man_jog.dart        # The rules of the continuous jog: when it refuses to start, the bounded speed, the watchdog of the heartbeat
 │   │   ├── pairing_link.dart        # Reads and validates hydra-umc://pair?host&port&fp&name; connects to nothing and keeps nothing
+│   │   ├── totp_rules.dart          # Rules of the second sign-in factor: how a refusal is told apart, how a typed code is cleaned, how the key is shown
 │   │   ├── watch_alerts.dart        # Which alerts the watch gets (connection, robot offline or in safe mode, STOP) and how they are rationed
 │   │   ├── watch_relay.dart         # What the watch asks the phone to pass to the server: presence heartbeat and the second tap of a spoken order
 │   │   ├── work_files.dart          # The Work files (trajectories): folder, list, the points checked like the server, and when a Work may be loaded
