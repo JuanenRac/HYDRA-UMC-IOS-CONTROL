@@ -7,9 +7,15 @@
   "/api/connections/events",
   "/api/ecosystem/status",
   "/api/hydra-info",
+  "/api/login",
   "/api/operator/presence",
   "/api/robot/{p}",
   "/api/safety-limits",
+  "/api/totp/begin",
+  "/api/totp/confirm",
+  "/api/totp/disable",
+  "/api/totp/recovery-codes",
+  "/api/totp/status",
   "/api/voice/confirm",
   "/api/voice/turn"
 ]
