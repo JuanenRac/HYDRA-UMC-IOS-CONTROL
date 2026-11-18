@@ -17,6 +17,7 @@ import 'widgets/pairing_widgets.dart';
 import 'widgets/release_signature_switch.dart';
 import 'widgets/update_notice_tile.dart';
 import 'widgets/security_dialog.dart';
+import 'totp_screen.dart';
 import 'widgets/server_options_dialog.dart';
 
 /// Everything the settings draw or decide from the view model, as one text: the list is redrawn when this text changes
@@ -316,6 +317,15 @@ class SettingsScreen extends StatelessWidget {
             port: server?.port ?? 3000,
           ),
         ),
+        // The second sign-in factor of the signed-in account (off until its owner turns it on)
+        if (vm.isLoggedIn)
+          ListTile(
+            key: const Key('settings-two-step'),
+            leading: const Icon(Icons.pin_outlined),
+            title: Text(l10n.totpTitle),
+            subtitle: Text(l10n.totpIntro, maxLines: 2, overflow: TextOverflow.ellipsis),
+            onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => TotpScreen(flow: vm.totp))),
+          ),
         ListTile(
           key: const Key('settings-bluetooth'),
           leading: const Icon(Icons.bluetooth),

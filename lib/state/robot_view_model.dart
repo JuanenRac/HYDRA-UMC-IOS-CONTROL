@@ -60,6 +60,8 @@ import 'external_surfaces.dart';
 import 'hydra_error.dart';
 import 'robot_command_repository.dart';
 import 'session_manager.dart';
+import 'totp_flow.dart';
+import '../network/totp_api.dart';
 
 class SystemMetrics {
   final int cpuLoad;
@@ -196,6 +198,19 @@ class RobotViewModel extends ChangeNotifier {
 
   HydraState state = HydraState();
   HydraApiClient? apiClient;
+
+  /// What the sign-in last said about the second factor of the account: nothing, a code is needed, the code was wrong, or a wait.
+  SecondFactorStep loginSecondFactor = SecondFactorStep.none;
+
+  /// The seconds the server asked to wait when [loginSecondFactor] is [SecondFactorStep.wait].
+  int loginWaitSeconds = 0;
+
+  /// The second factor of the signed-in account (Settings > Two-step sign-in); it holds a key or recovery codes only while they are on the screen.
+  late final TotpFlow totp = TotpFlow(() {
+    final client = apiClient;
+    return client == null ? null : ClientTotpEndpoint(client);
+  });
+
   HydraWebSocket? _ws;
   Timer? _metricsTimer;
   Timer? _stateCacheTimer;
@@ -1225,7 +1240,8 @@ class RobotViewModel extends ChangeNotifier {
     return true;
   }
 
-  Future<bool> login(ServerInfo server) async {
+  /// Signs in. [totpCode] is the code of the second step, given only after the server said the account has one ([loginSecondFactor]).
+  Future<bool> login(ServerInfo server, {String? totpCode}) async {
     _myUsername = null;
     // A sign-out still erasing the previous session must finish first.
     await _pendingLogout;
@@ -1239,7 +1255,7 @@ class RobotViewModel extends ChangeNotifier {
     apiClient = client;
     _logTelemetry('Logging in to ${server.host}:${server.port}...');
     try {
-      final resp = await client.login(server.username, server.password);
+      final resp = await client.loginWithCode(server.username, server.password, totp: totpCode);
       final token = resp['token'] as String?;
       if (resp['success'] != true || token == null) {
         lastError = const HydraError(HydraErrorKind.loginFailed);
@@ -1249,6 +1265,7 @@ class RobotViewModel extends ChangeNotifier {
       }
       client.authToken = token;
       isLoggedIn = true;
+      loginSecondFactor = SecondFactorStep.none;
       // The client resolves the scheme itself (HydraApiClient._resolveScheme): the server is stored with the scheme it answers on.
       activeServer = server.copyWith(useTls: client.usesTls);
       _refreshListenOnly(interrupt: false);
@@ -1264,6 +1281,16 @@ class RobotViewModel extends ChangeNotifier {
       notifyListeners();
       await connect();
       return true;
+    } on SecondFactorRequired catch (e) {
+      // Not a failure of the account: the form asks for the code (or says it was wrong, or how long to wait).
+      lastError = null;
+      loginWaitSeconds = e.waitSeconds ?? 0;
+      loginSecondFactor = e.waitSeconds != null
+          ? SecondFactorStep.wait
+          : (e.wrongCode ? SecondFactorStep.wrong : SecondFactorStep.needed);
+      _logTelemetry('Login needs the code of the second step');
+      notifyListeners();
+      return false;
     } catch (e) {
       lastError = isTlsFailure(e)
           ? const HydraError(HydraErrorKind.tlsFailed)
@@ -1281,6 +1308,8 @@ class RobotViewModel extends ChangeNotifier {
         if (claimStanding(claim, _myUsername ?? activeServer?.username ?? '', controllerId) == ClaimStanding.mineHere) claim.robotId,
     ];
     _myUsername = null;
+    totp.clear();
+    loginSecondFactor = SecondFactorStep.none;
     claims = const [];
     safetyByRobot.clear();
     jogArmedUntil.clear();
@@ -2750,6 +2779,7 @@ class RobotViewModel extends ChangeNotifier {
     metricsListenable.dispose();
     canOtaProgressListenable.dispose();
     apiClient?.close();
+    totp.dispose();
     super.dispose();
   }
 }

@@ -13,6 +13,7 @@ import '../l10n/app_localizations.dart';
 import '../models/server_info.dart';
 import '../network/client_prefs.dart';
 import '../network/discovery.dart';
+import '../network/totp_api.dart' show SecondFactorStep;
 import '../state/robot_view_model.dart';
 import '../state/hydra_error.dart';
 import 'widgets/hydra_mark.dart';
@@ -30,6 +31,8 @@ String loginScreenShape(RobotViewModel vm) {
     vm.pairedPort,
     vm.lastError?.kind.name,
     vm.lastError?.params,
+    vm.loginSecondFactor,
+    vm.loginWaitSeconds,
   ].join('|');
 }
 
@@ -45,6 +48,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final _portCtrl = TextEditingController(text: '3000');
   final _userCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
+  // The code of the second step: asked for only once the server says the account has one; never kept after the sign-in
+  final _codeCtrl = TextEditingController();
   bool _isSubmitting = false;
   bool _skipMobileVpn = false;
   bool _showPassword = false;
@@ -70,6 +75,7 @@ class _LoginScreenState extends State<LoginScreen> {
     _portCtrl.dispose();
     _userCtrl.dispose();
     _passCtrl.dispose();
+    _codeCtrl.dispose();
     super.dispose();
   }
 
@@ -235,7 +241,9 @@ class _LoginScreenState extends State<LoginScreen> {
       username: _userCtrl.text.trim(),
       password: _passCtrl.text,
     );
-    await context.read<RobotViewModel>().login(server);
+    final vm = context.read<RobotViewModel>();
+    await vm.login(server, totpCode: vm.loginSecondFactor == SecondFactorStep.none ? null : _codeCtrl.text);
+    if (mounted && vm.isLoggedIn) _codeCtrl.clear();
     if (mounted) setState(() => _isSubmitting = false);
   }
 
@@ -401,6 +409,24 @@ class _LoginScreenState extends State<LoginScreen> {
                                 border: const OutlineInputBorder(),
                               ),
                             ),
+                            if (vm.loginSecondFactor != SecondFactorStep.none) ...[
+                              const SizedBox(height: 12),
+                              TextField(
+                                key: const Key('login-code'),
+                                controller: _codeCtrl,
+                                obscureText: true,
+                                autocorrect: false,
+                                enableSuggestions: false,
+                                keyboardType: TextInputType.visiblePassword,
+                                decoration: InputDecoration(
+                                  labelText: l10n.loginCodeLabel,
+                                  helperText: l10n.loginCodeHint,
+                                  helperMaxLines: 3,
+                                  prefixIcon: const Icon(Icons.pin_outlined),
+                                  border: const OutlineInputBorder(),
+                                ),
+                              ),
+                            ],
                             const SizedBox(height: 20),
                             SizedBox(
                               height: 52,
@@ -445,6 +471,21 @@ class _LoginScreenState extends State<LoginScreen> {
                                 label: Text(l10n.securityOpen),
                               ),
                             ),
+                            if (vm.loginSecondFactor != SecondFactorStep.none)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 14),
+                                child: Semantics(
+                                  liveRegion: true,
+                                  child: Text(
+                                    switch (vm.loginSecondFactor) {
+                                      SecondFactorStep.wrong => l10n.loginCodeWrong,
+                                      SecondFactorStep.wait => l10n.loginCodeWait(vm.loginWaitSeconds),
+                                      _ => l10n.loginCodeNeeded,
+                                    },
+                                    style: TextStyle(color: scheme.error),
+                                  ),
+                                ),
+                              ),
                             if (vm.lastError != null)
                               Padding(
                                 padding: const EdgeInsets.only(top: 14),
