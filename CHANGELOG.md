@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **The reservations and the safety limits of a robot go through the generated client of the SDK:** `GET /api/claims` and `GET /api/safety-limits` are no longer written by hand; an answer that does not have the shape of the contract is a `HydraApiException`, and an older server without the safety route still answers null. New `test/typed_claims_limits_test.dart`.
+
 - **The README describes the two-step sign-in screen:** the features list the full screen of Settings > Two-step sign-in (turn the second factor on and off, recovery codes shown once, new codes and the code field of the sign-in form; there is no switch for screenshots here), and the source map lists its files. The README and its seven translations are regenerated.
 
 - **Two-step sign-in has a full screen in the app:** Settings > Two-step sign-in now lets the signed-in account turn the second factor on (the password, then the key to put in an authenticator app, then the first code), shows the one-time recovery codes once, tells how many are left, warns when two or fewer remain and makes a new set (the old ones stop working), and turns the second factor off with the password and a code. The key and the codes stay hidden until the person asks to see them, are never written to a log, a store or the saved state of the screen, are dropped as soon as the step ends, and are hidden again when the app leaves the foreground. The key can be copied to paste it into an authenticator app. Texts are in the eight languages.
