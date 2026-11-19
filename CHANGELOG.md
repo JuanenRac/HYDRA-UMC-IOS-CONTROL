@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+## [0.3.7]
+
 - **The reservations and the safety limits of a robot go through the generated client of the SDK:** `GET /api/claims` and `GET /api/safety-limits` are no longer written by hand; an answer that does not have the shape of the contract is a `HydraApiException`, and an older server without the safety route still answers null. New `test/typed_claims_limits_test.dart`.
 
 - **The README describes the two-step sign-in screen:** the features list the full screen of Settings > Two-step sign-in (turn the second factor on and off, recovery codes shown once, new codes and the code field of the sign-in form; there is no switch for screenshots here), and the source map lists its files. The README and its seven translations are regenerated.
@@ -19,6 +21,8 @@ All notable changes to this project are documented here.
 - **The "Require a release signature" switch says what it does here:** this app only announces new versions and downloads nothing, so the text of the switch, in the eight languages, now says it has no effect in this app instead of promising a check.
 
 - **Blocking commands on saved data no longer blocks safe mode:** the command that disables a robot goes out like STOP, as in Listen Only.
+
+- Build version synchronized with `hydra-umc.project.json` and the repository-native version source.
 
 ## [0.3.6]
 
