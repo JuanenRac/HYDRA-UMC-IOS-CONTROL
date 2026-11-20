@@ -10,6 +10,10 @@ updates:
       default-days: 7
     labels:
       - "dependencies"
+    ignore:
+      # flutter_blue_plus 2.x changes its license (commercial terms from a company size) and reports the app name on every build; the 1.x line stays.
+      - dependency-name: "flutter_blue_plus"
+        update-types: ["version-update:semver-major"]
     groups:
       pub_updates:
         patterns:
