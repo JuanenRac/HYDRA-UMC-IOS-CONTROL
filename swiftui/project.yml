@@ -1,0 +1,61 @@
+# HYDRA-UMC-IOS-CONTROL - the Xcode project of the native app, described for XcodeGen (https://github.com/yonaskolb/XcodeGen).
+# On a Mac, in this folder:  brew install xcodegen && xcodegen generate && open HydraControl.xcodeproj
+# The rules of the app live in the Swift package of this folder (HydraCore); the app target holds the screens and what needs the phone.
+# The identifier ends in ".native" so this app can be installed next to the published one while it is being written.
+name: HydraControl
+options:
+  bundleIdPrefix: com.hydraumc
+  deploymentTarget:
+    iOS: "16.0"
+  developmentLanguage: en
+  createIntermediateGroups: true
+packages:
+  HydraCore:
+    path: .
+targets:
+  HydraControl:
+    type: application
+    platform: iOS
+    sources:
+      - path: App
+    dependencies:
+      - package: HydraCore
+        product: HydraCore
+    info:
+      path: Generated/Info.plist
+      properties:
+        CFBundleDisplayName: HYDRA-UMC
+        CFBundleShortVersionString: "0.0.1"
+        CFBundleVersion: "1"
+        CFBundleDevelopmentRegion: en
+        CFBundleLocalizations: [en, es, de, fr, it, ja, zh-Hans, pt-PT]
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
+        UISupportedInterfaceOrientations~ipad: [UIInterfaceOrientationPortrait, UIInterfaceOrientationPortraitUpsideDown, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
+        NSFaceIDUsageDescription: Confirms that it is you before restoring a saved session.
+        NSLocalNetworkUsageDescription: Connects to your HYDRA-UMC server on the local network.
+        NSCameraUsageDescription: Reads the pairing QR code of your server.
+        NSBonjourServices: [_hydra._tcp]
+        NSAppTransportSecurity:
+          # plain http is allowed only for addresses of the local network, and the app itself only uses it when the person allows it
+          NSAllowsLocalNetworking: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.hydraumc.hydraUmcControl.native
+        MARKETING_VERSION: "0.0.1"
+        CURRENT_PROJECT_VERSION: "1"
+        SWIFT_VERSION: "5.9"
+        TARGETED_DEVICE_FAMILY: "1,2"
+    scheme:
+      testTargets: [HydraControlUITests]
+  HydraControlUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: Tests/HydraControlUITests
+    dependencies:
+      - target: HydraControl
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        SWIFT_VERSION: "5.9"

@@ -1,0 +1,87 @@
+# =============================================================================
+# HYDRA-UMC-IOS-CONTROL - the tests of the native app (swiftui/)
+# Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
+# GPL-3.0-or-later - see LICENSE
+# =============================================================================
+# The native app is written next to the published Flutter app; this workflow is its own and does not change the checks of that one.
+# "swift test" runs the unit tests of HydraCore. The second job makes the Xcode project with XcodeGen, builds the app without signing and
+# runs the interface tests of the STOP on an iPhone simulator of the runner (never on a push, so an emulator cannot turn main red).
+# The pictures of the screens are uploaded as an artifact. Nothing is signed or published.
+name: Native app tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "swiftui/**"
+      - ".github/workflows/swiftui-tests.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "swiftui/**"
+      - ".github/workflows/swiftui-tests.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: swiftui-tests-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' && !startsWith(github.ref, 'refs/tags/') }}
+
+jobs:
+  core:
+    name: swift test (HydraCore)
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Run the unit tests
+        working-directory: swiftui
+        run: swift test
+
+  app:
+    name: Build the app and test the STOP on a simulator
+    if: ${{ github.event_name != 'push' }}
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Make the Xcode project
+        working-directory: swiftui
+        run: |
+          brew install xcodegen
+          xcodegen generate
+      - name: Pick an iPhone simulator
+        shell: bash
+        run: |
+          set -euo pipefail
+          id="$(xcrun simctl list devices available -j | python3 -c "import json,sys; d=json.load(sys.stdin)['devices']; print(next(x['udid'] for k in sorted(d, reverse=True) if 'iOS' in k for x in d[k] if x['name'].startswith('iPhone') and x['isAvailable']))")"
+          echo "SIMULATOR_ID=$id" >> "$GITHUB_ENV"
+          echo "simulator: $id"
+      - name: Build and run the interface tests
+        working-directory: swiftui
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/shots"
+          status=0
+          TEST_RUNNER_SHOTS_DIR="$RUNNER_TEMP/shots" xcodebuild test -project HydraControl.xcodeproj -scheme HydraControl \
+            -destination "platform=iOS Simulator,id=$SIMULATOR_ID" CODE_SIGNING_ALLOWED=NO > "$RUNNER_TEMP/xcodebuild.log" 2>&1 || status=$?
+          grep -nE "error:|XCTAssert|failed -|Test Case .*(passed|failed)|Executed|TEST SUCCEEDED|TEST FAILED" "$RUNNER_TEMP/xcodebuild.log" | head -n 80 || true
+          if [ "$status" -ne 0 ]; then tail -n 40 "$RUNNER_TEMP/xcodebuild.log"; fi
+          exit "$status"
+      - name: Keep the pictures of the screens
+        if: ${{ always() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: screens
+          path: ${{ runner.temp }}/shots
+          if-no-files-found: warn
+          retention-days: 14

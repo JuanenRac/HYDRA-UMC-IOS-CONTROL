@@ -1,0 +1,3 @@
+"NSLocalNetworkUsageDescription" = "Liga-se ao seu servidor HYDRA-UMC na rede local.";
+"NSFaceIDUsageDescription" = "Confirma que é você antes de repor uma sessão guardada.";
+"NSCameraUsageDescription" = "Lê o código QR de emparelhamento do seu servidor.";

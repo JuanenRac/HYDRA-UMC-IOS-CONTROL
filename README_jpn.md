@@ -234,6 +234,7 @@ HYDRA-UMC-IOS-CONTROL/
 │   ├── l10n/                                                         実際に生成されたローカライゼーション(8言語) - リポジトリルートのl10n.yamlを参照
 │   ├── util/                                                         専用画面を持たない補助機能
 │   └── ui/                                                           画面とウィジェット
+├── swiftui/                                                          SwiftUI のネイティブアプリ（Flutter 版と並行して開発中）
 ├── ios/                                                              Xcode プロジェクト（macOS からのみビルド可能）
 ├── windows/                                                          Windows デスクトップターゲット——Mac なしでのビルド検証
 ├── tools/                                                            プロジェクトのツールと CI の検査

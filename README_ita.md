@@ -242,6 +242,7 @@ HYDRA-UMC-IOS-CONTROL/
 │   ├── l10n/                                                         Localizzazioni reali generate (8 lingue) - vedi l10n.yaml nella radice del repo
 │   ├── util/                                                         Utilità senza schermata propria
 │   └── ui/                                                           schermate e widget
+├── swiftui/                                                          app nativa SwiftUI, in sviluppo accanto all'app Flutter
 ├── ios/                                                              Progetto Xcode (compilare solo da macOS)
 ├── windows/                                                          Target desktop Windows - verifica della build senza un Mac
 ├── tools/                                                            strumenti del progetto e controlli della CI

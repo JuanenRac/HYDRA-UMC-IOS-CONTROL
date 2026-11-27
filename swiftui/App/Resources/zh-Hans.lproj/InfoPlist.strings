@@ -1,0 +1,3 @@
+"NSLocalNetworkUsageDescription" = "连接本地网络上的 HYDRA-UMC 服务器。";
+"NSFaceIDUsageDescription" = "恢复已保存的会话前确认是您本人。";
+"NSCameraUsageDescription" = "读取服务器的配对二维码。";

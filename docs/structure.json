@@ -241,6 +241,29 @@
       "columns": 2,
       "rows": [
         {
+          "name": "swiftui/",
+          "desc": {
+            "en": "native SwiftUI app, in progress",
+            "es": "app SwiftUI nativa, en curso",
+            "de": "native SwiftUI-App, in Arbeit",
+            "fr": "app SwiftUI native, en cours",
+            "it": "app SwiftUI nativa, in corso",
+            "ja": "SwiftUI 版（開発中）",
+            "zh": "SwiftUI 原生版（开发中）",
+            "pt": "app SwiftUI nativa, em curso"
+          },
+          "tree_desc": {
+            "en": "native SwiftUI app, in development next to the Flutter app",
+            "es": "app nativa en SwiftUI, en desarrollo junto a la app Flutter",
+            "de": "native SwiftUI-App, in Entwicklung neben der Flutter-App",
+            "fr": "application native SwiftUI, en développement à côté de l'application Flutter",
+            "it": "app nativa SwiftUI, in sviluppo accanto all'app Flutter",
+            "ja": "SwiftUI のネイティブアプリ（Flutter 版と並行して開発中）",
+            "zh": "SwiftUI 原生应用，与 Flutter 应用并行开发中",
+            "pt": "aplicação nativa em SwiftUI, em desenvolvimento ao lado da aplicação Flutter"
+          }
+        },
+        {
           "name": "ios/",
           "desc": {
             "en": "Xcode project (build only from macOS)",

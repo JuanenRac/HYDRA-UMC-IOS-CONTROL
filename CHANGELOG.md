@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **A native SwiftUI app has been started in `swiftui/`:** it is built next to the Flutter app, which does not change and stays the published one. It has the shared look of the Android app (metallic blue), the bar Home, Control, Cameras, Alerts and More, first use, sign-in with the second step, saved servers, search of the network, pairing by link or QR code (off by default), certificate fingerprints, a session kept only in the Keychain, the Face ID or Touch ID lock and the global STOP, drawn in windows of its own so it stays pressable over alerts and sheets. Home, Control, Cameras and Alerts are still skeletons. It is tested with a pretend server on an iPhone simulator; it has not run on a real iPhone or against a real server.
+
 - **Push notifications of the server through Firebase:** a build given the Firebase configuration (a secret of the CI or an ignored file) registers a Firebase token with the signed-in session; they only inform, and nothing can be commanded from them. Any other build says in Settings that push is off. Signing out also drops the token. Receiving one on an iPhone needs the Apple Developer key (`.p8`, paid membership), which the project does not have yet, so nothing has been received on a real phone.
 
 - **The STOP button can be pressed with a dialog, a menu or another page open:** a modal window lays a barrier over the whole screen, the STOP of the app bar included, so a first press only closed it or did nothing, and the pages opened from Settings had none. While one is open the global STOP is now drawn at the top right, above everything, with what it did at the bottom, and every dialog stays below it. New `test/stop_guard_test.dart`.
