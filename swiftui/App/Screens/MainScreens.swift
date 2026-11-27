@@ -190,6 +190,8 @@ struct MoreView: View {
             MenuRow(symbol: "questionmark.circle", title: model.tr("helpTitle"), subtitle: nil) { sheet = .help }
             MenuRow(symbol: "info.circle", title: model.tr("aboutTitle"), subtitle: model.tr("aboutVersion", ["version": AppModel.version])) { sheet = .about }
                 .accessibilityIdentifier("more-about")
+            MenuRow(symbol: "arrow.left.arrow.right", title: model.tr("moreChangeServer"), subtitle: model.tr("moreChangeServerText")) { model.controller.leaveServer() }
+                .accessibilityIdentifier("more-change-server")
             MenuRow(symbol: "rectangle.portrait.and.arrow.right", title: model.tr("commonSignOut"), subtitle: model.controller.server?.name, tint: Theme.alert) { askSignOut = true }
                 .accessibilityIdentifier("more-signout")
         }

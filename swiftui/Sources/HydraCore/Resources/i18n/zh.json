@@ -61,6 +61,8 @@
  "loginShowPassword": "显示密码",
  "loginSignIn": "登录",
  "loginSigningIn": "登录中…",
+ "moreChangeServer": "使用其他服务器",
+ "moreChangeServerText": "此服务器的会话保留在手机上",
  "moreSecurityTitle": "安全",
  "navAlerts": "提醒",
  "navCameras": "摄像头",

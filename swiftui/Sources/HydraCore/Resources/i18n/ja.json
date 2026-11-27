@@ -61,6 +61,8 @@
  "loginShowPassword": "パスワードを表示",
  "loginSignIn": "サインイン",
  "loginSigningIn": "サインイン中…",
+ "moreChangeServer": "別のサーバーを使う",
+ "moreChangeServerText": "このサーバーのセッションは端末に残ります",
  "moreSecurityTitle": "セキュリティ",
  "navAlerts": "通知",
  "navCameras": "カメラ",

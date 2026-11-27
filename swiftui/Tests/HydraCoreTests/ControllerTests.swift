@@ -18,7 +18,7 @@ final class ControllerTests: XCTestCase {
         XCTAssertEqual(rig.controller.roster.map(\.name), ["A1", "A2"])
         XCTAssertTrue(rig.controller.linkOk)
         XCTAssertEqual(rig.controller.savedServers.map(\.address.key), ["192.168.1.50:3000"])
-        XCTAssertEqual(rig.secrets.values["hydra_token"], "t1")
+        XCTAssertEqual(rig.secrets.values["hydra_token|192.168.1.50:3000"], "t1")
         // the password is nowhere on the phone
         XCTAssertFalse((Array(rig.prefs.values.values) + Array(rig.secrets.values.values)).contains { $0.contains("sample-pass") })
     }
@@ -110,7 +110,7 @@ final class ControllerTests: XCTestCase {
         XCTAssertEqual(second.controller.screen, .main)
         second.controller.logout()
         XCTAssertEqual(second.controller.screen, .login)
-        XCTAssertNil(first.secrets.values["hydra_token"])
+        XCTAssertEqual(first.secrets.stored("hydra_token"), [])
         let third = Rig(secrets: first.secrets, prefs: first.prefs)
         await third.controller.start()
         XCTAssertEqual(third.controller.screen, .login)
@@ -164,7 +164,7 @@ final class ControllerTests: XCTestCase {
         let second = Rig(secrets: first.secrets, prefs: first.prefs, auth: auth)
         await second.controller.start()
         XCTAssertEqual(second.controller.screen, .login)
-        XCTAssertNil(first.secrets.values["hydra_token"])
+        XCTAssertEqual(first.secrets.stored("hydra_token"), [])
     }
 
     func testTheLockIsNotTurnedOnWithoutProvingWhoYouAre() async {
@@ -175,6 +175,96 @@ final class ControllerTests: XCTestCase {
         await rig.controller.setBiometric(true, reason: "test")
         XCTAssertFalse(rig.controller.biometricEnabled)
         XCTAssertEqual(auth.asked, 1)
+    }
+
+    /// Two servers, each giving its own token: whatever is done, a token only travels to the server that gave it.
+    @Sendable private static func twoServers(_ request: HttpRequest) async throws -> HttpResponse {
+        let name = URL(string: request.url)?.host == "192.168.1.50" ? "a" : "b"
+        if request.url.hasSuffix("/api/login") { return reply(200, "{\"success\":true,\"token\":\"token-\(name)\",\"refreshToken\":\"refresh-\(name)\"}") }
+        return try await healthy(request)
+    }
+
+    private func assertNothingCrossed(_ rig: Rig, file: StaticString = #filePath, line: UInt = #line) {
+        for request in rig.transport.requests {
+            guard let sent = request.headers["Authorization"] else { continue }
+            let name = URL(string: request.url)?.host == "192.168.1.50" ? "a" : "b"
+            XCTAssertEqual(sent, "Bearer token-\(name)", request.url, file: file, line: line)
+        }
+    }
+
+    func testEachSavedServerKeepsItsOwnSession() async {
+        let rig = Rig({ try await ControllerTests.twoServers($0) })
+        await rig.signIn()
+        XCTAssertTrue(rig.controller.leaveServer())
+        await rig.controller.login(host: "192.168.1.61", port: "3000", username: "u", password: "p", code: "")
+        XCTAssertEqual(rig.controller.savedServers.count, 2)
+        XCTAssertTrue(rig.controller.savedServers.allSatisfy { rig.controller.hasSession($0) })
+        XCTAssertTrue(rig.controller.leaveServer())
+        XCTAssertFalse(rig.controller.showsStop)
+        let first = rig.controller.savedServers.first { $0.address.host == "192.168.1.50" }!
+        await rig.controller.resume(first)
+        XCTAssertEqual(rig.controller.screen, .main)
+        await rig.controller.stopAll()
+        XCTAssertEqual(rig.transport.requests.last { $0.url.hasSuffix("/api/stop-all") }?.url, "https://192.168.1.50:3000/api/stop-all")
+        assertNothingCrossed(rig)
+        // signing out of one server leaves the other session
+        rig.controller.logout()
+        XCTAssertFalse(rig.controller.hasSession(first))
+        XCTAssertEqual(rig.secrets.stored("hydra_token"), ["token-b"])
+        let other = rig.controller.savedServers.first { $0.address.host == "192.168.1.61" }!
+        await rig.controller.resume(other)
+        XCTAssertEqual(rig.controller.screen, .main)
+        assertNothingCrossed(rig)
+    }
+
+    func testARestartUsesTheSessionOfTheLastServerOnly() async {
+        let first = Rig({ try await ControllerTests.twoServers($0) })
+        await first.signIn()
+        first.controller.leaveServer()
+        await first.controller.login(host: "192.168.1.61", port: "3000", username: "u", password: "p", code: "")
+        let second = Rig({ try await ControllerTests.twoServers($0) }, secrets: first.secrets, prefs: first.prefs)
+        await second.controller.start()
+        XCTAssertEqual(second.controller.server?.address.host, "192.168.1.61")
+        XCTAssertFalse(second.transport.requests.isEmpty)
+        XCTAssertTrue(second.transport.requests.allSatisfy { $0.url.contains("192.168.1.61") })
+        assertNothingCrossed(second)
+    }
+
+    func testAServerIsNotLeftWhileAStopIsNotConfirmed() async {
+        let rig = Rig({ request in
+            if request.url.hasSuffix("/api/stop-all") { throw TransportError.unreachable }
+            return try await healthy(request)
+        })
+        await rig.signIn()
+        await rig.controller.stopAll()
+        XCTAssertFalse(rig.controller.leaveServer())
+        XCTAssertEqual(rig.controller.screen, .main)
+    }
+
+    func testAForgottenServerAndAReinstallLeaveNoSession() async {
+        let rig = Rig()
+        await rig.signIn()
+        let saved = rig.controller.savedServers[0]
+        rig.controller.leaveServer()
+        rig.controller.forget(saved)
+        XCTAssertEqual(rig.secrets.stored("hydra_token"), [])
+        await rig.controller.login(host: "192.168.1.50", port: "3000", username: "u", password: "p", code: "")
+        // a new install has empty preferences and the Keychain of before
+        let again = Rig(secrets: rig.secrets, prefs: MemoryPrefs())
+        await again.controller.start()
+        XCTAssertTrue(rig.secrets.values.isEmpty)
+    }
+
+    func testAPairingThatNamesACertificateDropsTheOldSessionOfThatAddress() async {
+        let rig = Rig()
+        await rig.signIn()
+        let saved = rig.controller.savedServers[0]
+        rig.controller.leaveServer()
+        rig.controller.setPairing(true)
+        rig.controller.receivePairing("hydra-umc://pair?host=192.168.1.50&port=3000&fp=\(pin)")
+        XCTAssertTrue(rig.controller.hasSession(saved), "nothing changes before the person says yes")
+        rig.controller.confirmPairing()
+        XCTAssertFalse(rig.controller.hasSession(saved))
     }
 
     func testPairingIsOffByDefaultAndAsksBeforeKeeping() async {

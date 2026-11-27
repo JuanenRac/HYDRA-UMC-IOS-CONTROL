@@ -173,6 +173,11 @@ final class KeychainSecrets: SecretStore {
         let status = SecItemDelete(base(key) as CFDictionary)
         if status != errSecSuccess && status != errSecItemNotFound { throw Failure(status: status) }
     }
+
+    func deleteAll() throws {
+        let status = SecItemDelete([kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: service] as CFDictionary)
+        if status != errSecSuccess && status != errSecItemNotFound { throw Failure(status: status) }
+    }
 }
 
 final class DefaultsPrefs: PrefsStore {

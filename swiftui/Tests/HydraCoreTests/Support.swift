@@ -55,6 +55,9 @@ final class MemorySecrets: SecretStore {
     func write(_ key: String, _ value: String) throws { if failWrites { throw Failure() }; values[key] = value }
     func read(_ key: String) throws -> String? { values[key] }
     func delete(_ key: String) throws { if failDeletes { throw Failure() }; values[key] = nil }
+    func deleteAll() throws { if failDeletes { throw Failure() }; values = [:] }
+    /// The values of one kind of key, whatever the server.
+    func stored(_ kind: String) -> [String] { values.filter { $0.key.hasPrefix(kind + "|") }.map(\.value) }
 }
 
 final class MemoryPrefs: PrefsStore {

@@ -185,7 +185,13 @@ struct LoginView: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 8) {
                         ForEach(model.controller.savedServers) { saved in
-                            Button(saved.name) { model.fill(saved.address) }
+                            Button {
+                                model.fill(saved.address)
+                                if model.controller.hasSession(saved) { Task { await model.controller.resume(saved) } }
+                            } label: {
+                                // an open lock: tapping goes in with the kept session
+                                if model.controller.hasSession(saved) { Label(saved.name, systemImage: "lock.open") } else { Text(saved.name) }
+                            }
                                 .font(.system(size: 13, weight: address?.key == saved.id ? .bold : .regular))
                                 .padding(.horizontal, 12).padding(.vertical, 8)
                                 .overlay(RoundedRectangle(cornerRadius: 9).stroke(address?.key == saved.id ? Theme.accent : Theme.outline))

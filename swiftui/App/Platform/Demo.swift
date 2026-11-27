@@ -47,6 +47,7 @@ final class DemoSecrets: SecretStore {
     func write(_ key: String, _ value: String) throws { values[key] = value }
     func read(_ key: String) throws -> String? { values[key] }
     func delete(_ key: String) throws { values[key] = nil }
+    func deleteAll() throws { values = [:] }
 }
 
 final class DemoPrefs: PrefsStore {

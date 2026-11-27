@@ -61,6 +61,8 @@
  "loginShowPassword": "Passwort anzeigen",
  "loginSignIn": "Anmelden",
  "loginSigningIn": "Anmeldung läuft…",
+ "moreChangeServer": "Anderen Server verwenden",
+ "moreChangeServerText": "Die Sitzung dieses Servers bleibt auf dem Telefon",
  "moreSecurityTitle": "Sicherheit",
  "navAlerts": "Meldungen",
  "navCameras": "Kameras",

@@ -46,7 +46,9 @@ public final class HydraController {
     private let transport: HttpTransport
     private let discoveryTransport: HttpTransport
     private let prefs: PrefsStore
-    private let store: SessionStore
+    private let secrets: SecretStore
+    /// One session per server, by `ServerAddress.key`.
+    private var stores: [String: SessionStore] = [:]
     private let auth: DeviceAuth
     private let appVersion: String
     private let sequence = CommandSequence()
@@ -78,7 +80,8 @@ public final class HydraController {
     public private(set) var chosenLanguage: String? { didSet { changed() } }
 
     private var client: HydraClient?
-    private var renewal: Task<String?, Never>?
+    /// The renewal on its way and the client it belongs to: its token never goes to another one.
+    private var renewal: (client: HydraClient, task: Task<String?, Never>)?
     /// Rises with every sign-in and sign-out: an answer of an earlier session is dropped.
     private var generation = 0
 
@@ -86,12 +89,22 @@ public final class HydraController {
         self.transport = transport
         self.discoveryTransport = discoveryTransport
         self.prefs = prefs
-        self.store = SessionStore(secrets: secrets, prefs: prefs)
+        self.secrets = secrets
         self.auth = auth
         self.appVersion = appVersion
     }
 
     private func changed() { onChange?() }
+
+    private func sessions(_ address: ServerAddress) -> SessionStore {
+        if let kept = stores[address.key] { return kept }
+        let made = SessionStore(secrets: secrets, prefs: prefs, scope: address.key)
+        stores[address.key] = made
+        return made
+    }
+
+    /// Whether this phone holds a session of that server.
+    public func hasSession(_ saved: SavedServer) -> Bool { sessions(saved.address).token != nil }
 
     public var biometricAvailable: Bool { auth.isAvailable }
     public var lastUsername: String { prefs.string(PrefKey.username) ?? "" }
@@ -129,17 +142,22 @@ public final class HydraController {
     // MARK: - Start, lock
 
     public func start() async {
-        store.purgeOnFirstRun()
+        SessionStore.purgeOnFirstRun(secrets: secrets, prefs: prefs)
         tlsSettings = prefs.codable(TlsSettings.self, PrefKey.tls) ?? TlsSettings()
         pairingEnabled = prefs.bool(PrefKey.pairing)
         biometricEnabled = prefs.bool(PrefKey.biometric)
         chosenLanguage = prefs.string(PrefKey.language)
         savedServers = prefs.codable([SavedServer].self, PrefKey.savedServers) ?? []
         server = prefs.codable(SavedServer.self, PrefKey.server)
-        guard let server, let token = store.token else {
+        guard let server, let token = sessions(server.address).token else {
             screen = prefs.bool(PrefKey.firstRunDone) || server != nil ? .login : .welcome
             return
         }
+        await open(server, token: token)
+    }
+
+    /// Takes the saved session of a server into use, behind the lock when it is on.
+    private func open(_ server: SavedServer, token: String) async {
         let made = makeClient(server.address, useTls: server.useTls, transport: transport)
         made.authToken = token
         bind(made)
@@ -153,6 +171,50 @@ public final class HydraController {
             return
         }
         await enterMain()
+    }
+
+    /// Uses the session this phone keeps of a saved server, without the password.
+    public func resume(_ saved: SavedServer) async {
+        guard screen == .login, !signingIn, let token = sessions(saved.address).token else { return }
+        generation += 1
+        message = nil
+        secondFactor = .none
+        server = saved
+        prefs.setCodable(saved, PrefKey.server)
+        await open(saved, token: token)
+    }
+
+    /// Goes back to the sign-in keeping this server's session, to use another one. Refused while a STOP is on its way or without answer.
+    @discardableResult
+    public func leaveServer() -> Bool {
+        guard screen == .main else { return false }
+        guard stopsInFlight == 0, !stopUnconfirmed else {
+            message = Message("errStopNotConfirmed")
+            return false
+        }
+        closeConnection()
+        message = nil
+        screen = .login
+        return true
+    }
+
+    private func closeConnection() {
+        generation += 1
+        client?.authToken = nil
+        client = nil
+        roster = []
+        linkOk = false
+        stopResult = nil
+        stopUnconfirmed = false
+        secondFactor = .none
+    }
+
+    private func keep(_ entry: SavedServer) {
+        let before = savedServers
+        savedServers = SavedServer.remember(entry, in: savedServers)
+        // a server that falls off the list takes its session with it
+        for old in before where !savedServers.contains(where: { $0.id == old.id }) { sessions(old.address).clear() }
+        prefs.setCodable(savedServers, PrefKey.savedServers)
     }
 
     public func finishFirstRun() {
@@ -203,13 +265,12 @@ public final class HydraController {
             guard mine == generation else { return }
             made.authToken = grant.token
             bind(made)
-            store.save(token: grant.token, username: user, refreshToken: grant.refreshToken, replaceRefreshToken: true)
+            sessions(address).save(token: grant.token, username: user, refreshToken: grant.refreshToken, replaceRefreshToken: true)
             let known = savedServers.first { $0.address.key == address.key }
             let entry = SavedServer(address: address, name: known?.name ?? address.host, useTls: made.usesTls)
             server = entry
-            savedServers = SavedServer.remember(entry, in: savedServers)
+            keep(entry)
             prefs.setCodable(entry, PrefKey.server)
-            prefs.setCodable(savedServers, PrefKey.savedServers)
             prefs.set(user, PrefKey.username)
             prefs.set(true, PrefKey.firstRunDone)
             secondFactor = .none
@@ -229,14 +290,20 @@ public final class HydraController {
         }
     }
 
+    /// Takes a server off the list, with its session.
     public func forget(_ saved: SavedServer) {
+        sessions(saved.address).clear()
         savedServers.removeAll { $0.id == saved.id }
         prefs.setCodable(savedServers, PrefKey.savedServers)
+        if server?.id == saved.id {
+            server = nil
+            prefs.set(nil, PrefKey.server)
+        }
     }
 
     public func logout() {
         let leaving = client
-        let refresh = store.refreshToken
+        let refresh = leaving.flatMap { sessions($0.address).refreshToken }
         dropSession()
         if let leaving, let refresh {
             leaving.authToken = nil
@@ -245,32 +312,27 @@ public final class HydraController {
     }
 
     private func dropSession(_ reason: Message? = nil) {
-        generation += 1
-        client?.authToken = nil
-        client = nil
-        store.clear()
-        roster = []
-        linkOk = false
-        stopResult = nil
-        stopUnconfirmed = false
-        secondFactor = .none
+        if let address = client?.address { sessions(address).clear() }
+        closeConnection()
         message = reason
         screen = .login
     }
 
     private func renew(_ of: HydraClient) async -> String? {
-        if let renewal { return await renewal.value }
+        if let renewal, renewal.client === of { return await renewal.task.value }
         let task = Task { [weak self] () -> String? in
-            guard let self, of === self.client, let refresh = self.store.refreshToken, let user = self.store.username else { return nil }
+            guard let self, of === self.client else { return nil }
+            let kept = self.sessions(of.address)
+            guard let refresh = kept.refreshToken, let user = kept.username else { return nil }
             let mine = self.generation
             guard let grant = try? await of.refresh(refresh), mine == self.generation else { return nil }
             of.authToken = grant.token
-            self.store.save(token: grant.token, username: user, refreshToken: grant.refreshToken, replaceRefreshToken: false)
+            kept.save(token: grant.token, username: user, refreshToken: grant.refreshToken, replaceRefreshToken: false)
             return grant.token
         }
-        renewal = task
+        renewal = (of, task)
         let token = await task.value
-        renewal = nil
+        if renewal?.client === of { renewal = nil }
         return token
     }
 
@@ -352,10 +414,11 @@ public final class HydraController {
         guard let offer = pendingPairing else { return }
         pendingPairing = nil
         // a paired server is reached over TLS and must present this certificate
+        // a session given before this certificate was named is not sent to it: the person signs in again
+        if signedIn, client?.address.key == offer.address.key { dropSession() }
+        sessions(offer.address).clear()
         setTls(tlsSettings.withPin(offer.fingerprint, for: offer.address))
-        let entry = SavedServer(address: offer.address, name: offer.name, useTls: true)
-        savedServers = SavedServer.remember(entry, in: savedServers)
-        prefs.setCodable(savedServers, PrefKey.savedServers)
+        keep(SavedServer(address: offer.address, name: offer.name, useTls: true))
         prefs.set(true, PrefKey.firstRunDone)
         pairedAddress = offer.address
         if screen == .welcome { screen = .login }
