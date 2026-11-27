@@ -343,6 +343,7 @@
   "pushServerOff": "此服务器已关闭推送通知。",
   "pushFailed": "无法为通知登记此手机。",
   "pushRegistered": "此手机已登记:服务器会通知它。",
+  "pushUnavailable": "此构建版本没有 Firebase 配置:推送通知已关闭。",
   "homeResetButton": "回零 / 复位",
   "homeResetSwitchLabel": "允许回零/复位",
   "homeResetSwitchHint": "显示一个按钮，将所选机器人移到零位。它会移动真实机器人，因此需要两次确认，仅操作员和管理员可用，默认关闭。",

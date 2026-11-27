@@ -42,6 +42,7 @@ String settingsScreenShape(RobotViewModel vm) {
     vm.pairingEnabled,
     vm.pushState,
     vm.pushNotifications,
+    vm.pushAvailable,
     vm.jobAlertsEnabled,
     vm.surfaces.liveActivityRefusedBySystem,
     vm.liveActivityEnabled,
@@ -203,14 +204,15 @@ class SettingsScreen extends StatelessWidget {
           secondary: const Icon(Icons.notifications_outlined),
           title: Text(l10n.pushTitle),
           subtitle: Text(switch (vm.pushState) {
+            _ when !vm.pushAvailable => l10n.pushUnavailable,
             PushState.denied => l10n.pushDenied,
             PushState.serverOff => l10n.pushServerOff,
             PushState.failed => l10n.pushFailed,
             PushState.registered => l10n.pushRegistered,
             _ => l10n.pushSubtitle,
           }),
-          value: vm.pushNotifications,
-          onChanged: (value) => vm.setPushNotifications(value),
+          value: vm.pushNotifications && vm.pushAvailable,
+          onChanged: vm.pushAvailable ? (value) => vm.setPushNotifications(value) : null,
         ),
         // What reaches out of the app: every one starts off and has its own switch.
         SwitchListTile(

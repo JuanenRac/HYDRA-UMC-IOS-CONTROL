@@ -343,6 +343,7 @@
   "pushServerOff": "Auf diesem Server sind Push-Benachrichtigungen ausgeschaltet.",
   "pushFailed": "Dieses Telefon konnte nicht für Benachrichtigungen registriert werden.",
   "pushRegistered": "Dieses Telefon ist registriert: Der Server benachrichtigt es.",
+  "pushUnavailable": "Dieser Build hat keine Firebase-Konfiguration: Push-Benachrichtigungen sind aus.",
   "homeResetButton": "HOME / RESET",
   "homeResetSwitchLabel": "HOME/RESET erlauben",
   "homeResetSwitchHint": "Zeigt eine Schaltfläche, die den gewählten Roboter in seine Nullstellung fährt. Sie bewegt den echten Roboter, fragt deshalb zweimal nach, wirkt nur für Bediener und Administratoren und ist standardmäßig aus.",

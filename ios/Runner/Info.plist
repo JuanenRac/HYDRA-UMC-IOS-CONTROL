@@ -4,6 +4,11 @@
 	<dict>
 		<key>CADisableMinimumFrameDurationOnPhone</key>
 		<true/>
+		<!-- Firebase (push notifications only): it does not swizzle the app delegate and makes no token by itself. -->
+		<key>FirebaseAppDelegateProxyEnabled</key>
+		<false/>
+		<key>FirebaseMessagingAutoInitEnabled</key>
+		<false/>
 		<key>CFBundleDevelopmentRegion</key>
 		<string>$(DEVELOPMENT_LANGUAGE)</string>
 		<key>CFBundleDisplayName</key>

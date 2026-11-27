@@ -131,6 +131,9 @@ Future<void> _until(bool Function() condition, {Duration timeout = const Duratio
 }
 
 class _FakeBridge implements PushBridge {
+  bool configured = true;
+  @override
+  Future<bool> available() async => configured;
   bool grant = true;
   String? token = 'ab' * 32;
   int asked = 0;
@@ -163,6 +166,15 @@ Future<(_Server, RobotViewModel, _FakeBridge)> _signedIn({bool playing = false})
 }
 
 void main() {
+  test('a build without the Firebase configuration asks for nothing and says so', () async {
+    final (_, vm, bridge) = await _signedIn();
+    bridge.configured = false;
+    await vm.setPushNotifications(true);
+
+    expect(vm.pushState, PushState.unavailable);
+    expect(bridge.asked, 0);
+  });
+
   test('turning them on registers the token with the language of the app', () async {
     final (server, vm, bridge) = await _signedIn();
     await vm.setPushNotifications(true);

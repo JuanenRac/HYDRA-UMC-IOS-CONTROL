@@ -371,6 +371,7 @@
   "pushServerOff": "This server has push notifications switched off.",
   "pushFailed": "This phone could not be registered for notifications.",
   "pushRegistered": "This phone is registered: the server will notify it.",
+  "pushUnavailable": "This build has no Firebase configuration: push notifications are off.",
   "homeResetButton": "HOME / RESET",
   "homeResetSwitchLabel": "Allow HOME/RESET",
   "homeResetSwitchHint": "Shows a button that takes the selected robot to its zero position. It moves the real robot, so it asks twice, only works for operators and administrators, and is off by default.",

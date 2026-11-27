@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **Push notifications of the server through Firebase:** a build given the Firebase configuration (a secret of the CI or an ignored file) registers a Firebase token with the signed-in session; they only inform, and nothing can be commanded from them. Any other build says in Settings that push is off. Signing out also drops the token. Receiving one on an iPhone needs the Apple Developer key (`.p8`, paid membership), which the project does not have yet, so nothing has been received on a real phone.
+
 - **The STOP button can be pressed with a dialog, a menu or another page open:** a modal window lays a barrier over the whole screen, the STOP of the app bar included, so a first press only closed it or did nothing, and the pages opened from Settings had none. While one is open the global STOP is now drawn at the top right, above everything, with what it did at the bottom, and every dialog stays below it. New `test/stop_guard_test.dart`.
 
 - **Reserving and releasing a robot go through the generated client of the SDK:** `POST /api/robot/{id}/claim` and `POST /api/robot/{id}/release` keep the same request (token, controller id, `If-Match`) and the same errors; an answer without the shape of the contract is now a `HydraApiException`. A server that sends no revision, and the release of a robot that was never reserved (no history), are still accepted.
