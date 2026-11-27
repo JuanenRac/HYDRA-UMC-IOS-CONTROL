@@ -62,9 +62,26 @@ public final class HydraController {
     public private(set) var signingIn = false { didSet { changed() } }
     public private(set) var secondFactor: SecondFactorStep = .none { didSet { changed() } }
     public var message: Message? { didSet { changed() } }
-    /// Whether the last read of the server answered.
-    public private(set) var linkOk = false { didSet { changed() } }
-    public private(set) var roster: [RosterRobot] = [] { didSet { changed() } }
+    /// The live link. `linkOk` is true only while the server is sending.
+    public private(set) var link: LinkStatus = .disconnected { didSet { changed() } }
+    public var linkOk: Bool { link == .connected }
+    public private(set) var cell = CellState() {
+        didSet {
+            robots = cell.robots
+            changed()
+        }
+    }
+    public private(set) var robots: [RobotInfo] = []
+    /// Every robot of every controller, which the STOP needs if the global route is not available.
+    public var roster: [RosterRobot] { cell.roster }
+    /// When what is on screen was read from the server.
+    public private(set) var stateTime: Date? { didSet { changed() } }
+    /// What is on screen is the copy saved on the phone: nothing was read from the server since it was opened.
+    public private(set) var showingSavedData = false { didSet { changed() } }
+    /// Robots are shown and nothing is feeding them.
+    public var isStale: Bool { !robots.isEmpty && link != .connected }
+    public private(set) var metrics: SystemMetrics? { didSet { changed() } }
+    public private(set) var canOta: CanOtaProgress? { didSet { changed() } }
 
     public private(set) var stopsInFlight = 0 { didSet { changed() } }
     /// A STOP got no answer (until a later one does): the robots may still be moving.
@@ -80,18 +97,36 @@ public final class HydraController {
     public private(set) var chosenLanguage: String? { didSet { changed() } }
 
     private var client: HydraClient?
+    private let socket: LiveSocket
+    private let cache: StateCache
+    private let schedule: Scheduler
+    private let now: () -> Date
+    private var cancelSave: (() -> Void)?
+    private var cancelMetrics: (() -> Void)?
+    private var budget = RenewalBudget()
+    private var renewingSocket = false
     /// The renewal on its way and the client it belongs to: its token never goes to another one.
     private var renewal: (client: HydraClient, task: Task<String?, Never>)?
     /// Rises with every sign-in and sign-out: an answer of an earlier session is dropped.
     private var generation = 0
+    /// The app is in the background: no socket is opened until it comes back.
+    private var paused = false
 
-    public init(transport: HttpTransport, discoveryTransport: HttpTransport, secrets: SecretStore, prefs: PrefsStore, auth: DeviceAuth, appVersion: String) {
+    public init(transport: HttpTransport, discoveryTransport: HttpTransport, secrets: SecretStore, prefs: PrefsStore, auth: DeviceAuth, appVersion: String,
+                sockets: LiveSocketTransport, cache: CacheStore, schedule: @escaping Scheduler = standardScheduler, now: @escaping () -> Date = Date.init) {
+        self.socket = LiveSocket(transport: sockets, schedule: schedule)
+        self.cache = StateCache(store: cache)
+        self.schedule = schedule
+        self.now = now
         self.transport = transport
         self.discoveryTransport = discoveryTransport
         self.prefs = prefs
         self.secrets = secrets
         self.auth = auth
         self.appVersion = appVersion
+        socket.onStatus = { [weak self] status in self?.linkChanged(status) }
+        socket.onMessage = { [weak self] message in self?.received(message) }
+        socket.onAuthRejected = { [weak self] in self?.socketRefused() }
     }
 
     private func changed() { onChange?() }
@@ -200,10 +235,13 @@ public final class HydraController {
 
     private func closeConnection() {
         generation += 1
+        pauseLive()
         client?.authToken = nil
         client = nil
-        roster = []
-        linkOk = false
+        cell = CellState()
+        stateTime = nil
+        showingSavedData = false
+        metrics = nil
         stopResult = nil
         stopUnconfirmed = false
         secondFactor = .none
@@ -213,8 +251,15 @@ public final class HydraController {
         let before = savedServers
         savedServers = SavedServer.remember(entry, in: savedServers)
         // a server that falls off the list takes its session with it
-        for old in before where !savedServers.contains(where: { $0.id == old.id }) { sessions(old.address).clear() }
+        for old in before where !savedServers.contains(where: { $0.id == old.id }) { discard(old.address) }
         prefs.setCodable(savedServers, PrefKey.savedServers)
+    }
+
+    /// Forgets the session of a server and the copy of its state.
+    private func discard(_ address: ServerAddress) {
+        let kept = sessions(address)
+        if let user = kept.username { cache.clear(scope: StateCache.scope(address: address, username: user)) }
+        kept.clear()
     }
 
     public func finishFirstRun() {
@@ -243,7 +288,147 @@ public final class HydraController {
 
     private func enterMain() async {
         screen = .main
+        showSavedState()
+        await connect()
+    }
+
+    // MARK: - Live state
+
+    private var cacheScope: String? {
+        guard let address = client?.address, let user = sessions(address).username else { return nil }
+        return StateCache.scope(address: address, username: user)
+    }
+
+    private func showSavedState() {
+        guard let scope = cacheScope, let saved = cache.load(scope: scope) else { return }
+        cell = CellState(saved.state)
+        stateTime = saved.savedAt
+        showingSavedData = true
+    }
+
+    /// Reads the state and opens the live link. Also what "Try again" does.
+    public func connect() async {
+        guard screen == .main, client != nil else { return }
+        let mine = generation
+        socket.disconnect()
+        link = .connecting
         await refresh()
+        guard mine == generation, screen == .main, !paused, let client, let token = client.authToken else {
+            if mine == generation { link = .disconnected }
+            return
+        }
+        socket.connect(address: client.address, tls: client.usesTls, token: token)
+        startMetrics()
+    }
+
+    /// The app went to the background: nothing is left to a connection the system may suspend.
+    public func pause() {
+        paused = true
+        guard screen == .main else { return }
+        flushCache()
+        pauseLive()
+    }
+
+    /// The app came back to the front.
+    public func resumeLive() async {
+        paused = false
+        guard screen == .main, link == .disconnected else { return }
+        await connect()
+    }
+
+    private func pauseLive() {
+        socket.disconnect()
+        link = .disconnected
+        cancelMetrics?()
+        cancelMetrics = nil
+        cancelSave?()
+        cancelSave = nil
+        canOta = nil
+    }
+
+    private func linkChanged(_ status: LinkStatus) {
+        link = status
+        // the progress of a flash is only true while the server is sending it
+        if status == .disconnected { canOta = nil }
+    }
+
+    private func live(_ state: CellState) {
+        cell = state
+        stateTime = now()
+        showingSavedData = false
+        scheduleSave()
+    }
+
+    private func received(_ message: LiveMessage) {
+        guard screen == .main else { return }
+        switch message {
+        case .settings(let payload):
+            live(CellState(payload))
+        case .delta(let delta):
+            var next = cell
+            if next.apply(delta: delta) {
+                live(next)
+            } else {
+                Task { [weak self] in await self?.refresh() }
+            }
+        case .claims:
+            break   // the reservations arrive with the Control screen
+        case .canOtaProgress(let report):
+            if let progress = CanOtaProgress(message: report) { canOta = progress }
+        }
+    }
+
+    private func socketRefused() {
+        guard screen == .main, let client, !renewingSocket else { return }
+        guard budget.tryAcquire(now: now()) else {
+            dropSession(Message("errSessionEnded"))
+            return
+        }
+        renewingSocket = true
+        let mine = generation
+        Task { [weak self] in
+            guard let self else { return }
+            let token = await self.renew(client)
+            self.renewingSocket = false
+            guard mine == self.generation, self.screen == .main else { return }
+            if let token {
+                if !self.paused { self.socket.connect(address: client.address, tls: client.usesTls, token: token) }
+            } else {
+                self.dropSession(Message("errSessionEnded"))
+            }
+        }
+    }
+
+    /// The copy is written one second after the last change, not once for every change.
+    private func scheduleSave() {
+        cancelSave?()
+        cancelSave = schedule(1) { [weak self] in self?.flushCache() }
+    }
+
+    private func flushCache() {
+        cancelSave?()
+        cancelSave = nil
+        guard !showingSavedData, let at = stateTime, let scope = cacheScope else { return }
+        cache.save(cell.raw, scope: scope, at: at)
+    }
+
+    private func startMetrics() {
+        cancelMetrics?()
+        cancelMetrics = schedule(5) { [weak self] in
+            Task { @MainActor in
+                guard let self, self.cancelMetrics != nil else { return }
+                await self.pollMetrics()
+                if self.screen == .main, self.cancelMetrics != nil { self.startMetrics() }
+            }
+        }
+    }
+
+    /// A missed reading keeps the last one.
+    public func pollMetrics() async {
+        guard screen == .main, let client else { return }
+        let mine = generation
+        guard let json = try? await client.metrics(), mine == generation else { return }
+        metrics = SystemMetrics(json: json)
     }
 
     // MARK: - Sign-in and sign-out
@@ -266,6 +451,7 @@ public final class HydraController {
             made.authToken = grant.token
             bind(made)
             sessions(address).save(token: grant.token, username: user, refreshToken: grant.refreshToken, replaceRefreshToken: true)
+            budget.reset()
             let known = savedServers.first { $0.address.key == address.key }
             let entry = SavedServer(address: address, name: known?.name ?? address.host, useTls: made.usesTls)
             server = entry
@@ -292,7 +478,7 @@ public final class HydraController {
 
     /// Takes a server off the list, with its session.
     public func forget(_ saved: SavedServer) {
-        sessions(saved.address).clear()
+        discard(saved.address)
         savedServers.removeAll { $0.id == saved.id }
         prefs.setCodable(savedServers, PrefKey.savedServers)
         if server?.id == saved.id {
@@ -312,7 +498,10 @@ public final class HydraController {
     }
 
     private func dropSession(_ reason: Message? = nil) {
-        if let address = client?.address { sessions(address).clear() }
+        if let address = client?.address {
+            sessions(address).clear()
+            cache.clear()   // the copy belongs to that session
+        }
         closeConnection()
         message = reason
         screen = .login
@@ -339,20 +528,19 @@ public final class HydraController {
     // MARK: - Reading
 
     /// Reads the state of the installation (the robots, which the STOP needs if the global route is not available).
+    /// A read that fails keeps what is on screen.
     public func refresh() async {
         guard screen == .main, let client else { return }
         let mine = generation
         do {
             let settings = try await client.settings()
             guard mine == generation else { return }
-            roster = RosterRobot.list(settings: settings)
-            linkOk = true
+            live(CellState(settings))
         } catch let error as ApiError where error.isSessionProblem {
             guard mine == generation else { return }
             dropSession(Message("errSessionEnded"))
         } catch {
-            guard mine == generation else { return }
-            linkOk = false
+            // what is on screen stays; the live link says whether the server is there
         }
     }
 
@@ -370,6 +558,11 @@ public final class HydraController {
         case .answered(let result):
             stopUnconfirmed = false
             stopResult = result
+            var next = cell
+            for entry in result.robots where entry.stopped {
+                if let robotId = entry.robotId { next.markStopped(controllerId: entry.controllerId, robotId: robotId) }
+            }
+            cell = next
             await refresh()
         case .unconfirmed(let sessionEnded):
             if sessionEnded {
@@ -416,7 +609,7 @@ public final class HydraController {
         // a paired server is reached over TLS and must present this certificate
         // a session given before this certificate was named is not sent to it: the person signs in again
         if signedIn, client?.address.key == offer.address.key { dropSession() }
-        sessions(offer.address).clear()
+        discard(offer.address)
         setTls(tlsSettings.withPin(offer.fingerprint, for: offer.address))
         keep(SavedServer(address: offer.address, name: offer.name, useTls: true))
         prefs.set(true, PrefKey.firstRunDone)

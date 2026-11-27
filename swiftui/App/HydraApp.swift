@@ -16,7 +16,7 @@ struct HydraApp: App {
                 .tint(Theme.accent)
                 .task { await model.start() }
                 .onChange(of: scenePhase) { phase in
-                    if phase == .active { model.becameActive() } else if phase == .background { model.stopSearch() }
+                    if phase == .active { model.becameActive() } else if phase == .background { model.enteredBackground() }
                 }
         }
     }

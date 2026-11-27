@@ -74,20 +74,119 @@ final class FakeAuth: DeviceAuth {
 }
 
 @MainActor
+final class FakeConnection: LiveConnection {
+    let url: String
+    let protocols: [String]
+    let onEvent: @MainActor (SocketEvent) -> Void
+    var closed = false
+
+    init(url: String, protocols: [String], onEvent: @escaping @MainActor (SocketEvent) -> Void) {
+        self.url = url
+        self.protocols = protocols
+        self.onEvent = onEvent
+    }
+
+    func close() { closed = true }
+    func say(_ text: String) { onEvent(.text(text)) }
+    func end(_ code: Int? = nil) { onEvent(.closed(code: code)) }
+}
+
+/// Records every socket; with `opens` it is open as soon as it is asked for.
+@MainActor
+final class FakeSockets: LiveSocketTransport {
+    var opens: Bool
+    var made: [FakeConnection] = []
+    var last: FakeConnection { made[made.count - 1] }
+
+    init(opens: Bool = true) { self.opens = opens }
+
+    func open(url: String, protocols: [String], onEvent: @escaping @MainActor (SocketEvent) -> Void) -> LiveConnection {
+        let connection = FakeConnection(url: url, protocols: protocols, onEvent: onEvent)
+        made.append(connection)
+        if opens { onEvent(.opened) }
+        return connection
+    }
+}
+
+/// Timers a test fires by hand.
+@MainActor
+final class ManualTimers {
+    final class Entry {
+        let seconds: Double
+        let block: @MainActor () -> Void
+        var done = false
+
+        init(_ seconds: Double, _ block: @escaping @MainActor () -> Void) {
+            self.seconds = seconds
+            self.block = block
+        }
+    }
+
+    private(set) var entries: [Entry] = []
+    var waiting: [Double] { entries.filter { !$0.done }.map(\.seconds) }
+
+    func add(_ seconds: Double, _ block: @escaping @MainActor () -> Void) -> () -> Void {
+        let entry = Entry(seconds, block)
+        entries.append(entry)
+        return { entry.done = true }
+    }
+
+    /// Fires what is waiting and matches.
+    func fire(_ matches: (Double) -> Bool) {
+        for entry in entries where !entry.done && matches(entry.seconds) {
+            entry.done = true
+            entry.block()
+        }
+    }
+}
+
+final class ManualClock {
+    var time = Date(timeIntervalSince1970: 1_000_000)
+}
+
+final class MemoryCache: CacheStore {
+    var data: Data?
+    var text: String { data.flatMap { String(data: $0, encoding: .utf8) } ?? "" }
+    func read() -> Data? { data }
+    func write(_ data: Data?) { self.data = data }
+}
+
+/// Waits until `done` or two seconds.
+@MainActor
+func until(_ done: () -> Bool) async {
+    for _ in 0..<400 where !done() {
+        try? await Task.sleep(nanoseconds: 5_000_000)
+    }
+}
+
+@MainActor
 struct Rig {
     let transport: FakeTransport
     let secrets: MemorySecrets
     let prefs: MemoryPrefs
     let auth: FakeAuth
+    let sockets: FakeSockets
+    let cache: MemoryCache
+    let timers: ManualTimers
+    let clock: ManualClock
     let controller: HydraController
 
-    init(_ answer: @escaping @Sendable (HttpRequest) async throws -> HttpResponse = healthy, secrets: MemorySecrets = MemorySecrets(), prefs: MemoryPrefs = MemoryPrefs(), auth: FakeAuth = FakeAuth()) {
+    init(_ answer: @escaping @Sendable (HttpRequest) async throws -> HttpResponse = healthy, secrets: MemorySecrets = MemorySecrets(), prefs: MemoryPrefs = MemoryPrefs(), auth: FakeAuth = FakeAuth(),
+         cache: MemoryCache = MemoryCache(), opens: Bool = true) {
         let transport = FakeTransport(answer)
         self.transport = transport
         self.secrets = secrets
         self.prefs = prefs
         self.auth = auth
-        controller = HydraController(transport: transport, discoveryTransport: transport, secrets: secrets, prefs: prefs, auth: auth, appVersion: "0.0.1")
+        let sockets = FakeSockets(opens: opens)
+        let timers = ManualTimers()
+        let clock = ManualClock()
+        self.sockets = sockets
+        self.cache = cache
+        self.timers = timers
+        self.clock = clock
+        controller = HydraController(transport: transport, discoveryTransport: transport, secrets: secrets, prefs: prefs, auth: auth, appVersion: "0.0.1",
+                                     sockets: sockets, cache: cache, schedule: { timers.add($0, $1) }, now: { clock.time })
     }
 
     func signIn() async {

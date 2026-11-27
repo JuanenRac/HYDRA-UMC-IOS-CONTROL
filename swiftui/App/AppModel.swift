@@ -34,16 +34,16 @@ final class AppModel: ObservableObject {
         #if DEBUG
         if Demo.screen != nil {
             let transport = DemoTransport()
-            made = HydraController(transport: transport, discoveryTransport: transport, secrets: DemoSecrets(), prefs: DemoPrefs(), auth: PhoneAuth(), appVersion: AppModel.version)
+            made = HydraController(transport: transport, discoveryTransport: transport, secrets: DemoSecrets(), prefs: DemoPrefs(), auth: PhoneAuth(), appVersion: AppModel.version, sockets: DemoSockets(), cache: DemoCache())
         } else {
             let transport = UrlSessionTransport()
             real = transport
-            made = HydraController(transport: transport, discoveryTransport: UrlSessionTransport(acceptAnyCertificate: true), secrets: KeychainSecrets(), prefs: DefaultsPrefs(), auth: PhoneAuth(), appVersion: AppModel.version)
+            made = HydraController(transport: transport, discoveryTransport: UrlSessionTransport(acceptAnyCertificate: true), secrets: KeychainSecrets(), prefs: DefaultsPrefs(), auth: PhoneAuth(), appVersion: AppModel.version, sockets: PhoneSockets(trust: transport.trust), cache: FileCacheStore())
         }
         #else
         let transport = UrlSessionTransport()
         real = transport
-        made = HydraController(transport: transport, discoveryTransport: UrlSessionTransport(acceptAnyCertificate: true), secrets: KeychainSecrets(), prefs: DefaultsPrefs(), auth: PhoneAuth(), appVersion: AppModel.version)
+        made = HydraController(transport: transport, discoveryTransport: UrlSessionTransport(acceptAnyCertificate: true), secrets: KeychainSecrets(), prefs: DefaultsPrefs(), auth: PhoneAuth(), appVersion: AppModel.version, sockets: PhoneSockets(trust: transport.trust), cache: FileCacheStore())
         #endif
         controller = made
         self.transport = real
@@ -91,7 +91,21 @@ final class AppModel: ObservableObject {
     }
 
     func becameActive() {
-        Task { await controller.refresh() }
+        Task { await controller.resumeLive() }
+    }
+
+    func enteredBackground() {
+        stopSearch()
+        controller.pause()
+    }
+
+    /// A time of day as the language of the app writes it.
+    func time(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: translator.language == "pt" ? "pt_PT" : translator.language)
+        formatter.dateStyle = Calendar.current.isDateInToday(date) ? .none : .short
+        formatter.timeStyle = .short
+        return formatter.string(from: date)
     }
 
     func stopAll() {

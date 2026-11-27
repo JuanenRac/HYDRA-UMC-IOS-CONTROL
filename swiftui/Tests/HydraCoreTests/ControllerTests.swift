@@ -15,7 +15,7 @@ final class ControllerTests: XCTestCase {
         XCTAssertEqual(rig.controller.screen, .login)
         await rig.controller.login(host: " 192.168.1.50 ", port: "3000", username: "operator", password: "sample-pass", code: "")
         XCTAssertEqual(rig.controller.screen, .main)
-        XCTAssertEqual(rig.controller.roster.map(\.name), ["A1", "A2"])
+        XCTAssertEqual(rig.controller.robots.map(\.name), ["A1", "A2"])
         XCTAssertTrue(rig.controller.linkOk)
         XCTAssertEqual(rig.controller.savedServers.map(\.address.key), ["192.168.1.50:3000"])
         XCTAssertEqual(rig.secrets.values["hydra_token|192.168.1.50:3000"], "t1")

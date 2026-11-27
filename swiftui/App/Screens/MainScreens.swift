@@ -1,4 +1,4 @@
-// HYDRA-UMC-IOS-CONTROL - the app in use: the header (with the place of the STOP), the bottom bar and the pages. Home, Control, Cameras and Alerts are still skeletons.
+// HYDRA-UMC-IOS-CONTROL - the app in use: the header (with the place of the STOP), the bottom bar and the pages. Control, Cameras and Alerts are still skeletons.
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D). GPL-3.0-or-later.
 import SwiftUI
 import HydraCore
@@ -36,7 +36,13 @@ struct HeaderView: View {
     @EnvironmentObject var model: AppModel
 
     private var status: String {
-        model.tr(model.controller.linkOk ? "statusOnline" : "statusUnreachable", ["server": model.controller.server?.name ?? ""])
+        let key: String
+        switch model.controller.link {
+        case .connected: key = "statusOnline"
+        case .connecting: key = "statusConnecting"
+        case .disconnected: key = "statusUnreachable"
+        }
+        return model.tr(key, ["server": model.controller.server?.name ?? ""])
     }
 
     var body: some View {
@@ -57,6 +63,17 @@ struct HeaderView: View {
             }
             .padding(.horizontal, 14)
             .padding(.bottom, 8)
+            // on every page: what is shown may no longer be true
+            if model.controller.isStale, let at = model.controller.stateTime {
+                Text(model.tr("savedDataBanner", ["time": model.time(at)]))
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(.black)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 6)
+                    .background(Theme.amber)
+                    .accessibilityIdentifier("saved-data-banner")
+            }
             Rectangle().fill(Theme.outline).frame(height: 1)
         }
     }
@@ -81,10 +98,10 @@ struct RobotList: View {
     @EnvironmentObject var model: AppModel
 
     var body: some View {
-        if model.controller.roster.isEmpty {
+        if model.controller.robots.isEmpty {
             Text(model.tr("robotsNone")).font(.system(size: 13)).foregroundColor(Theme.muted)
         } else {
-            ForEach(model.controller.roster) { robot in
+            ForEach(model.controller.robots) { robot in
                 Panel {
                     HStack(spacing: 12) {
                         IconBadge(symbol: "gearshape.2", tint: model.controller.linkOk ? Theme.accent : Theme.muted)
@@ -93,26 +110,6 @@ struct RobotList: View {
                 }
             }
         }
-    }
-}
-
-struct HomeView: View {
-    @EnvironmentObject var model: AppModel
-
-    var body: some View {
-        Page {
-            ScreenTitle(symbol: MainTab.home.symbol, title: model.tr("navHome"), subtitle: model.controller.server?.name)
-            if !model.controller.linkOk {
-                Panel(tint: Theme.amber) {
-                    Text(model.tr("errNoAnswer")).font(.system(size: 13))
-                    Button(model.tr("commonRetry")) { Task { await model.controller.refresh() } }.buttonStyle(PrimaryButtonStyle())
-                }
-            }
-            Text(model.tr("robotsTitle")).font(.system(size: 14, weight: .semibold))
-            RobotList()
-            Panel(tint: Theme.amber) { Text(model.tr("notYet")).font(.system(size: 12)) }
-        }
-        .refreshable { await model.controller.refresh() }
     }
 }
 

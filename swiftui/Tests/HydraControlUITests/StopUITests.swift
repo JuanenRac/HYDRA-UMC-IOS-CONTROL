@@ -131,6 +131,27 @@ final class StopUITests: XCTestCase {
         print("STOP_OVER_ALERT alert_still_open=\(app.alerts.firstMatch.exists) sheets=\(app.sheets.count) cancel=\(app.buttons["Cancel"].exists)")
     }
 
+    func testHomeShowsTheRobotsAndTheirState() {
+        let app = launch("main")
+        XCTAssertTrue(app.staticTexts["All ready"].waitForExistence(timeout: 20))
+        XCTAssertFalse(app.staticTexts["saved-data-banner"].exists)
+        let row = app.buttons["robot-1"]
+        if !row.isHittable { app.swipeUp() }
+        row.tap()
+        shot("12_home_robot")
+    }
+
+    /// Without a server the saved state is shown and said to be saved, and the STOP stays.
+    func testOfflineShowsTheSavedStateAndSaysSo() {
+        let app = launch("main", extra: ["-hydraDemoOffline"])
+        XCTAssertTrue(app.staticTexts["saved-data-banner"].waitForExistence(timeout: 20))
+        XCTAssertTrue(topStop(app).exists)
+        shot("13_offline")
+        app.tabBars.buttons["Control"].tap()
+        XCTAssertTrue(app.staticTexts["saved-data-banner"].exists, "the warning is on every page")
+        pressAndRead(app, "without a link")
+    }
+
     /// The pretend server leaves the first STOP and its repeat without answer, then answers.
     func testAStopWithoutAnswerStaysSaidUntilOneIsAnswered() {
         let app = launch("main", extra: ["-hydraDemoStopFails"])

@@ -35,9 +35,13 @@ public struct StoppedRobot: Equatable, Sendable, Identifiable {
     public var stopped: Bool
     public var reservedBy: String?
     public var error: String?
+    public var robotId: Int?
+    public var controllerId: String?
     public var id = UUID()
 
-    public init(name: String, stopped: Bool, reservedBy: String? = nil, error: String? = nil) {
+    public init(name: String, stopped: Bool, reservedBy: String? = nil, error: String? = nil, robotId: Int? = nil, controllerId: String? = nil) {
+        self.robotId = robotId
+        self.controllerId = controllerId
         self.name = name
         self.stopped = stopped
         self.reservedBy = reservedBy
@@ -63,7 +67,8 @@ public struct StopAllResult: Equatable, Sendable {
         var list: [StoppedRobot] = []
         for case let robot as [String: Any] in json["robots"] as? [Any] ?? [] {
             let name = robot["name"] as? String ?? (robot["robotId"] as? Int).map(String.init) ?? "?"
-            list.append(StoppedRobot(name: name, stopped: robot["stopped"] as? Bool == true, reservedBy: robot["reservedBy"] as? String, error: robot["error"] as? String))
+            list.append(StoppedRobot(name: name, stopped: robot["stopped"] as? Bool == true, reservedBy: robot["reservedBy"] as? String, error: robot["error"] as? String,
+                                     robotId: robot["robotId"] as? Int, controllerId: robot["controllerId"] as? String))
         }
         success = json["success"] as? Bool == true
         stoppedCount = json["stoppedCount"] as? Int ?? list.filter(\.stopped).count
@@ -137,10 +142,10 @@ public enum GlobalStop {
             tasks.append(Task { @MainActor in
                 do {
                     try await client.stopRobot(robot.robotId, sequence: number)
-                    return StoppedRobot(name: robot.name, stopped: true)
+                    return StoppedRobot(name: robot.name, stopped: true, robotId: robot.robotId, controllerId: robot.controllerId)
                 } catch {
                     let detail = (error as? ApiError).map { "HTTP \($0.status)" }
-                    return StoppedRobot(name: robot.name, stopped: false, error: detail)
+                    return StoppedRobot(name: robot.name, stopped: false, error: detail, robotId: robot.robotId, controllerId: robot.controllerId)
                 }
             })
         }
