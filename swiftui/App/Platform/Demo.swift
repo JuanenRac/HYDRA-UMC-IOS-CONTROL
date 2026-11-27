@@ -15,14 +15,25 @@ enum Demo {
     static var stopFails: Bool { ProcessInfo.processInfo.arguments.contains("-hydraDemoStopFails") }
 }
 
-struct DemoTransport: HttpTransport {
+/// With `-hydraDemoStopFails` the first STOP and its repeat get no answer; later ones are answered.
+final class DemoTransport: HttpTransport, @unchecked Sendable {
+    private let lock = NSLock()
+    private var failures = Demo.stopFails ? 2 : 0
+
+    private func failsThisStop() -> Bool {
+        lock.lock(); defer { lock.unlock() }
+        if failures == 0 { return false }
+        failures -= 1
+        return true
+    }
+
     func send(_ request: HttpRequest) async throws -> HttpResponse {
         let json: String
         switch URL(string: request.url)?.path {
         case "/api/hydra-info": json = #"{"remoteApiVersion":2,"hostname":"Demo cell","robotCount":2}"#
         case "/api/settings": json = #"{"controllers":[{"id":"c1","robots":[{"id":1,"name":"Robot A1"},{"id":2,"name":"Robot A2"}]}]}"#
         case "/api/stop-all":
-            if Demo.stopFails { throw TransportError.unreachable }
+            if failsThisStop() { throw TransportError.unreachable }
             json = #"{"success":true,"stoppedCount":2,"failedCount":0,"persisted":true,"robots":[{"robotId":1,"name":"Robot A1","stopped":true},{"robotId":2,"name":"Robot A2","stopped":true}]}"#
         case "/api/login": json = #"{"success":true,"token":"demo","refreshToken":"demo"}"#
         default: json = "{}"
