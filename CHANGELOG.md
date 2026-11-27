@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **The STOP button can be pressed with a dialog, a menu or another page open:** a modal window lays a barrier over the whole screen, the STOP of the app bar included, so a first press only closed it or did nothing, and the pages opened from Settings had none. While one is open the global STOP is now drawn at the top right, above everything, with what it did at the bottom, and every dialog stays below it. New `test/stop_guard_test.dart`.
+
 - **Reserving and releasing a robot go through the generated client of the SDK:** `POST /api/robot/{id}/claim` and `POST /api/robot/{id}/release` keep the same request (token, controller id, `If-Match`) and the same errors; an answer without the shape of the contract is now a `HydraApiException`. A server that sends no revision, and the release of a robot that was never reserved (no history), are still accepted.
 - **The vendored files follow the SDK contract again:** the SDK is pinned to its newest release and the vendored server client and server answers now include the routes of the watch release notice, so the nightly family check finds no drift.
 ## [0.3.7]
