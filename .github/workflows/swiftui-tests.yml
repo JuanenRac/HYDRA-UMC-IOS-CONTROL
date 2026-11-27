@@ -14,11 +14,15 @@ on:
     branches: [main]
     paths:
       - "swiftui/**"
+      - "test/fixtures/**"
+      - "docs/robot_command_contract.json"
       - ".github/workflows/swiftui-tests.yml"
   pull_request:
     branches: [main]
     paths:
       - "swiftui/**"
+      - "test/fixtures/**"
+      - "docs/robot_command_contract.json"
       - ".github/workflows/swiftui-tests.yml"
   workflow_dispatch:
 
@@ -39,9 +43,22 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - name: Run the unit tests
-        working-directory: swiftui
-        run: swift test
+      - name: Run the unit tests, with the pretend server and its live link
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 swiftui/bench/hydra_ws_bench.py --port 0 > "$RUNNER_TEMP/bench.log" 2>&1 &
+          bench=$!
+          for _ in $(seq 1 50); do
+            grep -q "bench on" "$RUNNER_TEMP/bench.log" && break
+            sleep 0.2
+          done
+          port="$(sed -n 's#.*http://127.0.0.1:\([0-9]*\).*#\1#p' "$RUNNER_TEMP/bench.log" | head -n 1)"
+          test -n "$port"
+          status=0
+          HYDRA_BENCH_URL="127.0.0.1:$port" HYDRA_BENCH_REQUIRED=1 swift test --package-path swiftui || status=$?
+          kill "$bench"
+          exit "$status"
 
   app:
     name: Build the app and test the STOP on a simulator

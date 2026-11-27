@@ -45,13 +45,16 @@ public enum PrefKey {
 public final class HydraController {
     private let transport: HttpTransport
     private let discoveryTransport: HttpTransport
-    private let prefs: PrefsStore
+    let prefs: PrefsStore
     private let secrets: SecretStore
     /// One session per server, by `ServerAddress.key`.
     private var stores: [String: SessionStore] = [:]
     private let auth: DeviceAuth
     private let appVersion: String
-    private let sequence = CommandSequence()
+    let sequence = CommandSequence()
+
+    /// What the Control screen does; made when it is first used.
+    public private(set) lazy var control: RobotControl = RobotControl(app: self, prefs: prefs)
 
     /// Called after every change of the state below.
     public var onChange: (() -> Void)?
@@ -96,7 +99,7 @@ public final class HydraController {
     public private(set) var biometricEnabled = false { didSet { changed() } }
     public private(set) var chosenLanguage: String? { didSet { changed() } }
 
-    private var client: HydraClient?
+    private(set) var client: HydraClient?
     private let socket: LiveSocket
     private let cache: StateCache
     private let schedule: Scheduler
@@ -129,7 +132,22 @@ public final class HydraController {
         socket.onAuthRejected = { [weak self] in self?.socketRefused() }
     }
 
-    private func changed() { onChange?() }
+    func changed() { onChange?() }
+
+    /// Changes what is shown of the cell, without saying it came from the server.
+    func changeCell(_ change: (inout CellState) -> Void) {
+        var next = cell
+        change(&next)
+        cell = next
+    }
+
+    func sessionEnded() { dropSession(Message("errSessionEnded")) }
+
+    /// The user of the session in use.
+    var sessionUser: String { client.flatMap { sessions($0.address).username } ?? "" }
+
+    /// The key of the server in use, or of the one the app would use.
+    public var serverKey: String? { client?.address.key ?? server?.address.key }
 
     private func sessions(_ address: ServerAddress) -> SessionStore {
         if let kept = stores[address.key] { return kept }
@@ -171,6 +189,7 @@ public final class HydraController {
             guard let self, let made else { return nil }
             return await self.renew(made)
         }
+        made.listenOnly = { [weak self] in self?.control.listenOnly ?? false }
         client = made
     }
 
@@ -236,7 +255,9 @@ public final class HydraController {
     private func closeConnection() {
         generation += 1
         pauseLive()
-        client?.authToken = nil
+        // a stop of a held jog still has to leave with the token it was held with
+        release(client)
+        control.reset()
         client = nil
         cell = CellState()
         stateTime = nil
@@ -245,6 +266,21 @@ public final class HydraController {
         stopResult = nil
         stopUnconfirmed = false
         secondFactor = .none
+    }
+
+    /// Takes the token away from a client, after the jog stops on their way left.
+    private func release(_ leaving: HydraClient?) {
+        guard let leaving else { return }
+        control.interrupt()
+        let runner = control.deadMan
+        guard runner.stopping else {
+            leaving.authToken = nil
+            return
+        }
+        Task { @MainActor in
+            await runner.waitStops()
+            leaving.authToken = nil
+        }
     }
 
     private func keep(_ entry: SavedServer) {
@@ -325,6 +361,8 @@ public final class HydraController {
     public func pause() {
         paused = true
         guard screen == .main else { return }
+        // leaving the app ends a held jog
+        control.interrupt()
         flushCache()
         pauseLive()
     }
@@ -349,7 +387,11 @@ public final class HydraController {
     private func linkChanged(_ status: LinkStatus) {
         link = status
         // the progress of a flash is only true while the server is sending it
-        if status == .disconnected { canOta = nil }
+        if status == .disconnected {
+            canOta = nil
+            // a held jog must not outlive the connection
+            control.linkLost()
+        }
     }
 
     private func live(_ state: CellState) {
@@ -371,8 +413,8 @@ public final class HydraController {
             } else {
                 Task { [weak self] in await self?.refresh() }
             }
-        case .claims:
-            break   // the reservations arrive with the Control screen
+        case .claims(let report):
+            control.claimsPushed(report)
         case .canOtaProgress(let report):
             if let progress = CanOtaProgress(message: report) { canOta = progress }
         }
@@ -492,7 +534,6 @@ public final class HydraController {
         let refresh = leaving.flatMap { sessions($0.address).refreshToken }
         dropSession()
         if let leaving, let refresh {
-            leaving.authToken = nil
             Task { await leaving.logoutRemote(refresh) }
         }
     }
@@ -550,6 +591,8 @@ public final class HydraController {
     public func stopAll() async {
         guard showsStop, let client else { return }
         let mine = generation
+        // the global STOP ends any held jog first: its own stop goes out before and together with this one
+        control.interrupt()
         stopsInFlight += 1
         defer { stopsInFlight -= 1 }
         let outcome = await GlobalStop.run(client: client, roster: roster, sequence: sequence)
@@ -558,6 +601,7 @@ public final class HydraController {
         case .answered(let result):
             stopUnconfirmed = false
             stopResult = result
+            control.stoppedAll()   // the server disarms every jog on a global stop
             var next = cell
             for entry in result.robots where entry.stopped {
                 if let robotId = entry.robotId { next.markStopped(controllerId: entry.controllerId, robotId: robotId) }

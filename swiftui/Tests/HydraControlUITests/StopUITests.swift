@@ -70,6 +70,28 @@ final class StopUITests: XCTestCase {
         XCTAssertFalse(topStop(app).exists)
     }
 
+    func testControlPageKeepsBothStopsAndListenOnlyDimsTheCommands() {
+        let app = launch("main")
+        XCTAssertTrue(topStop(app).waitForExistence(timeout: 20))
+        app.tabBars.buttons["Control"].tap()
+        XCTAssertTrue(app.buttons["control-play"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["control-play"].isEnabled)
+        shot("10_control")
+        app.swipeUp()
+        shot("11_control_jog")
+        pressAndRead(app, "on the Control page")
+        closeResult(app)
+        app.tabBars.buttons["More"].tap()
+        let listen = app.switches["switch-listen-only"]
+        XCTAssertTrue(listen.waitForExistence(timeout: 10))
+        listen.coordinate(withNormalizedOffset: CGVector(dx: 0.93, dy: 0.5)).tap()
+        app.tabBars.buttons["Control"].tap()
+        XCTAssertTrue(app.buttons["control-play"].waitForExistence(timeout: 10))
+        XCTAssertFalse(app.buttons["control-play"].isEnabled, "listen only dims PLAY")
+        shot("12_control_listen_only")
+        pressAndRead(app, "with listen only on")
+    }
+
     func testFirstUse() {
         let app = launch("welcome")
         XCTAssertTrue(app.buttons["first-by-hand"].waitForExistence(timeout: 20))
