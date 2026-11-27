@@ -343,6 +343,7 @@
   "pushServerOff": "Ce serveur a désactivé les notifications push.",
   "pushFailed": "Ce téléphone n'a pas pu être enregistré pour les notifications.",
   "pushRegistered": "Ce téléphone est enregistré : le serveur le préviendra.",
+  "pushUnavailable": "Cette version n'a pas de configuration Firebase : les notifications push sont désactivées.",
   "homeResetButton": "HOME / RESET",
   "homeResetSwitchLabel": "Autoriser HOME/RESET",
   "homeResetSwitchHint": "Affiche un bouton qui amène le robot sélectionné à sa position zéro. Il déplace le vrai robot : il demande donc deux confirmations, ne fonctionne que pour les opérateurs et les administrateurs, et est désactivé par défaut.",

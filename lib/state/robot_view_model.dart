@@ -82,7 +82,7 @@ class SystemMetrics {
 }
 
 /// What became of the registration of this phone for push notifications.
-enum PushState { off, registering, registered, denied, serverOff, failed }
+enum PushState { off, registering, registered, denied, serverOff, failed, unavailable }
 
 /// What became of handing the token of the Live Activity to the server (see [RobotViewModel.liveActivityPushState]).
 enum LiveActivityPushState { off, registered, serverOff, failed }
@@ -368,6 +368,12 @@ class RobotViewModel extends ChangeNotifier {
     surfaces.listenForWatchRelays(onPresence: relayPresence, onVoiceConfirm: relayVoiceConfirm);
     dictationEnabled = await _clientPrefs.loadDictation(VoiceContract.enabledByDefault);
     dictationOnline = await _clientPrefs.loadDictationOnline();
+    // Not awaited: the system answers when it can and the rest of the settings does not wait for it.
+    unawaited(_push.available().then((value) {
+      if (value == pushAvailable) return;
+      pushAvailable = value;
+      notifyListeners();
+    }));
     pushNotifications = await _clientPrefs.loadPushNotifications();
     // The controller id of this installation: made once, kept, and adopted here.
     conditionalMode = ConditionalMode.fromKey(await _clientPrefs.loadConditionalMode());
@@ -476,6 +482,9 @@ class RobotViewModel extends ChangeNotifier {
   /// Whether the person wants push notifications from the server.
   bool pushNotifications = false;
 
+  /// Whether this build can receive push notifications (it has the Firebase configuration).
+  bool pushAvailable = false;
+
   /// What became of the last attempt to register this phone with the server.
   PushState pushState = PushState.off;
   String? _pushToken;
@@ -510,7 +519,10 @@ class RobotViewModel extends ChangeNotifier {
     pushState = PushState.registering;
     notifyListeners();
     try {
-      if (!await _push.requestPermission()) {
+      pushAvailable = await _push.available();
+      if (!pushAvailable) {
+        pushState = PushState.unavailable;
+      } else if (!await _push.requestPermission()) {
         pushState = PushState.denied;
       } else {
         final token = await _push.deviceToken();
@@ -1345,6 +1357,8 @@ class RobotViewModel extends ChangeNotifier {
       // Before the bearer token is cleared: this phone must not keep receiving what this account is told.
       unawaited(client.deletePushDevice(pushToken).catchError((Object _) {}));
     }
+    // Dropped at Firebase too: a server that was not reached finds no one.
+    if (pushToken != null) unawaited(_push.unregister());
     client?.authToken = null;
     _pendingLogout = _finishLogout(client);
     notifyListeners();

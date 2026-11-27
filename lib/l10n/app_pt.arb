@@ -342,6 +342,7 @@
   "pushServerOff": "Este servidor tem as notificações push desligadas.",
   "pushFailed": "Não foi possível registar este telemóvel para as notificações.",
   "pushRegistered": "Este telemóvel está registado: o servidor vai avisá-lo.",
+  "pushUnavailable": "Esta compilação não tem configuração do Firebase: as notificações push estão desativadas.",
   "homeResetButton": "HOME / REPOR",
   "homeResetSwitchLabel": "Permitir HOME/REPOR",
   "homeResetSwitchHint": "Mostra um botão que leva o robô selecionado à posição zero. Move o robô real, por isso pede confirmação duas vezes, só funciona para operadores e administradores e vem desativado por predefinição.",

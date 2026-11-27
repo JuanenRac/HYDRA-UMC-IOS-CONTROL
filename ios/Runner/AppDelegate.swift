@@ -1,10 +1,30 @@
+import FirebaseCore
+import FirebaseMessaging
 import Flutter
 import UIKit
 import UserNotifications
 
+/// The Firebase side of the push notifications. The configuration file (GoogleService-Info.plist) is not kept in the
+/// repository: a build without it never starts Firebase and the app says that push is off (see docs/PUSH_NOTIFICATIONS.md).
+enum PushFirebase {
+  private(set) static var configured = false
+
+  /// Starts Firebase when the app was built with the configuration of this app. Nothing of the file is logged.
+  static func configureIfPresent() {
+    guard !configured,
+      let path = Bundle.main.path(forResource: "GoogleService-Info", ofType: "plist"),
+      let options = FirebaseOptions(contentsOfFile: path),
+      options.bundleID == Bundle.main.bundleIdentifier
+    else { return }
+    FirebaseApp.configure(options: options)
+    configured = true
+  }
+}
+
 @main
 @objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
-  // The push notifications of the server (APNs): the Dart side is lib/network/push_bridge.dart.
+  // The push notifications of the server (Firebase Cloud Messaging over APNs): the Dart side is lib/network/push_bridge.dart.
+  // They only inform: no category and no action is registered, so nothing can be commanded from a notification.
   private var pushChannel: FlutterMethodChannel?
   private var pushToken: String?
   private var shortcutChannel: FlutterMethodChannel?
@@ -14,6 +34,7 @@ import UserNotifications
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
     UNUserNotificationCenter.current().delegate = self
+    PushFirebase.configureIfPresent()
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 
@@ -23,6 +44,8 @@ import UserNotifications
       let channel = FlutterMethodChannel(name: "hydra_umc/push", binaryMessenger: messenger)
       channel.setMethodCallHandler { [weak self] call, result in
         switch call.method {
+        case "available":
+          result(PushFirebase.configured)
         case "requestPermission":
           // Asks the person once; the system remembers the answer. Only a granted permission registers the app.
           UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { granted, _ in
@@ -36,6 +59,9 @@ import UserNotifications
         case "unregister":
           self?.pushToken = nil
           UIApplication.shared.unregisterForRemoteNotifications()
+          if PushFirebase.configured {
+            Messaging.messaging().deleteToken { _ in }
+          }
           result(nil)
         default:
           result(FlutterMethodNotImplemented)
@@ -81,9 +107,18 @@ import UserNotifications
     _ application: UIApplication,
     didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data
   ) {
-    let hex = deviceToken.map { String(format: "%02x", $0) }.joined()
-    pushToken = hex
-    pushChannel?.invokeMethod("token", arguments: hex)
+    // The token the server is told is the one of Firebase, which is made from the Apple one. The swizzling of Firebase is
+    // off (Info.plist), so the Apple token is handed to it here.
+    if PushFirebase.configured {
+      Messaging.messaging().apnsToken = deviceToken
+      Messaging.messaging().token { [weak self] token, _ in
+        guard let token = token else { return }
+        DispatchQueue.main.async {
+          self?.pushToken = token
+          self?.pushChannel?.invokeMethod("token", arguments: token)
+        }
+      }
+    }
     super.application(application, didRegisterForRemoteNotificationsWithDeviceToken: deviceToken)
   }
 

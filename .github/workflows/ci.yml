@@ -43,7 +43,45 @@ jobs:
         run: |
           git clone --depth 1 --branch 3.47.9 https://github.com/flutter/flutter.git "$RUNNER_TEMP/flutter"
           echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
+      # The Firebase configuration of the push notifications. The secret only reaches code of this repository that the owner
+      # pushed (the main branch and his own pull requests); everywhere else the app is built with push off. Never printed,
+      # never uploaded.
+      - name: Put the Firebase configuration in place
+        id: firebase
+        if: ${{ github.actor == github.repository_owner && (github.ref == 'refs/heads/main' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)) }}
+        env:
+          GOOGLE_SERVICE_INFO_PLIST: ${{ secrets.GOOGLE_SERVICE_INFO_PLIST }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "$GOOGLE_SERVICE_INFO_PLIST" ]; then
+            echo "::warning::the secret GOOGLE_SERVICE_INFO_PLIST is not set: this build has push off"
+            exit 0
+          fi
+          file=ios/Runner/GoogleService-Info.plist
+          printf '%s' "$GOOGLE_SERVICE_INFO_PLIST" > "$file"
+          plutil -lint "$file" >/dev/null 2>&1 || { echo "::error::the secret is not a property list"; rm -f "$file"; exit 1; }
+          bundle="$(plutil -extract BUNDLE_ID raw "$file" 2>/dev/null)" || bundle=""
+          [ "$bundle" = "com.hydraumc.hydraUmcControl" ] || { echo "::error::the configuration is not the one of com.hydraumc.hydraUmcControl"; rm -f "$file"; exit 1; }
+          echo "configured=yes" >> "$GITHUB_OUTPUT"
       - name: Build for iOS without code signing
         run: |
           flutter pub get
           flutter build ios --release --no-codesign
+      - name: Check the push configuration inside the app
+        env:
+          CONFIGURED: ${{ steps.firebase.outputs.configured }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          inside=build/ios/iphoneos/Runner.app/GoogleService-Info.plist
+          if [ "$CONFIGURED" = "yes" ]; then
+            test -f "$inside" || { echo "::error::the app was built without the configuration"; exit 1; }
+            echo "PUSH_CONFIG=ON"
+          else
+            test ! -f "$inside" || { echo "::error::the app carries a configuration it should not have"; exit 1; }
+            echo "PUSH_CONFIG=OFF"
+          fi
+      - name: Remove the Firebase configuration
+        if: ${{ always() }}
+        run: rm -f ios/Runner/GoogleService-Info.plist

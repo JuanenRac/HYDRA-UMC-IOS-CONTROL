@@ -3,9 +3,9 @@
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
 // GPL-3.0-or-later - see LICENSE
 //
-// The bridge to the push notifications of the system (APNs): asking the person
-// for permission, registering the app with the system and receiving the device
-// token. The native half lives in ios/Runner/AppDelegate.swift; this is its Dart
+// The bridge to the push notifications (Firebase Cloud Messaging over APNs):
+// asking the person for permission, registering the app with the system and
+// receiving the token. A build without the Firebase configuration has no push. The native half lives in ios/Runner/AppDelegate.swift; this is its Dart
 // side, behind an interface so the tests plug in their own.
 // =============================================================================
 
@@ -14,6 +14,9 @@ import 'dart:async';
 import 'package:flutter/services.dart';
 
 abstract class PushBridge {
+  /// Whether this build of the app can receive push notifications at all (it was built with the Firebase configuration).
+  Future<bool> available();
+
   /// Asks the person for permission to show notifications and, when granted, registers the app with the system.
   /// False when the person said no.
   Future<bool> requestPermission();
@@ -46,6 +49,19 @@ class MethodChannelPushBridge implements PushBridge {
       });
     } catch (_) {
       _listening = false; // no bindings (a test): there is no system to talk to
+    }
+  }
+
+  @override
+  Future<bool> available() async {
+    try {
+      return await _channel.invokeMethod<bool>('available') ?? false;
+    } on MissingPluginException {
+      return false;
+    } on PlatformException {
+      return false;
+    } catch (_) {
+      return false;
     }
   }
 
