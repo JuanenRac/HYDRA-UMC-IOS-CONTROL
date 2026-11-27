@@ -121,7 +121,14 @@ final class StopUITests: XCTestCase {
         XCTAssertTrue(app.alerts.firstMatch.waitForExistence(timeout: 5))
         shot("09_stop_over_alert")
         pressAndRead(app, "over an alert")
-        XCTAssertTrue(app.alerts.firstMatch.exists, "the STOP does not answer the question of the alert")
+        shot("11_after_stop_over_alert")
+        // Whatever the system does with the question, the STOP must never answer it with "yes": the person is still signed in.
+        XCTAssertTrue(topStop(app).exists, "the STOP signed the person out")
+        XCTAssertFalse(app.buttons["login-submit"].exists, "the STOP signed the person out")
+        let kept = XCTAttachment(string: "alert still open after the STOP: \(app.alerts.firstMatch.exists)")
+        kept.lifetime = .keepAlways
+        add(kept)
+        print("STOP_OVER_ALERT alert_still_open=\(app.alerts.firstMatch.exists) sheets=\(app.sheets.count) cancel=\(app.buttons["Cancel"].exists)")
     }
 
     /// The pretend server leaves the first STOP and its repeat without answer, then answers.

@@ -74,7 +74,7 @@ jobs:
           status=0
           TEST_RUNNER_SHOTS_DIR="$RUNNER_TEMP/shots" xcodebuild test -project HydraControl.xcodeproj -scheme HydraControl \
             -destination "platform=iOS Simulator,id=$SIMULATOR_ID" CODE_SIGNING_ALLOWED=NO > "$RUNNER_TEMP/xcodebuild.log" 2>&1 || status=$?
-          grep -nE "error:|XCTAssert|failed -|Test Case .*(passed|failed)|Executed|TEST SUCCEEDED|TEST FAILED" "$RUNNER_TEMP/xcodebuild.log" | head -n 80 || true
+          grep -nE "error:|XCTAssert|failed -|Test Case .*(passed|failed)|Executed|TEST SUCCEEDED|TEST FAILED|STOP_OVER_ALERT" "$RUNNER_TEMP/xcodebuild.log" | head -n 80 || true
           if [ "$status" -ne 0 ]; then tail -n 40 "$RUNNER_TEMP/xcodebuild.log"; fi
           exit "$status"
       - name: Keep the pictures of the screens
