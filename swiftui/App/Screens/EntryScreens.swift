@@ -196,16 +196,16 @@ struct LoginView: View {
             }
             HStack(spacing: 8) {
                 TextField(model.tr("loginServerIp"), text: $model.formHost).keyboardType(.URL).textInputAutocapitalization(.never).autocorrectionDisabled().accessibilityIdentifier("login-host")
-                    .textFieldStyle(.roundedBorder)
-                TextField(model.tr("commonPort"), text: $model.formPort).keyboardType(.numberPad).accessibilityIdentifier("login-port").textFieldStyle(.roundedBorder).frame(width: 80)
+                    .hydraField()
+                TextField(model.tr("commonPort"), text: $model.formPort).keyboardType(.numberPad).accessibilityIdentifier("login-port").hydraField().frame(width: 80)
             }
             Button { sheet = .search } label: { Label(model.tr("loginScanNetwork"), systemImage: "dot.radiowaves.left.and.right") }.font(.system(size: 14, weight: .semibold))
-            TextField(model.tr("commonUsername"), text: $username).textContentType(.username).textInputAutocapitalization(.never).autocorrectionDisabled().textFieldStyle(.roundedBorder).accessibilityIdentifier("login-user")
+            TextField(model.tr("commonUsername"), text: $username).textContentType(.username).textInputAutocapitalization(.never).autocorrectionDisabled().hydraField().accessibilityIdentifier("login-user")
             HStack {
                 Group {
                     if showPassword { TextField(model.tr("commonPassword"), text: $password) } else { SecureField(model.tr("commonPassword"), text: $password) }
                 }
-                .textContentType(.password).textInputAutocapitalization(.never).autocorrectionDisabled().textFieldStyle(.roundedBorder).accessibilityIdentifier("login-password")
+                .textContentType(.password).textInputAutocapitalization(.never).autocorrectionDisabled().hydraField().accessibilityIdentifier("login-password")
                 .submitLabel(.go).onSubmit(signIn)
                 Button { showPassword.toggle() } label: { Image(systemName: showPassword ? "eye.slash" : "eye") }
                     .accessibilityLabel(model.tr(showPassword ? "loginHidePassword" : "loginShowPassword"))
@@ -225,7 +225,7 @@ struct LoginView: View {
     private var secondFactor: some View {
         if model.controller.secondFactor != .none {
             Text(secondFactorText).font(.system(size: 13)).foregroundColor(Theme.amber)
-            TextField(model.tr("loginCodeLabel"), text: $code).textContentType(.oneTimeCode).textInputAutocapitalization(.never).autocorrectionDisabled().textFieldStyle(.roundedBorder).accessibilityIdentifier("login-code")
+            TextField(model.tr("loginCodeLabel"), text: $code).textContentType(.oneTimeCode).textInputAutocapitalization(.never).autocorrectionDisabled().hydraField().accessibilityIdentifier("login-code")
             Text(model.tr("loginCodeHint")).font(.system(size: 12)).foregroundColor(Theme.muted)
         }
     }

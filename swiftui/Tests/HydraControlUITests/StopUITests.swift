@@ -32,8 +32,16 @@ final class StopUITests: XCTestCase {
         let stop = topStop(app)
         XCTAssertTrue(stop.waitForExistence(timeout: 10), "no STOP \(where_)")
         XCTAssertTrue(stop.isHittable, "STOP not pressable \(where_)")
+        assertFullSize(stop)
         stop.tap()
         XCTAssertTrue(app.staticTexts["stop-result"].waitForExistence(timeout: 10), "no answer of the STOP \(where_)")
+    }
+
+    /// The button keeps its size (a squashed STOP is easy to miss) and sits in the top corner.
+    private func assertFullSize(_ stop: XCUIElement) {
+        XCTAssertGreaterThanOrEqual(stop.frame.height, 44, "STOP is squashed: \(stop.frame)")
+        XCTAssertGreaterThanOrEqual(stop.frame.width, 100, "STOP is narrow: \(stop.frame)")
+        XCTAssertLessThan(stop.frame.minY, 100, "STOP is not at the top: \(stop.frame)")
     }
 
     private func closeResult(_ app: XCUIApplication) {
@@ -62,6 +70,7 @@ final class StopUITests: XCTestCase {
     func testStopOnEveryTabAndTheRoundOneInControl() {
         let app = launch("main")
         XCTAssertTrue(topStop(app).waitForExistence(timeout: 20))
+        assertFullSize(topStop(app))
         shot("03_home")
         for tab in ["Home", "Control", "Cameras", "Alerts", "More"] {
             app.tabBars.buttons[tab].tap()

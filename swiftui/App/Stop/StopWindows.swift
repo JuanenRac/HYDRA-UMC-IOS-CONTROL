@@ -6,6 +6,12 @@ import SwiftUI
 import UIKit
 import HydraCore
 
+/// The frame of these windows is already placed under the status bar: the system must not inset their content a second time
+/// (it would push the button down and squash it).
+private final class StopWindow: UIWindow {
+    override var safeAreaInsets: UIEdgeInsets { .zero }
+}
+
 @MainActor
 final class StopWindows {
     private weak var model: AppModel?
@@ -20,11 +26,12 @@ final class StopWindows {
     }
 
     private func make(_ root: AnyView, in scene: UIWindowScene) -> UIWindow {
-        let window = UIWindow(windowScene: scene)
+        let window = StopWindow(windowScene: scene)
         window.windowLevel = .alert + 1
         window.backgroundColor = .clear
         let controller = UIHostingController(rootView: root)
         controller.view.backgroundColor = .clear
+        if #available(iOS 16.4, *) { controller.safeAreaRegions = [] }
         window.rootViewController = controller
         window.overrideUserInterfaceStyle = .dark
         return window

@@ -118,6 +118,17 @@ struct MenuRow: View {
     }
 }
 
+extension View {
+    /// A text field with the thin border of the cards.
+    func hydraField() -> some View {
+        font(.system(size: 14))
+            .padding(.horizontal, 12)
+            .frame(minHeight: 46)
+            .background(Theme.surface, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(Theme.outline, lineWidth: 1))
+    }
+}
+
 struct PrimaryButtonStyle: ButtonStyle {
     var secondary = false
     @Environment(\.isEnabled) private var enabled

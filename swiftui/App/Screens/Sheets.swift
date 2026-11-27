@@ -90,7 +90,7 @@ struct PairingSheet: View {
             } else {
                 Panel(tint: Theme.amber) { Text(model.tr("pairingCameraUnavailable")).font(.system(size: 13)) }
             }
-            TextField(model.tr("pairingPasteLabel"), text: $link).textInputAutocapitalization(.never).autocorrectionDisabled().textFieldStyle(.roundedBorder)
+            TextField(model.tr("pairingPasteLabel"), text: $link).textInputAutocapitalization(.never).autocorrectionDisabled().hydraField()
             Button(model.tr("pairingPasteButton")) { read(link) }.buttonStyle(PrimaryButtonStyle()).disabled(link.isEmpty)
             Text(model.tr("pairingSwitchHint")).font(.system(size: 12)).foregroundColor(Theme.muted)
         }
@@ -212,7 +212,7 @@ struct SecuritySheet: View {
             Panel {
                 Text(model.tr("securityFingerprintLabel")).font(.system(size: 13, weight: .semibold))
                 if let address { Text("\(address.host):\(address.port)").font(.system(size: 12)).foregroundColor(Theme.muted) }
-                TextField(model.tr("securityFingerprintLabel"), text: $fingerprint).textInputAutocapitalization(.never).autocorrectionDisabled().textFieldStyle(.roundedBorder)
+                TextField(model.tr("securityFingerprintLabel"), text: $fingerprint).textInputAutocapitalization(.never).autocorrectionDisabled().hydraField()
                 Button(model.tr("commonSave")) { save(fingerprint) }.buttonStyle(PrimaryButtonStyle())
                 Button(model.tr("securityFetch"), action: fetch).buttonStyle(PrimaryButtonStyle(secondary: true))
                 if let read {
