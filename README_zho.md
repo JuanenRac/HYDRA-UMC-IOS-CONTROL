@@ -234,6 +234,7 @@ HYDRA-UMC-IOS-CONTROL/
 │   ├── l10n/                                                         真实生成的本地化文件（8 种语言）——见仓库根目录的 l10n.yaml
 │   ├── util/                                                         没有独立界面的辅助模块
 │   └── ui/                                                           界面和控件
+├── swiftui/                                                          SwiftUI 原生应用，与 Flutter 应用并行开发中
 ├── ios/                                                              Xcode 项目（仅可在 macOS 上构建）
 ├── windows/                                                          Windows 桌面目标——无需 Mac 即可进行构建验证
 ├── tools/                                                            项目工具和 CI 检查

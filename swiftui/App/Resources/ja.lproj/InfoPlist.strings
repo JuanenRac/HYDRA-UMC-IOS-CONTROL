@@ -1,0 +1,3 @@
+"NSLocalNetworkUsageDescription" = "ローカルネットワーク上の HYDRA-UMC サーバーに接続します。";
+"NSFaceIDUsageDescription" = "保存されたセッションを復元する前に本人確認を行います。";
+"NSCameraUsageDescription" = "サーバーのペアリング QR コードを読み取ります。";

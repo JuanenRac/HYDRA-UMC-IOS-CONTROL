@@ -1,0 +1,3 @@
+"NSLocalNetworkUsageDescription" = "Connects to your HYDRA-UMC server on the local network.";
+"NSFaceIDUsageDescription" = "Confirms that it is you before restoring a saved session.";
+"NSCameraUsageDescription" = "Reads the pairing QR code of your server.";
