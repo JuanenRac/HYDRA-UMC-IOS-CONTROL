@@ -248,6 +248,10 @@ public final class HydraClient {
         return try await authed(method: "GET", path: "/api/settings", timeout: 5)
     }
 
+    public func metrics() async throws -> [String: Any] {
+        try await authed(method: "GET", path: "/api/system/metrics", timeout: 4)
+    }
+
     public func stopAll() async throws -> [String: Any] {
         try await authed(method: "POST", path: "/api/stop-all", timeout: 2)
     }
