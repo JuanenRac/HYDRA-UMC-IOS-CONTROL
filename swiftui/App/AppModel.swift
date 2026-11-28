@@ -20,6 +20,9 @@ final class AppModel: ObservableObject {
     enum LoginAction { case search, scan }
 
     let stopWindows = StopWindows()
+    let cameraStreams: CameraStreamTransport
+    /// The certificate rules for the 3D viewer; nil with the pretend server.
+    var viewerTrust: TrustDelegate? { transport?.trust }
     private let transport: UrlSessionTransport?
     private let bonjour = BonjourSearch()
     private var search: Task<Void, Never>?
@@ -31,24 +34,30 @@ final class AppModel: ObservableObject {
     init() {
         let made: HydraController
         var real: UrlSessionTransport?
+        let streams: CameraStreamTransport
         #if DEBUG
         if Demo.screen != nil {
             let transport = DemoTransport()
+            streams = DemoCameraStreams()
             made = HydraController(transport: transport, discoveryTransport: transport, secrets: DemoSecrets(), prefs: DemoPrefs(), auth: PhoneAuth(), appVersion: AppModel.version, sockets: DemoSockets(), cache: DemoCache())
         } else {
             let transport = UrlSessionTransport()
             real = transport
-            made = HydraController(transport: transport, discoveryTransport: UrlSessionTransport(acceptAnyCertificate: true), secrets: KeychainSecrets(), prefs: DefaultsPrefs(), auth: PhoneAuth(), appVersion: AppModel.version, sockets: PhoneSockets(trust: transport.trust), cache: FileCacheStore())
+            streams = PhoneCameraStreams(trust: transport.trust)
+            made = HydraController(transport: transport, discoveryTransport: UrlSessionTransport(acceptAnyCertificate: true), secrets: KeychainSecrets(), prefs: DefaultsPrefs(), auth: PhoneAuth(), appVersion: AppModel.version, sockets: PhoneSockets(trust: transport.trust), cache: FileCacheStore(), push: FirebasePush.shared)
         }
         #else
         let transport = UrlSessionTransport()
         real = transport
-        made = HydraController(transport: transport, discoveryTransport: UrlSessionTransport(acceptAnyCertificate: true), secrets: KeychainSecrets(), prefs: DefaultsPrefs(), auth: PhoneAuth(), appVersion: AppModel.version, sockets: PhoneSockets(trust: transport.trust), cache: FileCacheStore())
+        streams = PhoneCameraStreams(trust: transport.trust)
+        made = HydraController(transport: transport, discoveryTransport: UrlSessionTransport(acceptAnyCertificate: true), secrets: KeychainSecrets(), prefs: DefaultsPrefs(), auth: PhoneAuth(), appVersion: AppModel.version, sockets: PhoneSockets(trust: transport.trust), cache: FileCacheStore(), push: FirebasePush.shared)
         #endif
+        cameraStreams = streams
         controller = made
         self.transport = real
         translator = Translator(language: Translator.resolve(chosen: nil, preferred: Locale.preferredLanguages))
         made.onChange = { [weak self] in self?.controllerChanged() }
+        PushInbox.connect { [weak made] title, body, once in made?.serverMessage(title: title, body: body, once: once) }
     }
 
     private var appliedTls: TlsSettings?
@@ -79,7 +88,10 @@ final class AppModel: ObservableObject {
         #if DEBUG
         if let demo = Demo.screen {
             if demo != "welcome" { controller.finishFirstRun() }
-            if demo == "main" { await controller.login(host: "192.168.1.50", port: "3000", username: "demo", password: "demo", code: "") }
+            if demo == "main" {
+                await controller.login(host: "192.168.1.50", port: "3000", username: "demo", password: "demo", code: "")
+                controller.serverMessage(title: "Job finished", body: "Robot A1", once: true)
+            }
         }
         #endif
         if formHost.isEmpty, let server = controller.server ?? controller.savedServers.first { fill(server.address) }

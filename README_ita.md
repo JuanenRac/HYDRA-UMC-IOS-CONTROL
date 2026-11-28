@@ -126,7 +126,7 @@ Questa app punta a iOS/iPadOS, ma è costruita in **Flutter** anziché Swift/Swi
 | Qualcuno con il telefono sbloccato | Un blocco biometrico facoltativo (Face ID, Touch ID) condiziona il ripristino di una sessione salvata all'avvio; l'immagine della telecamera si chiude mentre l'app è in background | `network/biometric_helper.dart`, `ui/biometric_gate_screen.dart` |
 | Un robot mosso da due persone, un PLAY premuto per errore o uno stop che non arriva | Il robot viene prenotato prima di muoverlo e lo schermo dice chi lo detiene; PLAY chiede prima per impostazione predefinita e mostra il robot, i suoi punti, la velocità e chi lo ha prenotato; lo STOP globale è ritentato una volta, ricade su uno stop per robot e mantiene un banner persistente «STOP non confermato» se nessuno ha risposto | `models/access.dart`, `util/play_confirmation.dart`, `ui/widgets/stop_all.dart` |
 
-**Cosa non fa mai:** sostituire un arresto di emergenza fisico, né cifrare da sola il traffico: l'app prova HTTPS una volta quando una sonda HTTP in chiaro non riceve risposta, e non ha il pinning dei certificati né una protezione dal traffico in chiaro fuori dalla rete locale. Lo STOP è lo stop software del server.
+**Cosa non fa mai:** sostituire un arresto di emergenza fisico. Per impostazione predefinita parla solo HTTPS con un server fuori dal telefono: l'HTTP in chiaro è disattivato a meno che le impostazioni di Sicurezza lo consentano (un server fuori dalla rete locale richiede un secondo interruttore), e si può facoltativamente fissare un certificato. Lo STOP è lo stop software del server.
 
 ## 🔌 Interfacce
 

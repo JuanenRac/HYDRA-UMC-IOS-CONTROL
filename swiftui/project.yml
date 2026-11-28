@@ -12,6 +12,10 @@ options:
 packages:
   HydraCore:
     path: .
+  # the push notifications of the server; without a configuration file Firebase is never started
+  Firebase:
+    url: https://github.com/firebase/firebase-ios-sdk
+    exactVersion: "13.2.0"
 targets:
   HydraControl:
     type: application
@@ -21,6 +25,23 @@ targets:
     dependencies:
       - package: HydraCore
         product: HydraCore
+      - package: Firebase
+        product: FirebaseCore
+      - package: Firebase
+        product: FirebaseMessaging
+    # GoogleService-Info.plist is not kept in the repository: a build that has it next to this file gets push, any other one does not.
+    # Receiving one on an iPhone also needs the push entitlement and the key of a paid Apple Developer account, which the project does not have yet.
+    postBuildScripts:
+      - name: Copy Firebase configuration
+        basedOnDependencyAnalysis: false
+        script: |
+          if [ -f "${SRCROOT}/GoogleService-Info.plist" ]; then
+            cp "${SRCROOT}/GoogleService-Info.plist" "${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/GoogleService-Info.plist"
+            echo "note: PUSH_CONFIG=ON"
+          else
+            rm -f "${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/GoogleService-Info.plist"
+            echo "note: PUSH_CONFIG=OFF (no Firebase configuration: the app is built with push off)"
+          fi
     info:
       path: Generated/Info.plist
       properties:
@@ -30,6 +51,7 @@ targets:
         CFBundleDevelopmentRegion: en
         CFBundleLocalizations: [en, es, de, fr, it, ja, zh-Hans, pt-PT]
         UILaunchScreen: {}
+        FirebaseAppDelegateProxyEnabled: false
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
         UISupportedInterfaceOrientations~ipad: [UIInterfaceOrientationPortrait, UIInterfaceOrientationPortraitUpsideDown, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
         NSFaceIDUsageDescription: Confirms that it is you before restoring a saved session.
@@ -46,6 +68,9 @@ targets:
         CURRENT_PROJECT_VERSION: "1"
         SWIFT_VERSION: "5.9"
         TARGETED_DEVICE_FAMILY: "1,2"
+        # needed by the Firebase packages, and by the script that copies their configuration
+        OTHER_LDFLAGS: ["$(inherited)", "-ObjC"]
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
     scheme:
       testTargets: [HydraControlUITests]
   HydraControlUITests:

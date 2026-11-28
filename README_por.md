@@ -126,7 +126,7 @@ Esta aplicação destina-se a iOS/iPadOS, mas é construída em **Flutter** em v
 | Alguém com o telemóvel desbloqueado | Um bloqueio biométrico opcional (Face ID, Touch ID) condiciona o restauro de uma sessão guardada ao arrancar; a imagem da câmara fecha-se enquanto a aplicação está em segundo plano | `network/biometric_helper.dart`, `ui/biometric_gate_screen.dart` |
 | Um robô movido por duas pessoas, um PLAY premido por engano ou uma paragem que não chega | O robô é reservado antes de ser movido e o ecrã diz quem o detém; o PLAY pergunta primeiro por predefinição e mostra o robô, os seus pontos, a velocidade e quem o reservou; a paragem global é repetida uma vez, recorre a uma paragem por robô e mantém um aviso persistente «PARAGEM não confirmada» se ninguém respondeu | `models/access.dart`, `util/play_confirmation.dart`, `ui/widgets/stop_all.dart` |
 
-**O que nunca faz:** substituir uma paragem de emergência física, nem cifrar o tráfego por si só: a aplicação tenta HTTPS uma vez quando uma sonda HTTP simples não obtém resposta, e não tem fixação de certificados nem proteção contra tráfego sem cifra fora da rede local. A PARAGEM é a paragem por software do servidor.
+**O que nunca faz:** substituir uma paragem de emergência física. Por omissão só fala HTTPS com um servidor fora do telemóvel: o HTTP sem cifra está desligado a menos que as definições de Segurança o permitam (um servidor fora da rede local precisa de um segundo interruptor), e pode opcionalmente fixar-se um certificado. A PARAGEM é a paragem por software do servidor.
 
 ## 🔌 Interfaces
 

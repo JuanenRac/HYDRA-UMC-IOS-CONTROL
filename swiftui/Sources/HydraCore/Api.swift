@@ -126,6 +126,8 @@ public final class HydraClient {
 
     private var clientHeaders: [String: String] { ["X-Hydra-Client": clientHeader] }
     private var authHeaders: [String: String] { authToken.map { ["Authorization": "Bearer \($0)"] } ?? [:] }
+    /// For what is not read through this client (the camera stream): who asks and the session.
+    public var mediaHeaders: [String: String] { clientHeaders.merging(authHeaders) { _, new in new } }
 
     // MARK: - Scheme
 
@@ -337,6 +339,30 @@ public final class HydraClient {
         let response = try await send(HttpRequest(method: "GET", url: baseUrl + "/api/hydra-info", headers: clientHeaders, timeout: Contract.linkProbeTimeout))
         guard response.status == 200 else { throw ApiError(status: response.status) }
         return Int(Date().timeIntervalSince(started) * 1000)
+    }
+
+    // MARK: - The record of the server and push
+
+    public func faults(limit: Int) async throws -> [String: Any] {
+        try await authed(method: "GET", path: "/api/faults?limit=\(min(200, max(1, limit)))", timeout: 5)
+    }
+
+    public func nodeHealth(slot: Int) async throws -> [String: Any] {
+        try await authed(method: "GET", path: "/api/ecosystem/node-health?slot=\(slot)", timeout: 5)
+    }
+
+    public func registerPush(_ token: String, locale: String) async throws {
+        _ = try await authed(method: "POST", path: "/api/push/devices", body: HydraClient.json(["token": token, "platform": "ios", "locale": locale]), timeout: 10)
+    }
+
+    /// With the session given: the one of a sign-out, which the client no longer holds when this leaves.
+    public func removePush(_ token: String, bearer: String) async throws {
+        var allowed = CharacterSet.alphanumerics
+        allowed.insert(charactersIn: "-._~:")
+        var headers = clientHeaders
+        headers["Authorization"] = "Bearer \(bearer)"
+        let path = "/api/push/devices/" + (token.addingPercentEncoding(withAllowedCharacters: allowed) ?? "")
+        _ = try HydraClient.expectObject(await send(HttpRequest(method: "DELETE", url: baseUrl + path, headers: headers, timeout: 5)))
     }
 
     // MARK: - State and commands

@@ -47,6 +47,21 @@ public final class HydraController {
     private let discoveryTransport: HttpTransport
     let prefs: PrefsStore
     private let secrets: SecretStore
+    let push: PushPlatform
+    /// What the phone saw and received, the newest first. Kept between runs.
+    public internal(set) var notices: [Notice] = [] {
+        didSet {
+            if notices != oldValue {
+                prefs.set(Notices.encode(notices), PrefKey.notices)
+                changed()
+            }
+        }
+    }
+    var alertRules = AlertRules()
+    public internal(set) var serverReading: ServerReading? { didSet { changed() } }
+    public internal(set) var readingServer = false { didSet { changed() } }
+    public internal(set) var pushEnabled = false { didSet { changed() } }
+    public internal(set) var pushState = PushState.off { didSet { changed() } }
     /// One session per server, by `ServerAddress.key`.
     private var stores: [String: SessionStore] = [:]
     private let auth: DeviceAuth
@@ -103,20 +118,21 @@ public final class HydraController {
     private let socket: LiveSocket
     private let cache: StateCache
     private let schedule: Scheduler
-    private let now: () -> Date
+    let now: () -> Date
     private var cancelSave: (() -> Void)?
     private var cancelMetrics: (() -> Void)?
-    private var budget = RenewalBudget()
+    var budget = RenewalBudget()
     private var renewingSocket = false
     /// The renewal on its way and the client it belongs to: its token never goes to another one.
     private var renewal: (client: HydraClient, task: Task<String?, Never>)?
     /// Rises with every sign-in and sign-out: an answer of an earlier session is dropped.
     private var generation = 0
     /// The app is in the background: no socket is opened until it comes back.
-    private var paused = false
+    private(set) var paused = false
 
     public init(transport: HttpTransport, discoveryTransport: HttpTransport, secrets: SecretStore, prefs: PrefsStore, auth: DeviceAuth, appVersion: String,
-                sockets: LiveSocketTransport, cache: CacheStore, schedule: @escaping Scheduler = standardScheduler, now: @escaping () -> Date = Date.init) {
+                sockets: LiveSocketTransport, cache: CacheStore, schedule: @escaping Scheduler = standardScheduler, now: @escaping () -> Date = Date.init, push: PushPlatform = NoPush()) {
+        self.push = push
         self.socket = LiveSocket(transport: sockets, schedule: schedule)
         self.cache = StateCache(store: cache)
         self.schedule = schedule
@@ -130,6 +146,8 @@ public final class HydraController {
         socket.onStatus = { [weak self] status in self?.linkChanged(status) }
         socket.onMessage = { [weak self] message in self?.received(message) }
         socket.onAuthRejected = { [weak self] in self?.socketRefused() }
+        // read at once: a message received before start() must not write over them
+        notices = Notices.decode(prefs.string(PrefKey.notices) ?? "[]")
     }
 
     func changed() { onChange?() }
@@ -202,6 +220,7 @@ public final class HydraController {
         biometricEnabled = prefs.bool(PrefKey.biometric)
         chosenLanguage = prefs.string(PrefKey.language)
         savedServers = prefs.codable([SavedServer].self, PrefKey.savedServers) ?? []
+        pushEnabled = prefs.bool(PrefKey.push)
         server = prefs.codable(SavedServer.self, PrefKey.server)
         guard let server, let token = sessions(server.address).token else {
             screen = prefs.bool(PrefKey.firstRunDone) || server != nil ? .login : .welcome
@@ -263,6 +282,8 @@ public final class HydraController {
         stateTime = nil
         showingSavedData = false
         metrics = nil
+        serverReading = nil
+        pushState = .off
         stopResult = nil
         stopUnconfirmed = false
         secondFactor = .none
@@ -293,6 +314,7 @@ public final class HydraController {
 
     /// Forgets the session of a server and the copy of its state.
     private func discard(_ address: ServerAddress) {
+        forgetPush(address.key, client: nil)
         let kept = sessions(address)
         if let user = kept.username { cache.clear(scope: StateCache.scope(address: address, username: user)) }
         kept.clear()
@@ -324,7 +346,9 @@ public final class HydraController {
 
     private func enterMain() async {
         screen = .main
+        alertRules = AlertRules()
         showSavedState()
+        if pushEnabled { Task { await self.syncPush() } }
         await connect()
     }
 
@@ -395,7 +419,9 @@ public final class HydraController {
     }
 
     private func live(_ state: CellState) {
+        let before = showingSavedData ? [] : robots
         cell = state
+        noticeFinishedJobs(before: before, after: robots)
         stateTime = now()
         showingSavedData = false
         scheduleSave()
@@ -540,6 +566,8 @@ public final class HydraController {
 
     private func dropSession(_ reason: Message? = nil) {
         if let address = client?.address {
+            // while the client still has its token
+            forgetPush(address.key, client: client)
             sessions(address).clear()
             cache.clear()   // the copy belongs to that session
         }
@@ -548,7 +576,7 @@ public final class HydraController {
         screen = .login
     }
 
-    private func renew(_ of: HydraClient) async -> String? {
+    func renew(_ of: HydraClient) async -> String? {
         if let renewal, renewal.client === of { return await renewal.task.value }
         let task = Task { [weak self] () -> String? in
             guard let self, of === self.client else { return nil }
@@ -594,7 +622,11 @@ public final class HydraController {
         // the global STOP ends any held jog first: its own stop goes out before and together with this one
         control.interrupt()
         stopsInFlight += 1
-        defer { stopsInFlight -= 1 }
+        noticesTick()
+        defer {
+            stopsInFlight -= 1
+            noticesTick()
+        }
         let outcome = await GlobalStop.run(client: client, roster: roster, sequence: sequence)
         guard mine == generation else { return }
         switch outcome {
