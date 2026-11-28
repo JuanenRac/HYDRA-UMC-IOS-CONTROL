@@ -42,7 +42,7 @@ struct AlertsView: View {
             .accessibilityIdentifier("alerts-settings")
         }
         .sheet(isPresented: $settingsOpen) {
-            SheetFrame(model.tr("noticesSettingsLink")) { NotificationSettings() }
+            SheetFrame(model.tr("navAlerts")) { NotificationSettings() }
         }
     }
 
