@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **The remembered language is kept by the shared keeper of the SDK:** the app takes HYDRA-UMC-SDK v0.7.7 and drops its own copy of the language preferences; the saved choice and its key are the same.
+
 - **The README describes how the app reaches the server:** HTTPS by default, plain HTTP only where the Security settings allow it, and an optional pinned certificate; it still said there was none of this.
 - **The SwiftUI app has Cameras, Alerts, the 3D view and push notifications:** the live picture of the camera of each robot with its switch (downloaded only while the page is in front, opened again after a cut, a refusal or 30 s of silence, with the session in a header and the certificate rules of the rest of the app); a list of notices kept on the phone (connection lost and back, robot offline or in safe mode, STOP confirmed or not, job finished, messages of the server) with filters and a count, and the fault record and board health of the server read on request; the 3D view of the server from Control and More, with the round STOP under it and nothing kept after it closes; and push through Firebase, off until switched on, told only to a signed-in server and taken back on sign-out. The push needs the Firebase configuration and a paid Apple Developer key that the project does not have, so no notification has been received. Tested with a pretend server on an iPhone simulator; not on a real iPhone, server, camera or robot.
 

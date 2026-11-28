@@ -17,7 +17,8 @@ import 'package:flutter/foundation.dart';
 
 import '../kinematics/parol6_kinematics.dart';
 import '../app_version.dart';
-import '../l10n/language_prefs.dart';
+import 'package:hydra_umc_app_common/hydra_umc_app_common.dart' show LanguagePrefsCore;
+import '../network/shared_preferences_store.dart';
 import '../models/access.dart';
 import '../models/assistant_reply.dart';
 import '../models/can_ota_progress.dart';
@@ -124,7 +125,14 @@ class RobotViewModel extends ChangeNotifier {
 
   final AuthPrefs _authPrefs;
   final BiometricHelper _biometricHelper = BiometricHelper();
-  final LanguagePrefs _languagePrefs = LanguagePrefs();
+  final LanguagePrefsCore _languagePrefs = LanguagePrefsCore(SharedPreferencesPrefsStore());
+
+  /// The saved language as one the app ships, or null: MaterialApp then follows the language of the system.
+  Future<Locale?> _savedLocale() async {
+    final code = await _languagePrefs.loadLanguageCode(AppLocalizations.supportedLocales.map((locale) => locale.languageCode));
+    if (code == null) return null;
+    return AppLocalizations.supportedLocales.firstWhere((locale) => locale.languageCode == code);
+  }
   final StateCache _stateCache = StateCache();
   final ClientPrefs _clientPrefs = ClientPrefs();
   final TlsPrefs _tlsPrefs = TlsPrefs();
@@ -289,7 +297,7 @@ class RobotViewModel extends ChangeNotifier {
   AssistantReply? latestAssistantReply;
   bool voiceAssistantBusy = false;
 
-  // Language chosen in Settings (null follows the language of the system); kept by LanguagePrefs and read by MaterialApp.locale.
+  // Language chosen in Settings (null follows the language of the system); kept by LanguagePrefsCore and read by MaterialApp.locale.
   Locale? languageOverride;
 
   // Connection and command events for ui/telemetry_screen.dart: newest first, at most 50, in memory only (never persisted).
@@ -318,7 +326,7 @@ class RobotViewModel extends ChangeNotifier {
 
   Future<void> setLanguage(String? languageCode) async {
     await _languagePrefs.saveLanguage(languageCode);
-    languageOverride = await _languagePrefs.loadLocale();
+    languageOverride = await _savedLocale();
     notifyListeners();
   }
 
@@ -336,7 +344,7 @@ class RobotViewModel extends ChangeNotifier {
   /// left in the iOS Keychain (see AuthPrefs.purgeStaleKeychainOnFirstRun).
   Future<void> init({bool purgeStaleKeychain = false}) async {
     if (purgeStaleKeychain) await _authPrefs.purgeStaleKeychainOnFirstRun();
-    languageOverride = await _languagePrefs.loadLocale();
+    languageOverride = await _savedLocale();
     _listenToShortcuts();
     // The saved last-known state is shown at once; the live fetch of connect() replaces it (network/state_cache.dart).
     tlsSettings = await _tlsPrefs.load();
