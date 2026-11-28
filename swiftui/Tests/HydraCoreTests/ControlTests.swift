@@ -17,6 +17,8 @@ final class CellServer: @unchecked Sendable {
     var claimBody = #"{"success":true}"#
     var claims = "[]"
     var armRequired = false
+    /// Until when the jog is armed, as the server says it after `jog-arm`.
+    var armedUntil: Int64 = 0
     var maxAmount = 100.0
     var stopAllStatus = 200
     var work = #"[{"x":1,"y":2,"z":3}]"#
@@ -43,10 +45,13 @@ final class CellServer: @unchecked Sendable {
         case "/api/stop-all": return reply(stopAllStatus, stoppedJson)
         case "/api/claims": return reply(200, #"{"claims":\#(claims)}"#)
         case "/api/safety-limits":
-            return reply(200, #"{"limits":{"jog":{"armRequired":\#(armRequired),"armTtlMs":60000}},"robot":{"id":1,"jog":{"maxAmount":\#(maxAmount),"maxAbsolute":500}}}"#)
+            return reply(200, #"{"limits":{"jog":{"armRequired":\#(armRequired),"armTtlMs":60000}},"robot":{"id":1,"jog":{"maxAmount":\#(maxAmount),"maxAbsolute":500},"jogArmedUntil":\#(armedUntil)}}"#)
         case "/api/robot/1": return reply(200, #"{"robot":{"id":1,"name":"A1","online":true,"hasXYTable":true},"revision":"r9"}"#)
         case "/api/robot/1/claim", "/api/robot/1/release": return reply(claimStatus, claimBody)
-        case "/api/robot/1/jog-arm": return reply(200, #"{"success":true,"ttlMs":60000}"#)
+        case "/api/robot/1/jog-arm":
+            let armed = (request.body.flatMap { HydraClient.object($0) })?["armed"] as? Bool == true
+            armedUntil = armed ? Int64(Date().timeIntervalSince1970 * 1000) + 60_000 : 0
+            return reply(200, #"{"success":true,"ttlMs":60000}"#)
         case "/api/robot/1/command":
             let name = (request.body.flatMap { HydraClient.object($0) })?["command"] as? String ?? ""
             if silent.contains(name) { throw TransportError.unreachable }

@@ -76,8 +76,10 @@ final class StopUITests: XCTestCase {
         app.tabBars.buttons["Control"].tap()
         XCTAssertTrue(app.buttons["control-play"].waitForExistence(timeout: 10))
         XCTAssertTrue(app.buttons["control-play"].isEnabled)
+        XCTAssertTrue(app.buttons["jog-Z+"].isEnabled)
         shot("10_control")
         app.swipeUp()
+        XCTAssertEqual(app.staticTexts.matching(NSPredicate(format: "label CONTAINS '{'")).count, 0, "a text was not filled in")
         shot("11_control_jog")
         pressAndRead(app, "on the Control page")
         closeResult(app)
@@ -88,6 +90,7 @@ final class StopUITests: XCTestCase {
         app.tabBars.buttons["Control"].tap()
         XCTAssertTrue(app.buttons["control-play"].waitForExistence(timeout: 10))
         XCTAssertFalse(app.buttons["control-play"].isEnabled, "listen only dims PLAY")
+        XCTAssertFalse(app.buttons["jog-Z+"].isEnabled, "listen only dims the jog pad")
         shot("12_control_listen_only")
         pressAndRead(app, "with listen only on")
     }

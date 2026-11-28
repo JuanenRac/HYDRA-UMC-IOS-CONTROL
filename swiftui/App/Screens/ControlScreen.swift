@@ -135,7 +135,7 @@ struct ControlView: View {
                     Text(String(format: "XY  %.1f   %.1f", robot.xyX, robot.xyY)).font(.system(size: 14, design: .monospaced)).foregroundColor(Theme.muted)
                 }
                 if !robot.online { Text(model.tr("robotOffline")).font(.system(size: 12)).foregroundColor(Theme.amber) }
-                if !robot.enabled { Text(model.tr("robotSafeMode")).font(.system(size: 12)).foregroundColor(Theme.amber) }
+                if !robot.enabled { Text(model.tr("robotSafeMode", ["name": robot.name])).font(.system(size: 12)).foregroundColor(Theme.amber) }
             }
         }
     }
@@ -331,9 +331,10 @@ struct ControlView: View {
                     HStack(spacing: 10) {
                         ForEach([-1, 1], id: \.self) { direction in
                             let title = axis.uppercased() + (direction > 0 ? " +" : " -")
-                            HoldButton(title: title, label: title, enabled: robot.online && robot.enabled,
+                            HoldButton(title: title, label: title,
                                        onDown: { control.press(id, target: jogTarget, axis: axis, direction: direction) },
                                        onUp: { _ in control.release(id) })
+                                .disabled(!(robot.online && robot.enabled))
                                 .frame(height: 52)
                                 .accessibilityIdentifier("hold-\(axis)\(direction > 0 ? "plus" : "minus")")
                         }
@@ -387,11 +388,11 @@ private struct SpeedPanel: View {
     var body: some View {
         Panel {
             VStack(alignment: .leading, spacing: 6) {
-                Text(model.tr("robotSpeed", ["speed": String(Int(speed ?? robot.speed))])).font(.system(size: 13))
+                Text(model.tr("robotSpeed", ["value": String(Int(speed ?? robot.speed))])).font(.system(size: 13))
                 Slider(value: Binding(get: { limited(speed ?? robot.speed) }, set: { speed = $0 }), in: Contract.speedMin...Contract.speedMax) { editing in
                     if !editing { send() }
                 }
-                Text(model.tr("robotAccel", ["accel": String(Int(acceleration ?? robot.acceleration))])).font(.system(size: 13))
+                Text(model.tr("robotAccel", ["value": String(Int(acceleration ?? robot.acceleration))])).font(.system(size: 13))
                 Slider(value: Binding(get: { limited(acceleration ?? robot.acceleration) }, set: { acceleration = $0 }), in: Contract.speedMin...Contract.speedMax) { editing in
                     if !editing { send() }
                 }
@@ -487,7 +488,7 @@ private final class TouchControl: UIControl {
     required init?(coder: NSCoder) { fatalError("not used") }
 
     private func paint() {
-        backgroundColor = down ? UIColor(red: 0.05, green: 0.65, blue: 0.91, alpha: 1) : UIColor(red: 0.11, green: 0.16, blue: 0.23, alpha: 1)
+        backgroundColor = down ? UIColor(red: 0.05, green: 0.65, blue: 0.91, alpha: 1) : UIColor(red: 0.20, green: 0.28, blue: 0.42, alpha: 1)
         alpha = isEnabled ? 1 : 0.4
         accessibilityTraits = isEnabled ? .button : [.button, .notEnabled]
     }
@@ -538,7 +539,6 @@ private final class TouchControl: UIControl {
 private struct HoldButton: UIViewRepresentable {
     let title: String
     let label: String
-    let enabled: Bool
     let onDown: () -> Void
     let onUp: (Bool) -> Void
     var onActivate: (() -> Void)?
@@ -551,7 +551,8 @@ private struct HoldButton: UIViewRepresentable {
         view.onDown = onDown
         view.onUp = onUp
         view.onActivate = onActivate
-        view.isEnabled = enabled
+        // set with `.disabled` where the button is used: SwiftUI writes `isEnabled` of a wrapped control itself
+        view.isEnabled = context.environment.isEnabled
     }
 
     static func dismantleUIView(_ view: TouchControl, coordinator: ()) { view.isEnabled = false }
@@ -594,10 +595,11 @@ private struct RepeatButton: View {
     @StateObject private var repeater = Repeater()
 
     var body: some View {
-        HoldButton(title: title, label: label, enabled: enabled,
+        HoldButton(title: title, label: label,
                    onDown: { repeater.begin(tick) },
                    onUp: { repeater.end(inside: $0, tick) },
                    onActivate: tick)
+            .disabled(!enabled)
             .accessibilityIdentifier("jog-" + title)
     }
 }
