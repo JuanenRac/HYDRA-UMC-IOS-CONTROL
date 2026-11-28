@@ -115,7 +115,7 @@ public extension HydraController {
         }
         guard client === self.client else { return }
         serverReading = result
-        if sessionEnded { sessionEnded_() }
+        if sessionEnded { self.sessionEnded() }
     }
 
     // MARK: - Cameras and 3D
