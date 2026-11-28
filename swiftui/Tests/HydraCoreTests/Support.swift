@@ -172,7 +172,7 @@ struct Rig {
     let controller: HydraController
 
     init(_ answer: @escaping @Sendable (HttpRequest) async throws -> HttpResponse = healthy, secrets: MemorySecrets = MemorySecrets(), prefs: MemoryPrefs = MemoryPrefs(), auth: FakeAuth = FakeAuth(),
-         cache: MemoryCache = MemoryCache(), opens: Bool = true) {
+         cache: MemoryCache = MemoryCache(), opens: Bool = true, push: PushPlatform? = nil) {
         let transport = FakeTransport(answer)
         self.transport = transport
         self.secrets = secrets
@@ -186,7 +186,7 @@ struct Rig {
         self.timers = timers
         self.clock = clock
         controller = HydraController(transport: transport, discoveryTransport: transport, secrets: secrets, prefs: prefs, auth: auth, appVersion: "0.0.1",
-                                     sockets: sockets, cache: cache, schedule: { timers.add($0, $1) }, now: { clock.time })
+                                     sockets: sockets, cache: cache, schedule: { timers.add($0, $1) }, now: { clock.time }, push: push ?? NoPush())
     }
 
     func signIn() async {

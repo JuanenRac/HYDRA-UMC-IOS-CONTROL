@@ -37,12 +37,12 @@ struct HomeView: View {
             if let progress = controller.canOta { CanOtaCard(progress: progress) }
             if !robots.isEmpty {
                 let online = robots.filter(\.online).count
-                let moving = robots.filter(\.isMoving).count
+                let unseen = controller.unseenNotices
                 HStack(spacing: 10) {
                     StatTile(symbol: "gearshape.2", value: "\(online)/\(robots.count)", label: model.tr("homeRobotsOnline"),
                              tint: online < robots.count ? Theme.amber : Theme.ok) { model.selectedTab = .control }
-                    StatTile(symbol: "play.circle", value: String(moving), label: model.tr("homeRobotsMoving"),
-                             tint: moving > 0 ? Theme.amber : Theme.accent) { model.selectedTab = .control }
+                    StatTile(symbol: "bell", value: String(unseen), label: model.tr("homeAlerts"),
+                             tint: unseen > 0 ? Theme.amber : Theme.accent) { model.selectedTab = .alerts }
                 }
             }
             if controller.link == .connected { NextSteps() }
