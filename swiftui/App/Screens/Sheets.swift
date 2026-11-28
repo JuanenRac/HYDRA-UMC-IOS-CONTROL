@@ -3,6 +3,7 @@
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D). GPL-3.0-or-later.
 import SwiftUI
 import AVFoundation
+import UIKit
 import HydraCore
 
 struct SheetFrame<Content: View>: View {
@@ -226,17 +227,63 @@ struct SecuritySheet: View {
     }
 }
 
+/// The help by topic and by level, with a search. Opened from a page it starts on the topic of that page.
 struct HelpSheet: View {
     @EnvironmentObject var model: AppModel
+    @Environment(\.dismiss) private var dismiss
+    @State private var topic: HelpTopic?
+    @State private var query = ""
+
+    init(start: HelpTopic? = nil) { _topic = State(initialValue: start) }
+
+    private var controller: HydraController { model.controller }
 
     var body: some View {
         SheetFrame(model.tr("helpTitle")) {
-            Panel { Text(model.tr("helpText")).font(.system(size: 14)) }
-            Panel(tint: Theme.alert) {
-                Text(model.tr("firstRunStopTitle")).font(.system(size: 14, weight: .semibold))
-                Text(model.tr("firstRunStopText")).font(.system(size: 12)).foregroundColor(Theme.muted)
+            Picker(model.tr("helpTitle"), selection: Binding(get: { controller.helpLevel }, set: { controller.helpLevel = $0 })) {
+                ForEach(HelpLevel.allCases) { Text(model.tr($0.labelKey)).tag($0) }
+            }
+            .pickerStyle(.segmented)
+            TextField(model.tr("helpSearch"), text: $query)
+                .autocorrectionDisabled()
+                .hydraField()
+                .accessibilityIdentifier("help-search")
+            if let shown = topic, query.isEmpty {
+                page(shown)
+            } else {
+                let found = HelpTopic.search(query) { model.tr($0) }
+                if found.isEmpty { Text(model.tr("helpNothing")).font(.system(size: 13)).foregroundColor(Theme.muted) }
+                ForEach(found) { entry in
+                    MenuRow(symbol: entry.symbol, title: model.tr(entry.titleKey)) {
+                        topic = entry
+                        query = ""
+                    }
+                    .accessibilityIdentifier("help-topic-\(entry.rawValue)")
+                }
             }
         }
+    }
+
+    @ViewBuilder
+    private func page(_ shown: HelpTopic) -> some View {
+        ScreenTitle(symbol: shown.symbol, title: model.tr(shown.titleKey))
+        ForEach(controller.helpLevel.shown) { level in
+            Panel { Text(model.tr(shown.textKey(level))).font(.system(size: 14)) }
+        }
+        if shown != .safety {
+            Panel(tint: Theme.alert) {
+                Text(model.tr("helpSafetyTitle")).font(.system(size: 14, weight: .semibold))
+                Text(model.tr(HelpTopic.safety.textKey(.basic))).font(.system(size: 12)).foregroundColor(Theme.muted)
+            }
+        }
+        if let tab = MainTab.allCases.first(where: { HelpTopic.of($0) == shown && $0 != .more }), controller.signedIn {
+            MenuRow(symbol: "arrow.right", title: model.tr("helpOpenScreen")) {
+                model.selectedTab = tab
+                dismiss()
+            }
+        }
+        MenuRow(symbol: "square.grid.2x2", title: model.tr("helpAllTopics")) { topic = nil }
+            .accessibilityIdentifier("help-all")
     }
 }
 
@@ -252,8 +299,16 @@ struct AboutSheet: View {
                 Text("JuanenRac (Electro Hobby 3D) · GPL-3.0-or-later").font(.system(size: 12)).foregroundColor(Theme.muted)
             }
             .frame(maxWidth: .infinity)
+            Text(model.tr("aboutTagline")).font(.system(size: 13))
             Panel(tint: Theme.amber) { Text(model.tr("aboutPreview")).font(.system(size: 13)) }
             Panel(tint: Theme.alert) { Text(model.tr("stopPhysical")).font(.system(size: 13)) }
+            Panel {
+                ShareLink(item: model.controller.diagnostic(appVersion: AppModel.version, system: "\(UIDevice.current.systemName) \(UIDevice.current.systemVersion), \(UIDevice.current.model)")) {
+                    Label(model.tr("aboutShare"), systemImage: "square.and.arrow.up").font(.system(size: 14, weight: .semibold))
+                }
+                .accessibilityIdentifier("about-share")
+                Text(model.tr("aboutShareHint")).font(.system(size: 12)).foregroundColor(Theme.muted)
+            }
         }
     }
 }

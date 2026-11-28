@@ -212,6 +212,25 @@ final class StopUITests: XCTestCase {
         XCTAssertTrue(gone(app.buttons["viewer-close"]), "the viewer does not close")
     }
 
+    func testHelpOfThePageAndItsSearch() {
+        let app = launch("main")
+        XCTAssertTrue(topStop(app).waitForExistence(timeout: 20))
+        app.tabBars.buttons["Cameras"].tap()
+        app.buttons["header-help"].tap()
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS 'Choose a camera'")).firstMatch.waitForExistence(timeout: 10))
+        shot("25_help_cameras")
+        pressAndRead(app, "over the help")
+        closeResult(app)
+        app.buttons["help-all"].tap()
+        XCTAssertTrue(app.buttons["help-topic-safety"].waitForExistence(timeout: 5))
+        let search = app.textFields["help-search"]
+        search.tap()
+        search.typeText("mDNS")
+        XCTAssertTrue(app.buttons["help-topic-start"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["help-topic-cameras"].exists)
+        shot("26_help_search")
+    }
+
     /// Without a server the saved state is shown and said to be saved, and the STOP stays.
     func testOfflineShowsTheSavedStateAndSaysSo() {
         let app = launch("main", extra: ["-hydraDemoOffline"])
