@@ -126,7 +126,7 @@ This app targets iOS/iPadOS, but it is built in **Flutter** rather than Swift/Sw
 | Someone holding the unlocked phone | An optional biometric lock (Face ID, Touch ID) gates restoring a saved session on launch; the camera picture is closed while the app is in the background | `network/biometric_helper.dart`, `ui/biometric_gate_screen.dart` |
 | A robot moved by two people, a PLAY pressed by mistake, or a stop that does not arrive | The robot is reserved before it is jogged and the screen says who holds it; PLAY asks first by default and shows the robot, its points, the speed and who has it reserved; the global STOP is retried once, falls back to one stop per robot, and keeps a persistent "STOP not confirmed" banner if nothing answered | `models/access.dart`, `util/play_confirmation.dart`, `ui/widgets/stop_all.dart` |
 
-**What it never does:** replace a physical emergency stop, or encrypt the traffic by itself: the app tries HTTPS once when a plain HTTP probe gets no answer, and it has no certificate pinning and no guard against plain traffic outside the local network. The STOP is the server's software stop.
+**What it never does:** replace a physical emergency stop. By default it talks only HTTPS to a server outside the phone: plain HTTP is off unless the Security settings allow it (a server outside the local network needs a second switch), and a certificate can optionally be pinned. The STOP is the server's software stop.
 
 ## 🔌 Interfaces
 
