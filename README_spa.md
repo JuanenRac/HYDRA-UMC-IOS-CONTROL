@@ -126,7 +126,7 @@ Esta app tiene como objetivo iOS/iPadOS, pero está construida en **Flutter** en
 | Alguien con el teléfono desbloqueado | Un bloqueo biométrico opcional (Face ID, Touch ID) controla la restauración de una sesión guardada al arrancar; la imagen de la cámara se cierra mientras la aplicación está en segundo plano | `network/biometric_helper.dart`, `ui/biometric_gate_screen.dart` |
 | Un robot movido por dos personas, un PLAY pulsado por error o un paro que no llega | El robot se reserva antes de moverlo y la pantalla dice quién lo tiene; PLAY pregunta primero por defecto y muestra el robot, sus puntos, la velocidad y quién lo tiene reservado; el paro global se reintenta una vez, recurre a un paro por robot y mantiene un aviso persistente «PARO sin confirmar» si nadie respondió | `models/access.dart`, `util/play_confirmation.dart`, `ui/widgets/stop_all.dart` |
 
-**Lo que nunca hace:** sustituir una parada de emergencia física, ni cifrar el tráfico por sí sola: la aplicación prueba HTTPS una vez cuando una sonda HTTP sin cifrar no obtiene respuesta, y no tiene fijado de certificados ni protección contra tráfico sin cifrar fuera de la red local. El PARO es el paro por software del servidor.
+**Lo que nunca hace:** sustituir una parada de emergencia física. Por defecto solo habla HTTPS con un servidor fuera del teléfono: HTTP sin cifrar está apagado salvo que los ajustes de Seguridad lo permitan (un servidor fuera de la red local necesita un segundo interruptor), y opcionalmente se puede fijar un certificado. El PARO es el paro por software del servidor.
 
 ## 🔌 Interfaces
 

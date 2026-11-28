@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **The README describes how the app reaches the server:** HTTPS by default, plain HTTP only where the Security settings allow it, and an optional pinned certificate; it still said there was none of this.
+
 - **Listen only no longer holds back the stop of a held jog:** switching it on while a jog was held made the app refuse its own `jogStop` and report a stop that was not confirmed. The `jogStop` now always leaves; a new jog and its heartbeats are still refused.
 
 - **The SwiftUI app has the Control page:** PLAY (asked first), pause, stop and safe mode of a robot, its reservation, take-over and jog arming, the jog by steps (with the Parol6 kinematics and the XY table), the continuous jog held by a dead-man with the link indicator, HOME/RESET in two steps, speed, valves, pumps and works. The rules are those of the published app, with the same cases tested; listen only and the block on saved data also hold the held jog, nothing starts when the button is let go or a STOP is pressed before the start left, and a step button sends nothing when the touch turns into a scroll. Tested with a scripted server and with the pretend server of the family over real sockets (its live link added in `swiftui/bench/`); not on a real iPhone, a real server or a robot.
