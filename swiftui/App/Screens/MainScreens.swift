@@ -1,4 +1,4 @@
-// HYDRA-UMC-IOS-CONTROL - the app in use: the header (with the place of the STOP), the bottom bar and the pages. Control, Cameras and Alerts are still skeletons.
+// HYDRA-UMC-IOS-CONTROL - the app in use: the header (with the place of the STOP), the bottom bar and the pages. Control is in ControlScreen.swift; Cameras and Alerts are still skeletons.
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D). GPL-3.0-or-later.
 import SwiftUI
 import HydraCore
@@ -113,27 +113,6 @@ struct RobotList: View {
     }
 }
 
-struct ControlView: View {
-    @EnvironmentObject var model: AppModel
-
-    var body: some View {
-        VStack(spacing: 0) {
-            Page {
-                ScreenTitle(symbol: MainTab.control.symbol, title: model.tr("navControl"), subtitle: model.controller.server?.name)
-                Panel(tint: Theme.amber) { Text(model.tr("notYet")).font(.system(size: 13)) }
-                RobotList()
-            }
-            HStack {
-                RoundStopButton(model: model)
-                Spacer()
-                Text(model.tr("stopPhysical")).font(.system(size: 12)).foregroundColor(Theme.muted)
-            }
-            .padding(14)
-            .background(Theme.surface)
-        }
-    }
-}
-
 struct PendingView: View {
     @EnvironmentObject var model: AppModel
     let tab: MainTab
@@ -142,6 +121,49 @@ struct PendingView: View {
         Page {
             ScreenTitle(symbol: tab.symbol, title: model.tr(tab.titleKey))
             Panel(tint: Theme.amber) { Text(model.tr("notYet")).font(.system(size: 13)) }
+        }
+    }
+}
+
+/// The switches of control. Every one that lets something move starts off.
+struct ControlSettings: View {
+    @EnvironmentObject var model: AppModel
+
+    private var control: RobotControl { model.controller.control }
+
+    private func toggle(_ title: String, _ hint: String, _ value: Bool, _ set: @escaping (Bool) -> Void) -> some View {
+        Toggle(isOn: Binding(get: { value }, set: set)) {
+            VStack(alignment: .leading) {
+                Text(model.tr(title)).font(.system(size: 14, weight: .semibold))
+                Text(model.tr(hint)).font(.system(size: 12)).foregroundColor(Theme.muted)
+            }
+        }
+    }
+
+    var body: some View {
+        Panel {
+            VStack(alignment: .leading, spacing: 10) {
+                Text(model.tr("navControl")).font(.system(size: 15, weight: .bold))
+                toggle("settingsListenOnly", "settingsListenOnlySubtitle", control.listenOnlyGeneral) { control.setListenOnly($0) }
+                    .accessibilityIdentifier("switch-listen-only")
+                toggle("settingsListenOnlyServer", "settingsListenOnlyServerSubtitle", control.listenOnlyThisServer) { control.setListenOnlyThisServer($0) }
+                toggle("settingsBlockCachedCommands", "settingsBlockCachedCommandsSubtitle", control.blockOnSavedData) { control.setBlockOnSavedData($0) }
+                toggle("settingsConfirmPlay", "settingsConfirmPlaySubtitle", control.confirmPlay) { control.setConfirmPlay($0) }
+                toggle("homeResetSwitchLabel", "homeResetSwitchHint", control.homeResetEnabled) { control.setHomeResetEnabled($0) }
+                    .accessibilityIdentifier("switch-home-reset")
+                toggle("deadManSwitchLabel", "deadManSwitchHint", control.deadManEnabled) { control.setDeadManEnabled($0) }
+                    .accessibilityIdentifier("switch-dead-man")
+                toggle("linkBlockSwitchLabel", "linkBlockSwitchHint", control.blockOnBadLink) { control.setBlockOnBadLink($0) }
+                toggle("linkIndicatorSwitchLabel", "linkIndicatorSwitchHint", control.linkIndicator) { control.setLinkIndicator($0) }
+                Text(model.tr("accessConditionalLabel")).font(.system(size: 14, weight: .semibold))
+                Picker(model.tr("accessConditionalLabel"), selection: Binding(get: { control.conditionalMode }, set: { control.setConditionalMode($0) })) {
+                    Text(model.tr("commonOff")).tag(ConditionalMode.off)
+                    Text(model.tr("commonStandard")).tag(ConditionalMode.standard)
+                    Text(model.tr("accessConditionalStrict")).tag(ConditionalMode.strict)
+                }
+                .pickerStyle(.segmented)
+                Text(model.tr("accessConditionalHint")).font(.system(size: 12)).foregroundColor(Theme.muted)
+            }
         }
     }
 }
@@ -177,6 +199,7 @@ struct MoreView: View {
                 }
                 if let message = model.controller.message { Text(model.text(message)).font(.system(size: 13)).foregroundColor(Theme.alert) }
             }
+            ControlSettings()
             Panel {
                 Picker(model.tr("commonLanguage"), selection: Binding(get: { model.controller.chosenLanguage ?? "" }, set: { model.controller.setLanguage($0.isEmpty ? nil : $0) })) {
                     Text(model.tr("languageSystem")).tag("")

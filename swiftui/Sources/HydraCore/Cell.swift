@@ -113,6 +113,31 @@ public struct CellState {
         return false
     }
 
+    /// The raw data of the first robot with that id, and the id of its controller.
+    public func robot(_ robotId: Int) -> (controllerId: String?, raw: [String: Any])? {
+        for controller in controllers {
+            for case let robot as [String: Any] in controller["robots"] as? [Any] ?? [] where robot["id"] as? Int == robotId {
+                return (controller["id"] as? String, robot)
+            }
+        }
+        return nil
+    }
+
+    /// Puts the raw data of that robot back.
+    public mutating func setRobot(_ robotId: Int, _ value: [String: Any]) {
+        var list = raw["controllers"] as? [Any] ?? []
+        for (index, entry) in list.enumerated() {
+            guard var controller = entry as? [String: Any] else { continue }
+            var robots = controller["robots"] as? [Any] ?? []
+            guard let at = robots.firstIndex(where: { ($0 as? [String: Any])?["id"] as? Int == robotId }) else { continue }
+            robots[at] = value
+            controller["robots"] = robots
+            list[index] = controller
+            raw["controllers"] = list
+            return
+        }
+    }
+
     /// Shows a robot the server said it stopped as stopped, until the state of the server arrives.
     public mutating func markStopped(controllerId: String?, robotId: Int) {
         var list = raw["controllers"] as? [Any] ?? []

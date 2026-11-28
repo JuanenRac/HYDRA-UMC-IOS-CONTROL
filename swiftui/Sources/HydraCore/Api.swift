@@ -48,12 +48,20 @@ public struct ApiError: Error, Equatable {
     public var status: Int
     public var code: String?
     public var message: String?
+    /// The revision the server is at, when a refusal says it.
+    public var revision: String?
 
-    public init(status: Int, code: String? = nil, message: String? = nil) {
+    public init(status: Int, code: String? = nil, message: String? = nil, revision: String? = nil) {
         self.status = status
         self.code = code
         self.message = message
+        self.revision = revision
     }
+
+    public var isRevisionMismatch: Bool { status == 412 || code == "revision-mismatch" }
+    public var isJogNotArmed: Bool { status == 403 && code == "jog-not-armed" }
+    /// An older server that does not know a command.
+    public var isUnknownCommand: Bool { status == 400 && code == nil && (message ?? "").lowercased().contains("unknown command") }
 
     public var isSessionProblem: Bool { status == 401 || (status == 403 && (code == "TOKEN_EXPIRED" || code == "TOKEN_INVALID")) }
     public var isRateLimited: Bool { status == 429 }
@@ -95,6 +103,8 @@ public final class HydraClient {
     private var tlsSeen: Bool
 
     public var authToken: String?
+    /// While true, nothing is written to the server except what stops.
+    public var listenOnly: () -> Bool = { false }
     /// Renews the session and returns the new token, or nil when it cannot be renewed.
     public var tokenRenewer: (() async -> String?)?
 
@@ -159,6 +169,9 @@ public final class HydraClient {
 
     /// One request with its total time limit.
     private func send(_ request: HttpRequest) async throws -> HttpResponse {
+        if listenOnly(), !ListenOnly.allows(method: request.method, path: URL(string: request.url)?.path ?? "", body: request.body) {
+            throw ApiError(status: 423, code: "listen-only")
+        }
         let transport = self.transport
         return try await withThrowingTaskGroup(of: HttpResponse.self) { group in
             group.addTask { try await transport.send(request) }
@@ -199,7 +212,7 @@ public final class HydraClient {
     nonisolated static func expectObject(_ response: HttpResponse) throws -> [String: Any] {
         let body = object(response.body)
         guard (200..<300).contains(response.status) else {
-            throw ApiError(status: response.status, code: body?["code"] as? String, message: body?["error"] as? String)
+            throw ApiError(status: response.status, code: body?["code"] as? String, message: body?["error"] as? String, revision: revisionOf(body))
         }
         guard let body else { throw ApiError(status: response.status, code: "not-json") }
         return body
@@ -239,6 +252,91 @@ public final class HydraClient {
         var headers = clientHeaders
         headers["Content-Type"] = "application/json"
         _ = try? await send(HttpRequest(method: "POST", url: baseUrl + "/api/logout", headers: headers, body: HydraClient.json(["refreshToken": refreshToken]), timeout: 5))
+    }
+
+    // MARK: - Control
+
+    private var controllerHeaders: [String: String] { ["X-Controller-Id": controllerId] }
+
+    /// A write of control: the controller id in the header and in the body, and the revision when one is given.
+    private func control(_ path: String, _ body: [String: Any], ifMatch: String?, timeout: TimeInterval) async throws -> [String: Any] {
+        var headers = controllerHeaders
+        if let ifMatch { headers["If-Match"] = ifMatch }
+        var full = body
+        full["controllerId"] = controllerId
+        return try await authed(method: "POST", path: path, headers: headers, body: HydraClient.json(full), timeout: timeout)
+    }
+
+    public func robotCommand(_ robotId: Int, _ payload: [String: Any], ifMatch: String?, urgent: Bool) async throws -> [String: Any] {
+        try await control("/api/robot/\(robotId)/command", payload, ifMatch: ifMatch, timeout: urgent ? 2 : 5)
+    }
+
+    public func claims() async throws -> [ClaimInfo] {
+        let json = try await authed(method: "GET", path: "/api/claims", headers: controllerHeaders, timeout: 5)
+        return ClaimInfo.list(json)
+    }
+
+    public func claim(_ robotId: Int, force: Bool = false, ifMatch: String?) async throws -> [String: Any] {
+        try await control("/api/robot/\(robotId)/claim", force ? ["force": true] : [:], ifMatch: ifMatch, timeout: 5)
+    }
+
+    public func release(_ robotId: Int, ifMatch: String?) async throws -> [String: Any] {
+        try await control("/api/robot/\(robotId)/release", [:], ifMatch: ifMatch, timeout: 5)
+    }
+
+    public func jogArm(_ robotId: Int, armed: Bool) async throws -> [String: Any] {
+        try await control("/api/robot/\(robotId)/jog-arm", ["armed": armed], ifMatch: nil, timeout: 5)
+    }
+
+    /// nil on a server without the route.
+    public func safetyLimits(_ robotId: Int) async throws -> RobotSafety? {
+        do {
+            return RobotSafety(json: try await authed(method: "GET", path: "/api/safety-limits?robotId=\(robotId)", timeout: 5))
+        } catch let error as ApiError where error.isNotFound {
+            return nil
+        }
+    }
+
+    /// One robot with the revision to use next; nil when the server has none.
+    public func robot(_ robotId: Int) async throws -> (robot: [String: Any], revision: String?)? {
+        do {
+            let json = try await authed(method: "GET", path: "/api/robot/\(robotId)", timeout: 5)
+            guard let robot = json["robot"] as? [String: Any] else { return nil }
+            return (robot, revisionOf(json))
+        } catch let error as ApiError where error.isNotFound {
+            return nil
+        }
+    }
+
+    /// A file of a work folder of the server, as it is.
+    public func workBody(folder: String, file: String) async throws -> Data {
+        var allowed = CharacterSet.urlPathAllowed
+        allowed.remove(charactersIn: "?#%")
+        let path = "/" + ("\(folder)/\(file)".addingPercentEncoding(withAllowedCharacters: allowed) ?? "")
+        func attempt() async throws -> Data {
+            let headers = clientHeaders.merging(authHeaders) { _, new in new }
+            let response = try await send(HttpRequest(method: "GET", url: baseUrl + path, headers: headers, timeout: 10))
+            guard (200..<300).contains(response.status) else {
+                let body = HydraClient.object(response.body)
+                throw ApiError(status: response.status, code: body?["code"] as? String, message: body?["error"] as? String)
+            }
+            return response.body
+        }
+        do {
+            return try await attempt()
+        } catch let error as ApiError where error.isSessionProblem {
+            guard let renewer = tokenRenewer, let token = await renewer() else { throw error }
+            authToken = token
+            return try await attempt()
+        }
+    }
+
+    /// The round trip of one small request, in milliseconds.
+    public func ping() async throws -> Int {
+        let started = Date()
+        let response = try await send(HttpRequest(method: "GET", url: baseUrl + "/api/hydra-info", headers: clientHeaders, timeout: Contract.linkProbeTimeout))
+        guard response.status == 200 else { throw ApiError(status: response.status) }
+        return Int(Date().timeIntervalSince(started) * 1000)
     }
 
     // MARK: - State and commands

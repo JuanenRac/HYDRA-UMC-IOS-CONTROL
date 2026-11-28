@@ -16,7 +16,14 @@ struct HydraApp: App {
                 .tint(Theme.accent)
                 .task { await model.start() }
                 .onChange(of: scenePhase) { phase in
-                    if phase == .active { model.becameActive() } else if phase == .background { model.enteredBackground() }
+                    if phase == .active {
+                        model.becameActive()
+                    } else if phase == .background {
+                        model.enteredBackground()
+                    } else {
+                        // a call or the control centre over the app: a held jog ends
+                        model.controller.control.interrupt()
+                    }
                 }
         }
     }
