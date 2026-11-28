@@ -63,6 +63,8 @@ struct FirstRunView: View {
                         step("person", model.tr("firstRunAccountTitle"), model.tr("firstRunAccountText"))
                         step("hand.raised.fill", model.tr("firstRunStopTitle"), model.tr("firstRunStopText"), tint: Theme.alert)
                     }
+                    // the notices start as they are: off
+                    NotificationSettings()
                     Button(model.tr("firstRunSearch")) { leave(.search) }.buttonStyle(PrimaryButtonStyle()).accessibilityIdentifier("first-search")
                     Button(model.tr("firstRunHaveQr")) { leave(.scan) }.buttonStyle(PrimaryButtonStyle(secondary: true))
                     Button(model.tr("firstRunByHand")) { leave(nil) }.font(.system(size: 14, weight: .semibold)).padding(8).accessibilityIdentifier("first-by-hand")

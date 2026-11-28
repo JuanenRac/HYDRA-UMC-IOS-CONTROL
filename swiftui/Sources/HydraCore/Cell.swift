@@ -16,6 +16,8 @@ public struct RobotInfo: Equatable, Sendable, Identifiable {
     public var enabled: Bool
     public var isPlaying: Bool
     public var isPaused: Bool
+    /// Set only when a job ran to its own end.
+    public var isFinished: Bool
     public var x, y, z: Double
     public var hasXYTable: Bool
     public var xyX, xyY: Double
@@ -42,6 +44,7 @@ public struct RobotInfo: Equatable, Sendable, Identifiable {
         let playback = map(raw["playbackState"])
         isPlaying = (playback["isPlaying"] ?? playback["playing"]) as? Bool == true
         isPaused = (playback["isPaused"] ?? playback["paused"]) as? Bool == true
+        isFinished = playback["isFinished"] as? Bool == true || playback["finished"] as? Bool == true
         speed = number(playback["speed"], 100)
         acceleration = number(playback["acceleration"], 100)
         let pos = map(raw["pos"])

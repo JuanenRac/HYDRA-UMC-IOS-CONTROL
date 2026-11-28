@@ -3,3 +3,4 @@
 Generated/
 *.xcodeproj/
 DerivedData/
+GoogleService-Info.plist

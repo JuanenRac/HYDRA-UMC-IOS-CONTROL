@@ -1,4 +1,4 @@
-// HYDRA-UMC-IOS-CONTROL - the app in use: the header (with the place of the STOP), the bottom bar and the pages. Control is in ControlScreen.swift; Cameras and Alerts are still skeletons.
+// HYDRA-UMC-IOS-CONTROL - the app in use: the header (with the place of the STOP), the bottom bar and the pages. Control, Cameras and Alerts have files of their own.
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D). GPL-3.0-or-later.
 import SwiftUI
 import HydraCore
@@ -13,11 +13,19 @@ struct MainView: View {
                 ForEach(MainTab.allCases) { tab in
                     page(tab)
                         .tabItem { Label(model.tr(tab.titleKey), systemImage: tab.symbol) }
+                        .badge(tab == .alerts ? model.controller.unseenNotices : 0)
                         .tag(tab)
                 }
             }
         }
         .background(Theme.background.ignoresSafeArea())
+        // what the phone sees while the app is on screen becomes the notices of the Alerts page
+        .task {
+            while !Task.isCancelled {
+                model.controller.noticesTick()
+                try? await Task.sleep(nanoseconds: 1_000_000_000)
+            }
+        }
     }
 
     @ViewBuilder
@@ -25,8 +33,8 @@ struct MainView: View {
         switch tab {
         case .home: HomeView()
         case .control: ControlView()
-        case .cameras: PendingView(tab: tab)
-        case .alerts: PendingView(tab: tab)
+        case .cameras: CamerasView()
+        case .alerts: AlertsView()
         case .more: MoreView()
         }
     }
@@ -113,18 +121,6 @@ struct RobotList: View {
     }
 }
 
-struct PendingView: View {
-    @EnvironmentObject var model: AppModel
-    let tab: MainTab
-
-    var body: some View {
-        Page {
-            ScreenTitle(symbol: tab.symbol, title: model.tr(tab.titleKey))
-            Panel(tint: Theme.amber) { Text(model.tr("notYet")).font(.system(size: 13)) }
-        }
-    }
-}
-
 /// The switches of control. Every one that lets something move starts off.
 struct ControlSettings: View {
     @EnvironmentObject var model: AppModel
@@ -172,6 +168,7 @@ struct MoreView: View {
     @EnvironmentObject var model: AppModel
     @State private var sheet: MoreSheet?
     @State private var askSignOut = false
+    @State private var viewerOpen = false
 
     enum MoreSheet: String, Identifiable {
         case security, help, about
@@ -200,6 +197,9 @@ struct MoreView: View {
                 if let message = model.controller.message { Text(model.text(message)).font(.system(size: 13)).foregroundColor(Theme.alert) }
             }
             ControlSettings()
+            NotificationSettings()
+            MenuRow(symbol: "cube", title: model.tr("viewerOpen"), subtitle: model.tr("viewerHint")) { viewerOpen = true }
+                .accessibilityIdentifier("more-viewer")
             Panel {
                 Picker(model.tr("commonLanguage"), selection: Binding(get: { model.controller.chosenLanguage ?? "" }, set: { model.controller.setLanguage($0.isEmpty ? nil : $0) })) {
                     Text(model.tr("languageSystem")).tag("")
@@ -215,6 +215,7 @@ struct MoreView: View {
             MenuRow(symbol: "rectangle.portrait.and.arrow.right", title: model.tr("commonSignOut"), subtitle: model.controller.server?.name, tint: Theme.alert) { askSignOut = true }
                 .accessibilityIdentifier("more-signout")
         }
+        .fullScreenCover(isPresented: $viewerOpen) { ViewerScreen(robotId: model.controller.control.selected?.robotId) }
         .sheet(item: $sheet) { which in
             switch which {
             case .security: SecuritySheet()

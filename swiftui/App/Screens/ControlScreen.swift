@@ -11,6 +11,7 @@ struct ControlView: View {
     @State private var ask: Ask?
     @State private var homeStep = 0
     @State private var worksOpen = false
+    @State private var viewerOpen = false
 
     enum Ask: String, Identifiable {
         case play, takeOver
@@ -68,6 +69,7 @@ struct ControlView: View {
         }
         .alert(item: $ask) { question($0) }
         .sheet(isPresented: $worksOpen) { WorkSheet() }
+        .fullScreenCover(isPresented: $viewerOpen) { ViewerScreen(robotId: control.selected?.robotId) }
     }
 
     private func question(_ which: Ask) -> Alert {
@@ -100,6 +102,14 @@ struct ControlView: View {
         let listen = control.listenOnly
         picker(robot)
         readout(robot)
+        Button {
+            control.interrupt()
+            viewerOpen = true
+        } label: {
+            Label(model.tr("viewerOpen"), systemImage: "cube")
+        }
+        .buttonStyle(PrimaryButtonStyle(secondary: true))
+        .accessibilityIdentifier("control-viewer")
         run(robot, listen: listen)
         access(robot, listen: listen)
         jogPanel(robot, listen: listen)
