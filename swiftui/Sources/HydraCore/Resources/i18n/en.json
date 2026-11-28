@@ -143,7 +143,7 @@
  "helpSafetyTitle": "Safety and the STOP",
  "helpSearch": "Search the help",
  "helpStartTitle": "First steps and connection",
- "helpTitle": "Reaching your server",
+ "helpTitle": "Help",
  "help_account_advanced": "The second factor of your account is turned on in HYDRA-UMC STUDIO; this app asks for its code at sign-in. Face ID or Touch ID is switched on in More.",
  "help_account_basic": "Settings and your account are in More. Your password is never kept on the phone.",
  "help_account_technical": "The session is kept in the Keychain, on this phone only. Share diagnostic, in About, prepares a report without addresses, user name or tokens.",

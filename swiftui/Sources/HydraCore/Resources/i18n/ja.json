@@ -143,7 +143,7 @@
  "helpSafetyTitle": "安全と STOP",
  "helpSearch": "ヘルプを検索",
  "helpStartTitle": "はじめに・接続",
- "helpTitle": "サーバーへの接続",
+ "helpTitle": "ヘルプ",
  "help_account_advanced": "アカウントの二要素認証は HYDRA-UMC STUDIO で有効にします。このアプリはサインイン時にそのコードを尋ねます。Face ID または Touch ID は「その他」でオンにします。",
  "help_account_basic": "設定とアカウントは「その他」にあります。パスワードは端末に保存されません。",
  "help_account_technical": "セッションはこの端末のキーチェーンにのみ保存されます。「このアプリについて」の診断の共有では、アドレス、ユーザー名、トークンを含まないレポートを作成します。",

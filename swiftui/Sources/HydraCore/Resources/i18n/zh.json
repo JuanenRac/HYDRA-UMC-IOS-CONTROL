@@ -143,7 +143,7 @@
  "helpSafetyTitle": "安全与 STOP",
  "helpSearch": "在帮助中搜索",
  "helpStartTitle": "入门与连接",
- "helpTitle": "连接服务器",
+ "helpTitle": "帮助",
  "help_account_advanced": "账户的第二验证因素在 HYDRA-UMC STUDIO 中开启；本应用在登录时要求输入验证码。Face ID 或 Touch ID 在“更多”中开启。",
  "help_account_basic": "设置和账户位于“更多”。手机从不保存您的密码。",
  "help_account_technical": "会话仅保存在本机的钥匙串中。“关于”中的分享诊断会生成不含地址、用户名和令牌的报告。",
