@@ -42,6 +42,7 @@ struct MainView: View {
 
 struct HeaderView: View {
     @EnvironmentObject var model: AppModel
+    @State private var helpOpen = false
 
     private var status: String {
         let key: String
@@ -68,6 +69,10 @@ struct HeaderView: View {
                 StatusDot(color: model.controller.linkOk ? Theme.ok : Theme.amber)
                 Text(status).font(.system(size: 12)).foregroundColor(Theme.muted).lineLimit(1)
                 Spacer(minLength: 0)
+                // the help of the page in front
+                Button { helpOpen = true } label: { Image(systemName: "questionmark.circle").font(.system(size: 18)) }
+                    .accessibilityLabel(model.tr("helpTitle"))
+                    .accessibilityIdentifier("header-help")
             }
             .padding(.horizontal, 14)
             .padding(.bottom, 8)
@@ -84,6 +89,7 @@ struct HeaderView: View {
             }
             Rectangle().fill(Theme.outline).frame(height: 1)
         }
+        .sheet(isPresented: $helpOpen) { HelpSheet(start: HelpTopic.of(model.selectedTab)) }
     }
 }
 
