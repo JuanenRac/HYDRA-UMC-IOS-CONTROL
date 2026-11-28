@@ -56,7 +56,6 @@ Every file of the repository with a line on what it does: the annotated tree tha
 │   │   ├── app_*.arb                    # app_en.arb, app_es.arb, app_it.arb, app_fr.arb, app_de.arb, app_ja.arb, app_zh.arb, app_pt.arb: the phrases of each language (the generated classes below come from them)
 │   │   ├── app_localizations.dart   # Generated base class
 │   │   ├── app_localizations_en.dart, _es.dart, _it.dart, _fr.dart, _de.dart, _ja.dart, _zh.dart, _pt.dart
-│   │   └── language_prefs.dart      # Persisted language override (shared_preferences)
 │   ├── util/                    # Helpers without a screen of their own
 │   │   ├── link_health.dart         # Grade of the link to the server from the slowest recent round-trip times (port of the Android LinkHealth)
 │   │   ├── connection_diagnostics.dart # The facts of the connection diagnostics and its plain-text report, without secrets
