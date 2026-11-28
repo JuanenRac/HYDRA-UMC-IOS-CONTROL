@@ -126,7 +126,7 @@ Cette application cible iOS/iPadOS, mais elle est construite en **Flutter** plut
 | Quelqu'un avec le téléphone déverrouillé | Un verrou biométrique facultatif (Face ID, Touch ID) conditionne la restauration d'une session enregistrée au démarrage ; l'image de la caméra est fermée tant que l'application est en arrière-plan | `network/biometric_helper.dart`, `ui/biometric_gate_screen.dart` |
 | Un robot déplacé par deux personnes, un PLAY pressé par erreur ou un arrêt qui n'arrive pas | Le robot est réservé avant d'être déplacé et l'écran dit qui le détient ; PLAY demande d'abord par défaut et montre le robot, ses points, la vitesse et qui l'a réservé ; l'arrêt global est réessayé une fois, se replie sur un arrêt par robot et garde une bannière persistante « ARRÊT non confirmé » si rien n'a répondu | `models/access.dart`, `util/play_confirmation.dart`, `ui/widgets/stop_all.dart` |
 
-**Ce qu'elle ne fait jamais :** remplacer un arrêt d'urgence physique, ni chiffrer le trafic d'elle-même : l'application essaie HTTPS une fois quand une sonde HTTP en clair n'obtient pas de réponse, et elle n'a ni épinglage de certificat ni garde contre le trafic en clair hors du réseau local. L'ARRÊT est l'arrêt logiciel du serveur.
+**Ce qu'elle ne fait jamais :** remplacer un arrêt d'urgence physique. Par défaut elle ne parle qu'en HTTPS à un serveur hors du téléphone : le HTTP en clair est désactivé sauf si les réglages de Sécurité l'autorisent (un serveur hors du réseau local demande un second interrupteur), et un certificat peut en option être épinglé. L'ARRÊT est l'arrêt logiciel du serveur.
 
 ## 🔌 Interfaces
 

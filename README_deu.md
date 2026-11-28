@@ -126,7 +126,7 @@ Diese App zielt auf iOS/iPadOS ab, ist aber in **Flutter** statt Swift/SwiftUI g
 | Jemand mit dem entsperrten Telefon | Eine optionale biometrische Sperre (Face ID, Touch ID) schützt das Wiederherstellen einer gespeicherten Sitzung beim Start; das Kamerabild wird geschlossen, solange die App im Hintergrund ist | `network/biometric_helper.dart`, `ui/biometric_gate_screen.dart` |
 | Ein Roboter, den zwei Personen bewegen, ein versehentliches PLAY oder ein Stopp, der nicht ankommt | Der Roboter wird vor dem Verfahren reserviert und der Bildschirm sagt, wer ihn hält; PLAY fragt standardmäßig zuerst und zeigt Roboter, Punkte, Geschwindigkeit und den Reservierenden; der globale STOPP wird einmal wiederholt, fällt auf einen Stopp je Roboter zurück und behält ein dauerhaftes Banner „STOPP nicht bestätigt“, wenn nichts antwortete | `models/access.dart`, `util/play_confirmation.dart`, `ui/widgets/stop_all.dart` |
 
-**Was sie nie tut:** einen physischen Not-Halt ersetzen oder den Verkehr selbst verschlüsseln: Die App versucht einmal HTTPS, wenn eine unverschlüsselte HTTP-Sonde keine Antwort bekommt, und hat weder Zertifikats-Pinning noch einen Schutz vor unverschlüsseltem Verkehr außerhalb des lokalen Netzes. Der STOPP ist der Software-Stopp des Servers.
+**Was sie nie tut:** einen physischen Not-Halt ersetzen. Standardmäßig spricht sie mit einem Server außerhalb des Telefons nur HTTPS: Unverschlüsseltes HTTP ist aus, solange die Sicherheitseinstellungen es nicht erlauben (ein Server außerhalb des lokalen Netzes braucht einen zweiten Schalter), und optional kann ein Zertifikat festgelegt werden. Der STOPP ist der Software-Stopp des Servers.
 
 ## 🔌 Schnittstellen
 
