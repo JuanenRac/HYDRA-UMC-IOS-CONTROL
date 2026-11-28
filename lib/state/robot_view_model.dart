@@ -1862,7 +1862,11 @@ class RobotViewModel extends ChangeNotifier {
     String? ifMatch,
   }) async {
     final command = payload['command'];
-    if (listenOnly && command != RobotCommandContract.stop && command != RobotCommandContract.disable) {
+    // Listen only lets every stop out, the jogStop of a held jog included: refusing a stop would be the unsafe side.
+    if (listenOnly &&
+        command != RobotCommandContract.stop &&
+        command != RobotCommandContract.jogStop &&
+        command != RobotCommandContract.disable) {
       throw StateError('listen only');
     }
     return _postCommandUnguarded(robotId, payload, urgent: urgent, ifMatch: ifMatch);

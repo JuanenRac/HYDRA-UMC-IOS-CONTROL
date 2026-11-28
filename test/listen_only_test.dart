@@ -4,10 +4,11 @@
 // GPL-3.0-or-later - see LICENSE
 //
 // Listen-only mode against a real local dart:io HttpServer: with it on the app
-// sends no command but STOP and the safe-mode disable, whatever asked for it;
+// sends no command but the stops (STOP, jogStop) and the safe-mode disable;
 // with it off (the default) the same commands go out; the choice is kept.
 // =============================================================================
 
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -18,6 +19,7 @@ import 'package:hydra_umc_control/models/server_info.dart';
 import 'package:hydra_umc_control/network/auth_prefs.dart';
 import 'package:hydra_umc_control/network/client_prefs.dart';
 import 'package:hydra_umc_control/state/robot_view_model.dart';
+import 'package:hydra_umc_control/util/dead_man_jog.dart';
 
 class _FakeSecureBackend implements SecureTokenBackend {
   final Map<String, String> store = {};
@@ -86,6 +88,9 @@ class _Server {
         request.response.write(jsonEncode({'success': true, 'token': 'token-2', 'refreshToken': 'refresh-2'}));
       } else if (route == 'POST /api/logout') {
         request.response.write(jsonEncode({'success': true}));
+      } else if (route == 'GET /api/hydra-info') {
+        // the link probe of the dead-man jog
+        request.response.write(jsonEncode({'remoteApiVersion': 2, 'appVersion': '0.8.2.1'}));
       } else if (route == 'GET /api/system/metrics') {
         request.response.write(jsonEncode({'cpu_load': 3, 'memory_usage': 40, 'temp': 48.0, 'temp_is_real': false, 'uptime': 99}));
       } else if (route == 'POST /api/robot/1/command') {
@@ -167,6 +172,26 @@ void main() {
     vm.sendCommand('disable');
     await _until(() => server.commands.length == 2);
     expect(server.commands.map((c) => c['command']), unorderedEquals(['stop', 'disable']));
+  });
+
+  test('a jog held when listen-only is switched on sends its jogStop and nothing that moves', () async {
+    final (server, vm) = await _signedIn();
+    await _until(() => vm.connectionStatus == 'connected');
+    await vm.setDeadManEnabled(true);
+    int count(String name) => server.commands.where((c) => c['command'] == name).length;
+    expect(vm.deadMan.blockOf(vm.selectedRobotId), DeadManBlock.none);
+    unawaited(vm.deadMan.press(vm.selectedRobotId, 'robot', 'x', 1));
+    await _until(() => count('jogStart') == 1);
+    expect(count('jogStart'), 1);
+
+    await vm.setListenOnly(true);
+    await _until(() => count('jogStop') == 1);
+    expect(count('jogStop'), 1, reason: 'a stop must always leave');
+
+    final sent = server.commands.length;
+    await vm.deadMan.press(vm.selectedRobotId, 'robot', 'x', 1);
+    await Future<void>.delayed(const Duration(milliseconds: 600));
+    expect(server.commands.length, sent, reason: 'neither a new jog nor a heartbeat may leave');
   });
 
   test('turning it off lets commands go out again', () async {
