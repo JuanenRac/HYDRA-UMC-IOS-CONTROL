@@ -4,10 +4,11 @@
 // GPL-3.0-or-later - see LICENSE
 //
 // Listen-only mode against a real local dart:io HttpServer: with it on the app
-// sends no command but STOP and the safe-mode disable, whatever asked for it;
+// sends no command but the stops (STOP, jogStop) and the safe-mode disable;
 // with it off (the default) the same commands go out; the choice is kept.
 // =============================================================================
 
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -167,6 +168,25 @@ void main() {
     vm.sendCommand('disable');
     await _until(() => server.commands.length == 2);
     expect(server.commands.map((c) => c['command']), unorderedEquals(['stop', 'disable']));
+  });
+
+  test('a jog held when listen-only is switched on sends its jogStop and nothing that moves', () async {
+    final (server, vm) = await _signedIn();
+    await _until(() => vm.connectionStatus == 'connected');
+    await vm.setDeadManEnabled(true);
+    int count(String name) => server.commands.where((c) => c['command'] == name).length;
+    unawaited(vm.deadMan.press(vm.selectedRobotId, 'robot', 'x', 1));
+    await _until(() => count('jogStart') == 1);
+    expect(count('jogStart'), 1);
+
+    await vm.setListenOnly(true);
+    await _until(() => count('jogStop') == 1);
+    expect(count('jogStop'), 1, reason: 'a stop must always leave');
+
+    final sent = server.commands.length;
+    await vm.deadMan.press(vm.selectedRobotId, 'robot', 'x', 1);
+    await Future<void>.delayed(const Duration(milliseconds: 600));
+    expect(server.commands.length, sent, reason: 'neither a new jog nor a heartbeat may leave');
   });
 
   test('turning it off lets commands go out again', () async {
