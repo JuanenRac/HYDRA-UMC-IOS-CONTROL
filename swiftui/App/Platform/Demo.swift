@@ -3,6 +3,7 @@
 #if DEBUG
 import Foundation
 import HydraCore
+import UIKit
 
 /// Launch arguments: `-hydraDemo main|login|welcome`, `-hydraDemoStopFails` and `-hydraDemoOffline`.
 enum Demo {
@@ -42,6 +43,8 @@ final class DemoTransport: HttpTransport, @unchecked Sendable {
         case "/api/stop-all":
             if failsThisStop() { throw TransportError.unreachable }
             json = #"{"success":true,"stoppedCount":2,"failedCount":0,"persisted":true,"robots":[{"robotId":1,"name":"Robot A1","stopped":true},{"robotId":2,"name":"Robot A2","stopped":true}]}"#
+        case "/api/faults": json = #"{"active":[{"source":"safety","robotId":2,"code":"HEARTBEAT_LOST","severity":"warning","text":"Operator heartbeat lost","since":1000000000000}],"recent":[{"source":"motion","code":"TX_ERROR","severity":"error","text":"A frame was not sent","state":"cleared","at":999999000000}]}"#
+        case "/api/ecosystem/node-health": json = request.url.hasSuffix("slot=0") ? #"{"slot":0,"online":true,"heard":true,"ageMs":2000,"flagNames":[],"txErrors":0,"rxErrors":0,"stalls":0,"uptimeS":3600}"# : #"{"slot":1,"online":false}"#
         case "/api/login": json = #"{"success":true,"token":"demo","refreshToken":"demo"}"#
         default: json = "{}"
         }
@@ -67,6 +70,26 @@ final class DemoSockets: LiveSocketTransport {
             }
             onEvent(.opened)
             onEvent(.text(#"{"type":"settings","payload":"# + Demo.settings + "}"))
+        }
+        return connection
+    }
+}
+
+/// One drawn picture, as the stream of a camera would send it.
+@MainActor
+struct DemoCameraStreams: CameraStreamTransport {
+    func open(url: String, headers: [String: String], onEvent: @escaping @MainActor (CameraEvent) -> Void) -> LiveConnection {
+        let connection = DemoConnection()
+        Task { @MainActor in
+            if connection.closed { return }
+            let picture = UIGraphicsImageRenderer(size: CGSize(width: 320, height: 240)).jpegData(withCompressionQuality: 0.8) { context in
+                UIColor(red: 0.08, green: 0.16, blue: 0.24, alpha: 1).setFill()
+                context.fill(CGRect(x: 0, y: 0, width: 320, height: 240))
+                UIColor(red: 0.18, green: 0.7, blue: 0.94, alpha: 1).setFill()
+                context.cgContext.fillEllipse(in: CGRect(x: 110, y: 70, width: 100, height: 100))
+            }
+            onEvent(.response(200))
+            onEvent(.data(picture))
         }
         return connection
     }

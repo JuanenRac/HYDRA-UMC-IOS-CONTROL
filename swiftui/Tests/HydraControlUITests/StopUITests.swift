@@ -27,6 +27,11 @@ final class StopUITests: XCTestCase {
         }
     }
 
+    /// Scrolls until the element can be touched.
+    private func reveal(_ element: XCUIElement, _ app: XCUIApplication) {
+        for _ in 0..<5 where !element.isHittable { app.swipeUp() }
+    }
+
     private func topStop(_ app: XCUIApplication) -> XCUIElement { app.buttons["stop-all"] }
 
     /// A touch of the screen at the middle of the element.
@@ -99,6 +104,7 @@ final class StopUITests: XCTestCase {
         let app = launch("welcome")
         XCTAssertTrue(app.buttons["first-by-hand"].waitForExistence(timeout: 20))
         shot("02_first_use")
+        reveal(app.buttons["first-by-hand"], app)
         app.buttons["first-by-hand"].tap()
         XCTAssertTrue(app.buttons["login-submit"].waitForExistence(timeout: 5))
     }
@@ -126,6 +132,7 @@ final class StopUITests: XCTestCase {
         let app = launch("main")
         XCTAssertTrue(topStop(app).waitForExistence(timeout: 20))
         app.tabBars.buttons["More"].tap()
+        reveal(app.buttons["more-about"], app)
         app.buttons["more-about"].tap()
         XCTAssertTrue(app.buttons["sheet-close"].waitForExistence(timeout: 5))
         shot("08_stop_over_sheet")
@@ -141,7 +148,7 @@ final class StopUITests: XCTestCase {
         XCTAssertTrue(topStop(app).waitForExistence(timeout: 20))
         app.tabBars.buttons["More"].tap()
         let signOut = app.buttons["more-signout"]
-        if !signOut.isHittable { app.swipeUp() }
+        reveal(signOut, app)
         signOut.tap()
         XCTAssertTrue(app.alerts.firstMatch.waitForExistence(timeout: 5))
         shot("09_stop_over_alert")
@@ -164,6 +171,45 @@ final class StopUITests: XCTestCase {
         if !row.isHittable { app.swipeUp() }
         row.tap()
         shot("12_home_robot")
+    }
+
+    func testCamerasShowThePictureAndAlertsListWhatHappened() {
+        let app = launch("main")
+        XCTAssertTrue(topStop(app).waitForExistence(timeout: 20))
+        app.tabBars.buttons["Cameras"].tap()
+        XCTAssertTrue(app.images["camera-picture"].waitForExistence(timeout: 10), "no picture of the camera")
+        shot("20_camera")
+        pressAndRead(app, "over the camera")
+        closeResult(app)
+        app.tabBars.buttons["Alerts"].tap()
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS 'Job finished'")).firstMatch.waitForExistence(timeout: 10))
+        XCTAssertEqual(app.staticTexts.matching(NSPredicate(format: "label CONTAINS '{'")).count, 0, "a text was not filled in")
+        shot("21_alerts")
+        app.buttons["The server"].tap()
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS 'HEARTBEAT_LOST'")).firstMatch.waitForExistence(timeout: 10))
+        XCTAssertEqual(app.staticTexts.matching(NSPredicate(format: "label CONTAINS '{'")).count, 0, "a text was not filled in")
+        shot("22_alerts_server")
+        reveal(app.buttons["alerts-settings"], app)
+        app.buttons["alerts-settings"].tap()
+        XCTAssertTrue(app.buttons["sheet-close"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.switches["switch-push"].isEnabled, "a build without the configuration cannot switch push on")
+        shot("23_notice_settings")
+    }
+
+    func testTheStopsStayOverTheViewer() {
+        let app = launch("main")
+        XCTAssertTrue(topStop(app).waitForExistence(timeout: 20))
+        app.tabBars.buttons["Control"].tap()
+        let open = app.buttons["control-viewer"]
+        XCTAssertTrue(open.waitForExistence(timeout: 10))
+        reveal(open, app)
+        open.tap()
+        XCTAssertTrue(app.buttons["viewer-close"].waitForExistence(timeout: 10))
+        shot("24_viewer")
+        pressAndRead(app, "over the 3D viewer")
+        closeResult(app)
+        app.buttons["viewer-close"].tap()
+        XCTAssertTrue(gone(app.buttons["viewer-close"]), "the viewer does not close")
     }
 
     /// Without a server the saved state is shown and said to be saved, and the STOP stays.

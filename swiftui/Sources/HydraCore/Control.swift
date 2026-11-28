@@ -473,6 +473,18 @@ public final class RobotControl {
         issue("stop", combined: true) { RobotControl.stopped(&$0) }
     }
 
+    /// Turns the camera of a robot on or off on the server.
+    @discardableResult
+    public func setVision(_ robotId: Int, _ on: Bool) -> Task<Void, Never>? {
+        issue("vision", params: ["enabled": on], robot: robotId) { robot in
+            robot["visionEnabled"] = on
+            if var camera = robot["camera"] as? [String: Any] {
+                camera["connected"] = on
+                robot["camera"] = camera
+            }
+        }
+    }
+
     /// Safe mode of the selected robot only: it stops, and the server then refuses everything but STOP.
     @discardableResult
     public func disable() -> Task<Void, Never>? {
